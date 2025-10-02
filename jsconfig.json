@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+    "baseUrl": ".",
+    "allowJs": true,
+    "checkJs": false,
+    "jsx": "react-jsx",
+    "paths": {
+        "@/*": ["src/*"],
+        "@components/*": ["src/components/*"],
+        "@style/*": ["src/style/*"],
+    },
+    "skipLibCheck": true
+},
+"include": ["app", "src"],
+"exclude": ["node_modules", "**/node_modules/*", ".expo", "dist", "web-build"]
+}

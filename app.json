@@ -1,29 +1,22 @@
 {
   "expo": {
-    "name": "vendoyo.ios",
-    "slug": "vendoyo.ios",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
+    "name": "VendoYo.es",
+    "slug": "vendoyo-es",
+    "scheme": "vendoyo",
+    "entryPoint": "expo-router/entry",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.vendoyo.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Necesitamos la cámara para subir fotos de inmuebles",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceder a tu galería para seleccionar imágenes",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "extra": {
+      "eas": {
+        "projectId": "a1fc4693-9560-48a9-ab58-4146c2ef6b3a"
+      }
     }
   }
 }
