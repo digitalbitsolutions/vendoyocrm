@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,6 +10,7 @@ import {
   StyleSheet,
   ImageBackground,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -46,7 +46,7 @@ export default function Login() {
       {/* velo muy suave para que el card destaque (puedes quitarlo si no lo quieres) */}
       <View style={s.scrim} />
 
-      <SafeAreaView style={s.bg}>
+      <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: "padding", android: undefined })} // <- antes "behavion"
           style={{ flex: 1 }}
@@ -100,6 +100,7 @@ export default function Login() {
                       error={touched.email && errors.email}
                       keyboardType="email-address"   // <- antes "keyBoardType"
                       autoComplete="email"
+                      returnKeyType="next"
                     />
 
                     <TextField
@@ -112,6 +113,8 @@ export default function Login() {
                       secureTextEntry
                       autoComplete="password"
                       style={{ marginTop: theme.spacing.sm }}
+                      returnKeyType="done"
+                      onSubmitEditing={handleSubmit}
                     />
 
                     {/* Recordar sesión */}
@@ -187,6 +190,7 @@ const s = StyleSheet.create({
     width: 180,
     height: 180,
     marginBottom: theme.spacing.sm,
+    ...theme.shadow,
   },
   title: {
     color: theme.colors.text,
