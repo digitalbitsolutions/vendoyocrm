@@ -20,7 +20,6 @@ import { Button } from "../src/components/Button";
 import { InlineMessage } from "../src/components/InlineMessage";
 
 const BG = require("../assets/images/Hero/background.png");
-const LOGO = require("../assets/images/Hero/logo.png");
 
 // Validación del form (solo email)
 const schema = Yup.object({
@@ -59,7 +58,9 @@ export default function Forget() {
                     contentContainerStyle={[
                         s.scroll,
                         {
-                            paddingTop: insets.top + theme.spacing.xl,
+                            flexGrow: 1,
+                            justifyContent: "center",
+                            paddingTop: insets.top + theme.spacing.lg,
                             paddingBottom: insets.bottom + theme.spacing.xl,
                         },
                     ]}
@@ -73,7 +74,6 @@ export default function Forget() {
                         <View style={s.card}>
                             {/* Header */}
                             <View style={s.header}>
-                                <Image source={LOGO} style={s.logo} resizeMode="contain" />
                                 <Text style={s.title}>¿Olvidaste tu contraseña?</Text>
                                 <Text style={s.subtitle}>
                                     Escribe tu e-mail y te enciaremos un enlace para restablecerla
@@ -191,7 +191,6 @@ const s = StyleSheet.create({
     },
 
     header: { alignItems: "center", marginBottom: theme.spacing.md },
-    logo: { width: 140, height: 140, marginBottom: theme.spacing.sm, ...theme.shadow },
     tittle: { color: theme.colors.text, fontSize: theme.font.h2, fontWeight: "800", textAlign: "center" },
     subtitle: {
         marginTop: 6,
