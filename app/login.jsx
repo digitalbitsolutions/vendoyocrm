@@ -62,6 +62,7 @@ export default function Login() {
               <View style={s.header}>
                 {/* ⬇️ logo tal cual, sin círculo */}
                 <Image source={LOGO} style={s.logo} resizeMode="contain" />
+                <Text style={s.h2}>Servicios inmobiliarios con tarifa plana</Text>
                 {/* El “VendoYo.es” ya va dentro del logo, así que solo dejo el título */}
                 <Text style={s.title}>Iniciar Sesión</Text>
               </View>
