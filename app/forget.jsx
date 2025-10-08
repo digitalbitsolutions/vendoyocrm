@@ -18,8 +18,11 @@ import { theme } from "../src/style/theme";
 import { TextField } from "../src/components/TextField";
 import { Button } from "../src/components/Button";
 import { InlineMessage } from "../src/components/InlineMessage";
+import { sendPasswordReset } from "../src/services/auth";
 
 const BG = require("../assets/images/Hero/background.png");
+
+const COOLDOWN_SECOND = 30;
 
 // Validación del form (solo email)
 const schema = Yup.object({
@@ -43,17 +46,12 @@ export default function Forget() {
     }, [cooldown]);
 
 
-    // Simulación del "envio" de email (mock)
-    const mockSendReset = async (email) => {
-        await new Promise((r) => setTimeout(r, 900));
-        return { ok: true };
-    };
 
     return (
         <ImageBackground source={BG} style={s.bg} resizeMode="cover">
-            <View style={s.scrim} />
+            <View style={s.scrim} pointerEvents="none"/>
 
-            <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
+            <SafeAreaView style={[s.bg, { position: "relative", zIndex: 2}]} edges={["top", "bottom"]}>
                 <KeyboardAwareScrollView
                     contentContainerStyle={[
                         s.scroll,
@@ -67,6 +65,7 @@ export default function Forget() {
                     keyboardShouldPersistTaps="handled"
                     enableOnAndroid={true}
                     extraScrollHeight={24}
+                    keyboardDismissMode="on-drag"
                 >
                     {/* Capa exterior con sombra */}
                     <View style={s.cardShadow}>
@@ -97,15 +96,15 @@ export default function Forget() {
                                 validationSchema={schema}
                                 onSubmit={async (values, helpers) => {
                                     Keyboard.dismiss();
-                                    const res = await mockSendReset(values.email);
-                                    if (res?.ok) {
+                                    try {
+                                        await sendPasswordReset (values.email);
                                         setEmailSentTo(values.email);
                                         setSent(true);
-                                        setCooldown(30);
+                                        setCooldown(COOLDOWN_SECOND);
                                         helpers.setSubmitting(false);
-                                    } else {
+                                    } catch (e) {
                                         helpers.setSubmitting(false);
-                                        helpers.setFieldError("email", "No pudimos enviar el correo. Inténtalo más tarde.");
+                                        helpers.setFieldError("email", e.message || "No pudimos enviar el correo. Inténtalo más tarde.");
                                     }
                                 }}
                             >
@@ -153,7 +152,13 @@ export default function Forget() {
                                         />
 
                                         <View style={s.links}>
-                                            <Text style={s.link} onPress={() => router.push("/login")}>
+                                            <Text
+                                                style={s.link}
+                                                onPress={() => router.push("/login")}
+                                                accessibilityRole="button"
+                                                accessibilityLabel="Volver al inicio de sesión"
+                                                testID="forget-back-to-login"
+                                            >
                                                 Volver al inicio de sesión
                                             </Text>
                                         </View>
@@ -170,7 +175,7 @@ export default function Forget() {
 
 const s = StyleSheet.create({
     bg: { flex: 1 },
-    scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.06)" },
+    scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.5)", zIndex: 1, },
     scroll: { paddingHorizontal: theme.spacing.lg },
 
     // Sombra fuera + recorte dentro
@@ -191,7 +196,7 @@ const s = StyleSheet.create({
     },
 
     header: { alignItems: "center", marginBottom: theme.spacing.md },
-    tittle: { color: theme.colors.text, fontSize: theme.font.h2, fontWeight: "800", textAlign: "center" },
+    title: { color: theme.colors.text, fontSize: theme.font.h2, fontWeight: "800", textAlign: "center" },
     subtitle: {
         marginTop: 6,
         fontSize: theme.font.small,

@@ -15,9 +15,11 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
+
 import { theme } from "../src/style/theme";
 import { TextField } from "../src/components/TextField";
 import { Button } from "../src/components/Button";
+import { useAuth } from "../src/context/AuthContext"; 
 
 // ⬇️ usa el mismo fondo del Hero
 const BG = require("../assets/images/Hero/background.png");
@@ -35,11 +37,9 @@ export default function Login() {
   const router = useRouter();
   const [remember, setRemember] = useState(false);
 
-  // Simulación de login (aquí conectarás tu API)
-  const mockLogin = async (values) => {
-    await new Promise((r) => setTimeout(r, 900));
-    return { ok: true }; // <- antes ponías "tru"
-  };
+  const { signIn, isLoading } = useAuth();
+  if (isLoading) return null;   // evita flicker mientras restaura sesión del storage
+
 
   return (
     <ImageBackground source={BG} style={s.bg} resizeMode="cover">
@@ -62,7 +62,6 @@ export default function Login() {
               <View style={s.header}>
                 {/* ⬇️ logo tal cual, sin círculo */}
                 <Image source={LOGO} style={s.logo} resizeMode="contain" />
-                <Text style={s.h2}>Servicios inmobiliarios con tarifa plana</Text>
                 {/* El “VendoYo.es” ya va dentro del logo, así que solo dejo el título */}
                 <Text style={s.title}>Iniciar Sesión</Text>
               </View>
@@ -72,13 +71,12 @@ export default function Login() {
                 initialValues={{ email: "", password: "" }}
                 validationSchema={schema}
                 onSubmit={async (values, helpers) => {
-                  const res = await mockLogin(values); // <- antes "rees"
-                  if (res.ok) {
-                    // TODO: guardar token y remember si aplica
-                    router.replace("/"); // navega a home/dashboard
-                  } else {
+                  try {
+                    await signIn({ email: values.email, password: values.password });
+                    router.replace("/");   // navega a home/dashboard
+                  } catch (e) {
                     helpers.setSubmitting(false);
-                    helpers.setFieldError("email", "Credenciales inválidas");
+                    helpers.setFieldError("email", e.message || "Credenciales inválidas");
                   }
                 }}
               >

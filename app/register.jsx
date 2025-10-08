@@ -4,6 +4,7 @@ import {
     Switch,                   // interruptor para "Aceptar términos"
     StyleSheet,
     ImageBackground,          // fondo con imagen a pantalla completa
+    Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";   // navegación entre pantallas
@@ -18,6 +19,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { theme } from "../src/style/theme";
 import { TextField } from "../src/components/TextField";
 import { Button } from "../src/components/Button";
+import { useAuth } from "../src/context/AuthContext";
 
 // Imágenes (mismo fondo y logo que el login)
 const BG = require("../assets/images/Hero/background.png");
@@ -46,12 +48,8 @@ const schema = Yup.object({
 // 2. COMPONENTE DE PANTALLA:
 export default function Register() {
     const router = useRouter();   // para navegar cuando el registro sea exitoso
-
-    // Simulación de registro (mock). Aquí, conectar API
-    const mockRegister = async (values) => {
-        await new Promise((r) => setTimeout(r, 900));   // pequeña espera "falsa"
-        return { ok: true };                            // simulamos éxito
-    };
+    const { signUp, isLoading } = useAuth();
+    if (isLoading) return null;
 
     // 3. UI de la pantalla:
     return (
@@ -68,6 +66,7 @@ export default function Register() {
                     keyboardShouldPersistTaps="handled"
                     enableOnAndroid={true}   
                     extraScrollHeight={24}
+                    keyboardDismissMode="on-drag"
                 >
                         {/* Tarjeta balnca centrada con sombra y bordes redondeados */}
                     <View style={s.centerer}>
@@ -94,14 +93,16 @@ export default function Register() {
                                 validationSchema={schema}   // reglas definidas arriba
                                 // Qué pasa cuando pulsas el botón "CREAR CUENTA"
                                 onSubmit={async (values, helpers) => {
-                                    const res = await mockRegister(values);
-                                    if (res && res.ok) {
-                                        // Si todo "bien", navega al Home o donde prefieras
+                                    try {
+                                        await signUp({
+                                            name: values.name,
+                                            email: values.email,
+                                            password: values.password,
+                                        });
                                         router.replace("/");
-                                    } else {
-                                        // si "falló", detén el submit y muestra error
+                                    } catch (e) {
                                         helpers.setSubmitting(false);
-                                        helpers.setFieldError("email", "No se pudo crear la cuenta");
+                                        helpers.setFieldError("email", e.message || "No se puede crear la cuenta");
                                     }
                                 }}
                             >
@@ -147,8 +148,9 @@ export default function Register() {
                                             onBlur={handleBlur("password")}
                                             error={touched.password && errors.password}
                                             secureTextEntry        // oculta caracteres
-                                            autoComplete="password"
-                                            textContentType="newPassword"
+                                            textContentType="password"
+                                            autoComplete="off"
+                                            importantForAutofill="no"
                                             returnKeyType="next"
                                             style={{ marginTop: theme.spacing.sm }}
                                         />
@@ -161,8 +163,9 @@ export default function Register() {
                                             onBlur={handleBlur("confirmPassword")}
                                             error={touched.confirmPassword && errors.confirmPassword}
                                             secureTextEntry
-                                            autoComplete="password"
                                             textContentType="password"
+                                            autoComplete="off"
+                                            importantForAutofill="no"
                                             returnKeyType="done"
                                             onSubmitEditing={handleSubmit}   // enviar con "enter"
                                         />
@@ -220,7 +223,7 @@ export default function Register() {
 const s = StyleSheet.create({
     bg: { flex: 1 },   // BG ocupa todo el espacio
     // Capa semitransparente para mejorar contraste del card sobre el fondo
-    scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.,6)"},
+    scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.6)" },
     scroll: {
         flexGrow: 1,
         padding: theme.spacing.lg,
@@ -263,6 +266,7 @@ const s = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         marginVertical: theme.spacing.md,
+        gap: theme.spacing.sm,
     },
     rowText: {
         marginLeft: theme.spacing.sm,
