@@ -8,7 +8,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack
+          screenOptions={{
+            headerShown: false,    // usaremos AppBar/Drawer propio luego
+          }}
+        />
       </AuthProvider>
     </SafeAreaProvider>
   );

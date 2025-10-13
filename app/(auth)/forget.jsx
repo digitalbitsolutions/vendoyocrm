@@ -14,13 +14,13 @@ import * as Yup from "yup";
 
 import { useRouter } from "expo-router";
 
-import { theme } from "../src/style/theme";
-import { TextField } from "../src/components/TextField";
-import { Button } from "../src/components/Button";
-import { InlineMessage } from "../src/components/InlineMessage";
-import { sendPasswordReset } from "../src/services/auth";
+import { theme } from "../../src/style/theme";
+import { TextField } from "../../src/components/TextField";
+import { Button } from "../../src/components/Button";
+import { InlineMessage } from "../../src/components/InlineMessage";
+import { sendPasswordReset } from "../../src/services/auth";
 
-const BG = require("../assets/images/Hero/background.png");
+const BG = require("../../assets/images/Hero/background.png");
 
 const COOLDOWN_SECOND = 30;
 

@@ -16,14 +16,14 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 
 // Tu tema y componentes reutilizables
 
-import { theme } from "../src/style/theme";
-import { TextField } from "../src/components/TextField";
-import { Button } from "../src/components/Button";
-import { useAuth } from "../src/context/AuthContext";
+import { theme } from "../../src/style/theme";
+import { TextField } from "../../src/components/TextField";
+import { Button } from "../../src/components/Button";
+import { useAuth } from "../../src/context/AuthContext";
 
 // Imágenes (mismo fondo y logo que el login)
-const BG = require("../assets/images/Hero/background.png");
-const LOGO = require("../assets/images/login/logo.png");
+const BG = require("../../assets/images/Hero/background.png");
+const LOGO = require("../../assets/images/login/logo.png");
 
 // 1. ESQUEMA DE VALIDACIÓN (Yup):
 //    Define reglas para cada campo del formulario

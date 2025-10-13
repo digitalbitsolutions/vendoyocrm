@@ -39,19 +39,23 @@ export function AuthProvider({ children }) {
 
     // Al montar el provider: intentamos restaurar la sesión desde almacenamiento seguro
     useEffect(() => {
+        let alive = true;
+
         (async () => {
             try {
                 // getSession() -> { token, user } | null (lo trae del storage seguro)
                 const sess = await getSession();
-                if (sess?.token) {
+                if (alive && sess?.token) {
                     setToken(sess.token);
                     setUser(sess.user);
                 }
             } finally {
-                // Pase lo que pase, dejamos de "bootear" para que la UI continúe
-                setBooting(false);
+                if (alive) setBooting(false);
             }
         })();
+        return () => {
+            alive = false;
+        };
     }, []);
 
     // Acciones expuestas a toda la app (memorizadas para no re-crear funciones)
@@ -67,7 +71,9 @@ export function AuthProvider({ children }) {
 
             /** Registro de usuario + deja sesión iniciada */
             async signUp({ name, email, password }) {
-                const sess = await register({ name, email, password });
+                const sess = await register({ name, email, password }).catch((e) => {
+                    throw new Error(e?.message || "No se pudo registrar");
+                });
                 setToken(sess.token);
                 setUser(sess.user);
                 return sess;

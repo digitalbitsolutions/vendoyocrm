@@ -16,16 +16,16 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 
 
-import { theme } from "../src/style/theme";
-import { TextField } from "../src/components/TextField";
-import { Button } from "../src/components/Button";
-import { useAuth } from "../src/context/AuthContext"; 
+import { theme } from "../../src/style/theme";
+import { TextField } from "../../src/components/TextField";
+import { Button } from "../../src/components/Button";
+import { useAuth } from "../../src/context/AuthContext"; 
 
 // ⬇️ usa el mismo fondo del Hero
-const BG = require("../assets/images/Hero/background.png");
+const BG = require("../../assets/images/Hero/background.png");
 
 // ⬇️ logo “tal cual” (sin fondo blanco; es tu PNG)
-const LOGO = require("../assets/images/login/logo.png");
+const LOGO = require("../../assets/images/login/logo.png");
 
 // Validación
 const schema = Yup.object({
@@ -73,7 +73,7 @@ export default function Login() {
                 onSubmit={async (values, helpers) => {
                   try {
                     await signIn({ email: values.email, password: values.password });
-                    router.replace("/");   // navega a home/dashboard
+                    router.replace("/(app)/dashboard");   // navega a home/dashboard
                   } catch (e) {
                     helpers.setSubmitting(false);
                     helpers.setFieldError("email", e.message || "Credenciales inválidas");
@@ -143,12 +143,12 @@ export default function Login() {
 
                     {/* Enlaces */}
                     <View style={s.links}>
-                      <Text style={s.link} onPress={() => router.push("/register")}>
+                      <Text style={s.link} onPress={() => router.push("/(auth)/register")}>
                         Registrarse
                       </Text>
                       <Text
                         style={[s.link, { marginTop: theme.spacing.sm }]} // <- antes "margintop"
-                        onPress={() => router.push("/forget")}
+                        onPress={() => router.push("/(auth)/forget")}
                       >
                         ¿Olvidaste tu contraseña?
                       </Text>

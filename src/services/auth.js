@@ -24,6 +24,17 @@ const SESSION_KEY = "session.v1";
 const RAW_BASE_URL = process.env.EXPO_PUBLIC_API_URL || null;
 const BASE_URL = RAW_BASE_URL ? RAW_BASE_URL.replace(/\/$/, "") : null;
 
+// Email considerado "admin" en modo MOCK (configurable por ENV)
+const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS || "admin@vendoyo.es")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+// helper para saber si un email debe ser admin en el mock
+function isAdminEmail(email = "") {
+    return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 // ----- Utilidades internas -----------------------------------------------------------
 
 /** Simula latencia de red en mocks */
@@ -85,6 +96,11 @@ function toSessionFrom(response) {
         if (!token) raise("Respuesta sin token del servidor");
         if (!user) raise("Respuesta sin usuario del servidor");
 
+        // si el usuario es admin, le damos un rol especial
+        if (user && !user.role) {
+            user.role = isAdminEmail(user.email) ? "admin" : "user";
+        }
+
         return { token, user };
 }
 
@@ -100,13 +116,16 @@ async function mockLogin({ email, password }) {
     if (!email || !email.includes("@")) raise("E-mail no válido");
     if (!password || password.length < 6) raise("La contraseña debe tener al menos 6 caracteres");
 
+    // Asignamos rol en función del email (mock admin)
+    const role = isAdminEmail(email) ? "admin" : "user";
+
     return {
         token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
         user: {
             id: "u_" + Math.random().toString(36).slice(2, 8),
             email,
             name: email.split("@")[0],
-            role: "user",
+            role,
         },
     };
 }
@@ -115,9 +134,19 @@ async function mockRegister({ name, email, password }) {
     await delay(900);
     if (!name || name.trim().length < 2) raise("Escribe tu nombre completo");
     if (!email || !email.includes("@")) raise("E-mail no válido");
-    if (!pasword || pasword.length < 6) raise("La contraseña debe tener al menos 6 caracteres");
-    // Devolvemos sesión iniciada directamente
-    return mockLogin({ email, password });
+    if (!password || password.length < 6) raise("La contraseña debe tener al menos 6 caracteres");
+
+    // Devolvemos sesión iniciada respetando el nombre y el rol mock
+    const role = isAdminEmail(email) ? "admin" : "user";
+    return {
+        token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
+        user: {
+            id: "u_" + Math.random().toString(36).slice(2, 8),
+            email,
+            name: name.trim(),
+            role,
+        },
+    };
 }
 
 async function mockForgot(email) {
