@@ -12,17 +12,14 @@ import {
     Text,
     StyleSheet,
     ScrollView,
-    TouchableOpacity,
-    Image,
+    TouchableOpacity
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { useAuth } from "../../../src/context/AuthContext";
 import { theme } from "../../../src/style/theme";
-
-// (Opcional) tu logo para el header del dashboard
-const LOGO = require("../../../assets/images/dashboard/logo_header.png");
+import AppBar from "../../../src/components/AppBar";
 
 // ------------------------------------------------------------------------------------
 // Helpers locales
@@ -30,7 +27,7 @@ const LOGO = require("../../../assets/images/dashboard/logo_header.png");
 
 /** Devuelve las iniciales a partir del nombre completo */
 function getInitials(name = "") {
-    const parts = name.trim().split(/\s+/  );
+    const parts = name.trim().split(/\s+/);
     const first = parts[0]?.[0] ?? "";
     const last = parts[parts.length - 1]?.[0] ?? "";
     return (first + last).toUpperCase();
@@ -39,8 +36,10 @@ function getInitials(name = "") {
 /** Tarjeta base reutilizable (sombra + borde redondeado) */
 function Card({ children, style, onPress, testID }) {
     const Comp = onPress ? TouchableOpacity : View;
+    const pressProps = onPress? { onPress, activeOpacity: 0.7, accessibilityRole: "button" }
+    : {};
     return (
-        <Comp style={[s.card, style]} onPress={onPress} activeOpacity={0.7} testID={testID}>
+        <Comp style={[s.card, style]} testID={testID} {...pressProps}>
             {children}
         </Comp>
     );
@@ -68,8 +67,8 @@ export default function DashboardScreen() {
     const greeting = useMemo(() => {
         const h = new Date().getHours();
         if (h < 12) return "Buenos días";
-        if (h < 19) return "BUenas tardes";
-        return "buenas noches";
+        if (h < 19) return "Buenas tardes";
+        return "Buenas noches";
     }, []);
 
     // Datos MOCK por ahora (conecta backend más adelante)
@@ -87,20 +86,13 @@ export default function DashboardScreen() {
     const goAjustes  = () => router.push("/(app)/ajustes");
 
     return (
-        <SafeAreaView style={s.safe} edges={["top"]}>
-            {/* Header App (muy simple). Más adelante meteremos AppBar propia. */}
-            <View style={s.appbar}>
-                <Image source={LOGO} style={s.logo} resizeMode="contain" />
-                {/* Menú hamburguesa (placeholder). En siguiente iteración lo conectamos */}
-                <TouchableOpacity onPress={goAjustes} accessibilityLabel="Abrir ajustes">
-                    <Text style={s.hamburger}>☰</Text>
-                </TouchableOpacity>
-            </View>
-
+        <SafeAreaView style={s.safe} edges={["top","left", "right", "bottom"]}>
+            <AppBar variant="dashboard" />
             <ScrollView
                 contentContainerStyle={s.scroll}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
+                contentInsetAdjustmentBehavior="automatic"
             >
                 {/* Tarjeta de bienvenida + usuario */}
                 <Card style={{ padding: theme.spacing.lg }}>
@@ -163,7 +155,7 @@ export default function DashboardScreen() {
 
                 <Card style={s.block}>
                     <Text style={s.blockTitle}>Trámites Recibidos Mensuales</Text>
-                    <Text style={s.blockHint}>Aquí irá un grádico de líneas por meses.</Text>
+                    <Text style={s.blockHint}>Aquí irá un gráfico de líneas por meses.</Text>
                 </Card>
 
                 <Card style={s.block}>
@@ -198,26 +190,6 @@ const s = StyleSheet.create({
     scroll: {
         padding: theme.spacing.lg,
         gap: theme.spacing.lg,
-    },
-
-    // AppBar simple
-    appbar: {
-        paddingHorizontal: theme.spacing.lg,
-        paddingBottom: theme.spacing.sm,
-        paddingTop: theme.spacing.sm,
-        minHeight: 64,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-    logo: {
-        width: 180,
-        height: 56,
-    },
-    hamburger: {
-        fontSize: 28,
-        fontWeight: "600",
-        color: theme.colors.text,
     },
 
     // Tipografía
@@ -309,12 +281,12 @@ const s = StyleSheet.create({
         marginTop: 4,
     },
 
-    // Bloquees grandes
+    // Bloques grandes
     block: {
         padding: theme.spacing.lg,
     },
     blockTitle: {
-        fontSize: theme.font.base,
+        fontSize: theme.font.h3,
         fontWeight: "800",
         color: theme.colors.text,
         marginTop: 4,

@@ -30,9 +30,9 @@ export function InlineMessage({ type = "info", children, style }) {
     };
 
     return (
-        <View style={[StyleSheet.wrap, { backgroundColor: bgByType[type]}, style]}>
+        <View style={[styles.wrap, { backgroundColor: bgByType[type]}, style]}>
             <Ionicons name={c.icon} size={18} color={c.color} style={{ marginRight: 8 }} />
-            <Text style={[StyleSheet.text, { color:theme.colors.text }]}>
+            <Text style={[styles.text, { color:theme.colors.text }]}>
                 {children}
             </Text>
         </View>

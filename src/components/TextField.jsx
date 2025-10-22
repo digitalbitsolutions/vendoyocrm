@@ -47,8 +47,8 @@ export function TextField({
           <Pressable
             onPress={() => setIsSecure((v) => !v)}
             style={styles.eyeBtn}
-            hitslop={theme.hitSlop}
-            accessibilityrole="button"
+            hitSlop={theme.hitSlop}
+            accessibilityRole="button"
             accessibilityLabel={isSecure ? "Mostrar contraseña" : "Ocultar contraseña"}
           >
             <Ionicons

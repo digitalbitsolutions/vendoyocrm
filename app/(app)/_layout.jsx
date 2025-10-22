@@ -1,18 +1,19 @@
-// app/(app)/_layout.jsx
 import { Stack, Redirect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/context/AuthContext";
 
 export default function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // 1. Mientras se resaura la sesión, no pintamos nada
   if (isLoading) return null;
 
-  if (!isAuthenticated) return <Redirect href="/(auth)/login" />
+  // 2. Si no hay sesión, mandamos al login
+  if(!isAuthenticated) return <Redirect href="/(auth)/login" />;
+
+  // 3. Deja que expo-router mapee pantallas por archivos (no declares Stack.Screen)
   return (
     <>
-      {/* Barra de estado en oscuro; sin header nativo del Stack */}
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
     </>

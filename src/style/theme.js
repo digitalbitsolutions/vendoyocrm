@@ -19,6 +19,9 @@ export const theme = {
         error:       "#FF3333",   // alias para errores (coincide con primary)
         onAccent:    "#111827",   // texto sobre botones amarillos
         onSecondary: "#FFFFFF",   // texto sobre botones azules
+
+        danger:      "#FF4D4D",
+        onDanger:    "#FFFFFF",
     },
 
     // 2. Escala de espacios (margen/padding)
