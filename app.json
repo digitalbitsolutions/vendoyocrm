@@ -8,22 +8,26 @@
       "bundleIdentifier": "com.vendoyo.app",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Necesitamos la cámara para subir fotos de inmuebles",
-        "NSPhotoLibraryUsageDescription": "Necesitamos acceder a tu galería para seleccionar imágenes",
+        "NSCameraUsageDescription": "Necesitamos la cámara para tu foto de perfil y para subir fotos de inmuebles.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceder a tu galería para seleccionar imágenes.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-    "extra": {
-      "eas": {
-        "projectId": "a1fc4693-9560-48a9-ab58-4146c2ef6b3a"
-      }
+    "android": {
+      "package": "com.vendoyo.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
     },
     "plugins": [
       "expo-secure-store",
       "expo-router"
     ],
-    "android": {
-      "package": "com.vendoyo.app"
+    "extra": {
+      "eas": {
+        "projectId": "a1fc4693-9560-48a9-ab58-4146c2ef6b3a"
+      }
     }
   }
 }

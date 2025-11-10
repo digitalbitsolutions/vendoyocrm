@@ -1,6 +1,24 @@
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { theme } from "../style/theme";
+import { useTheme } from "../style/theme";
+
+// ✅ util pequeño: aplica alpha a un color hex o rgb(a)
+const withAlpha = (color, a = 0.1) => {
+  if (!color) return `rgba(0,0,0,${a})`;
+  if (color.startsWith("rgba")) return color.replace(/rgba\(([^)]+)\)/, (_, inner) => `rgba(${inner.split(",").slice(0,3).join(",")}, ${a})`);
+  if (color.startsWith("rgb(")) {
+    const [r,g,b] = color.match(/\d+/g) || [0,0,0];
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  // hex #rrggbb
+  let c = color.replace("#", "");
+  if (c.length === 3) c = c.split("").map(x => x + x).join("");
+  const r = parseInt(c.slice(0,2),16);
+  const g = parseInt(c.slice(2,4),16);
+  const b = parseInt(c.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+};
 
 /**
  * InlineMessage
@@ -9,45 +27,44 @@ import { theme } from "../style/theme";
  * - children: texto del mensaje
  * - style: estilos adicionales opcionales
  */
-
 export function InlineMessage({ type = "info", children, style }) {
-    // Paleta por tipo (color del icono/texto)
-    const palette = {
-        success: { color: theme.colors.success, icon: "checkmark-circle" },
-        error:   { color: theme.colors.primary, icon: "close-circle" },
-        warning: { color: theme.colors.warning, icon: "alert-circle" },
-        info:    { color: theme.colors.secondary, icon: "information-circle" },
-    };
+  const { theme } = useTheme();                 
+  const s = mkStyles(theme);                    
 
-    const c = palette[type] || palette.info;
+  const palette = {
+    success: { color: theme.colors.success,   icon: "checkmark-circle" },
+    error:   { color: theme.colors.error,     icon: "close-circle" },
+    warning: { color: theme.colors.warning,   icon: "alert-circle" },
+    info:    { color: theme.colors.secondary, icon: "information-circle" },
+  };
+  const c = palette[type] || palette.info;
 
-    // Fondos suaves por tipo (sin tocar theme)
-    const bgByType = {
-        success:  "rgba(46,125,50,0.08)",
-        error:    "rgba(255,51,51,0.08)",
-        warning:  "rgba(255,176,32,0.10)",
-        info:     "rgba(0,102,204,0.08)",
-    };
+  const bgAlpha = theme.mode === "dark" ? 0.18 : 0.10;
+  const bg = withAlpha(c.color, bgAlpha);
 
-    return (
-        <View style={[styles.wrap, { backgroundColor: bgByType[type]}, style]}>
-            <Ionicons name={c.icon} size={18} color={c.color} style={{ marginRight: 8 }} />
-            <Text style={[styles.text, { color:theme.colors.text }]}>
-                {children}
-            </Text>
-        </View>
-    );
+  return (
+    <View
+      style={[s.wrap, { backgroundColor: bg, borderColor: withAlpha(c.color, 0.25) }, style]}
+      accessibilityRole="alert"                             
+    >
+      <Ionicons name={c.icon} size={18} color={c.color} style={{ marginRight: 8 }} />
+      <Text style={s.text}>{children}</Text>
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({
+const mkStyles = (theme) =>
+  StyleSheet.create({
     wrap: {
-        flexDirection: "row",
-        alignItems: "center",
-        borderRadius: theme.radius.md,
-        paddingVertical: 10,
-        paddingHorizontal: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      borderRadius: theme.radius.md,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderWidth: 1,                                 
     },
     text: {
-        fontSize: 14,
+      fontSize: 14,
+      color: theme.colors.text,                           
     },
-});
+  });

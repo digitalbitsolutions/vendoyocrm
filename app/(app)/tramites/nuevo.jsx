@@ -1,4 +1,3 @@
-// Modal de creación de trámite
 import React, { useState, useMemo } from "react";
 import {
     View,
@@ -9,6 +8,7 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
+    DeviceEventEmitter,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -42,32 +42,40 @@ export default function NuevoTramiteScreen() {
 
     const onClose = () => router.back();
 
+    const toISO = (d) => {
+        const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d?.trim() || "");
+        if (!m) return null;
+        const [_, dd, mm, yyyy] = m;
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
     const onSubmit = () => {
         if (!canSave) return;
-        const toISO= (d) => {
-            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d?.trim() || "");
-            if (!m) return null;
-            const [_, dd, mm, yyyy] = m;
-            return `${yyyy}-${mm}-${dd}`;
-        };
+        const refNorm = ref.trim().toUpperCase();
         // Aquí llamarías a tu API/servicio. Por ahora solo simulamos:
         // await api.tramites.create({ titulo, ref, cliente, fechaFin, estado, descripcion, files })
         const payload = { 
+            id: `t-${Date.now()}`,
             titulo: titulo.trim(),
-            referencia: ref.trim(),
+            ref: refNorm,
             cliente: cliente.trim(),
+            fechaInicio: null,
             fechaFinEstimada: toISO(fechaFin),
             estado,
-            descripcion: descripcion.trim() || null,
+            descripcion: descripcion.trim() || "",
             adjuntos: [],
         };
-        console.log("nuevoTramitePayload", payload);
-        alert("Trámite creado ✅ (demo)");
+        DeviceEventEmitter.emit("tramite:created", payload);
         router.back();
     };
 
     return (
-        <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
+        <SafeAreaView style={[
+            s.backdrop,
+            { backgroundColor: theme.colors?.overlay || "rgba(0,0,0,0.4)" },
+            ]}
+            edges={["top", "bottom"]}
+        >
             {/* Card central */}
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -248,7 +256,6 @@ function Chip({ label, active, onPress }) {
 const s = StyleSheet.create({
     backdrop: {
         flex: 1,
-        backgroundColor: theme.colors.overlay,     // capa semitransparente
         alignItems: "center",
         justifyContent: "flex-end",
     },

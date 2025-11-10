@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";                                   
 import {
   KeyboardAvoidingView,
   Platform,
@@ -15,16 +15,13 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
-
-import { theme } from "../../src/style/theme";
+// ⬇️ CHANGED: usar tema reactivo
+import { useTheme } from "../../src/style/theme";                             
 import { TextField } from "../../src/components/TextField";
 import { Button } from "../../src/components/Button";
 import { useAuth } from "../../src/context/AuthContext"; 
 
-// ⬇️ usa el mismo fondo del Hero
-const BG = require("../../assets/images/Hero/background.png");
-
-// ⬇️ logo “tal cual” (sin fondo blanco; es tu PNG)
+const BG   = require("../../assets/images/Hero/background.png");
 const LOGO = require("../../assets/images/login/logo.png");
 
 // Validación
@@ -35,34 +32,35 @@ const schema = Yup.object({
 
 export default function Login() {
   const router = useRouter();
+  const { signIn, isLoading } = useAuth();
+  const { theme, mode } = useTheme();                                          
+  const s = useMemo(() => mkStyles(theme), [theme]);                           
+
   const [remember, setRemember] = useState(false);
 
-  const { signIn, isLoading } = useAuth();
-  if (isLoading) return null;   // evita flicker mientras restaura sesión del storage
-
+  if (isLoading) return null; // evita flicker mientras restaura sesión del storage
 
   return (
     <ImageBackground source={BG} style={s.bg} resizeMode="cover">
-      {/* velo muy suave para que el card destaque (puedes quitarlo si no lo quieres) */}
-      <View style={s.scrim} />
+      {/* velo: más fuerte en dark para contraste */}
+      <View style={[s.scrim, mode === "dark" && { backgroundColor: "rgba(0,0,0,0.35)" }]} />
 
       <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
-          behavior={Platform.select({ ios: "padding", android: undefined })} // <- antes "behavion"
+          behavior={Platform.select({ ios: "padding", android: undefined })}
           style={{ flex: 1 }}
         >
           <ScrollView
             contentContainerStyle={s.scroll}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}                                
           >
-            {/* Tarjeta blanca centrada */}
+            {/* Tarjeta centrada */}
             <View style={s.card}>
               {/* Encabezado con logo y título */}
               <View style={s.header}>
-                {/* ⬇️ logo tal cual, sin círculo */}
                 <Image source={LOGO} style={s.logo} resizeMode="contain" />
-                {/* El “VendoYo.es” ya va dentro del logo, así que solo dejo el título */}
                 <Text style={s.title}>Iniciar Sesión</Text>
               </View>
 
@@ -72,11 +70,11 @@ export default function Login() {
                 validationSchema={schema}
                 onSubmit={async (values, helpers) => {
                   try {
-                    await signIn({ email: values.email, password: values.password });
-                    router.replace("/(app)/dashboard");   // navega a home/dashboard
+                    await signIn({ email: values.email, password: values.password, remember }); 
+                    router.replace("/(app)/dashboard");
                   } catch (e) {
                     helpers.setSubmitting(false);
-                    helpers.setFieldError("email", e.message || "Credenciales inválidas");
+                    helpers.setFieldError("email", e?.message || "Credenciales inválidas");
                   }
                 }}
               >
@@ -97,7 +95,7 @@ export default function Login() {
                       onChangeText={handleChange("email")}
                       onBlur={handleBlur("email")}
                       error={touched.email && errors.email}
-                      keyboardType="email-address"   // <- antes "keyBoardType"
+                      keyboardType="email-address"
                       autoComplete="email"
                       returnKeyType="next"
                     />
@@ -121,13 +119,13 @@ export default function Login() {
                       <Switch
                         value={remember}
                         onValueChange={setRemember}
-                        trackColor={{ false: "#d1d5db", true: theme.colors.secondary }}
-                        thumbColor="#fff"
+                        trackColor={{ false: theme.colors.border, true: theme.colors.secondary }}
+                        thumbColor={theme.colors.surface}                                         
                       />
                       <Text style={s.rowText}>Recordar sesión</Text>
                     </View>
 
-                    {/* Botón amarillo */}
+                    {/* CTA */}
                     <Button
                       title={isSubmitting ? "Entrando..." : "INICIAR SESIÓN"}
                       onPress={handleSubmit}
@@ -139,6 +137,7 @@ export default function Login() {
                         !!errors.password
                       }
                       variant="primary"
+                      fullWidth                                                             
                     />
 
                     {/* Enlaces */}
@@ -147,7 +146,7 @@ export default function Login() {
                         Registrarse
                       </Text>
                       <Text
-                        style={[s.link, { marginTop: theme.spacing.sm }]} // <- antes "margintop"
+                        style={[s.link, { marginTop: theme.spacing.sm }]}
                         onPress={() => router.push("/(auth)/forget")}
                       >
                         ¿Olvidaste tu contraseña?
@@ -164,55 +163,59 @@ export default function Login() {
   );
 }
 
-const s = StyleSheet.create({
-  bg: { flex: 1 },
-  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.06)" },
-  scroll: {
-    flexGrow: 1,
-    padding: theme.spacing.lg,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.xl,
-    ...theme.shadow,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: theme.spacing.sm,
-  },
-  logo: {
-    width: 180,
-    height: 180,
-    marginBottom: theme.spacing.sm,
-    ...theme.shadow,
-  },
-  title: {
-    color: theme.colors.text,
-    fontSize: theme.font.h1,
-    fontWeight: "800",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: theme.spacing.md,
-  },
-  rowText: {
-    marginLeft: theme.spacing.sm,
-    color: theme.colors.text,
-    fontSize: theme.font.small,
-  },
-  links: {
-    alignItems: "center",
-    marginTop: theme.spacing.lg,
-  },
-  link: {
-    color: theme.colors.primary,
-    fontWeight: "700",
-    fontSize: theme.font.small,
-  },
-});
+// ---------- Estilos dependientes del tema ----------
+const mkStyles = (theme) =>
+  StyleSheet.create({
+    bg: { flex: 1 },
+    scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.08)" },
+    scroll: {
+      flexGrow: 1,
+      padding: theme.spacing.lg,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      padding: theme.spacing.xl,
+      ...theme.shadow,
+      borderWidth: 1,                                                        
+      borderColor: theme.colors.border,                                      
+    },
+    header: {
+      alignItems: "center",
+      marginBottom: theme.spacing.sm,
+    },
+    logo: {
+      width: 180,
+      height: 180,
+      marginBottom: theme.spacing.sm,
+      ...theme.shadow,
+    },
+    title: {
+      color: theme.colors.text,
+      fontSize: theme.font.h1,
+      fontWeight: "800",
+    },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: theme.spacing.md,
+    },
+    rowText: {
+      marginLeft: theme.spacing.sm,
+      color: theme.colors.text,
+      fontSize: theme.font.small,
+    },
+    links: {
+      alignItems: "center",
+      marginTop: theme.spacing.lg,
+    },
+    link: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+      fontSize: theme.font.small,
+    },
+  });

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import React, { useMemo, useState } from "react";                           
 import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { theme } from "../style/theme";
+import { useTheme } from "../style/theme";                                  
 
 export function TextField({
   label,
@@ -9,44 +9,53 @@ export function TextField({
   style,
   onBlur,
   secureTextEntry,
-  ...inputProps // value, onChangeText, secureTextEntry, placeholder, etc.
+  leftIcon = null,                                                          
+  rightIcon = null,                                                     
+  helperText,                                                       
+  ...inputProps // value, onChangeText, placeholder, keyboardType, etc.
 }) {
-  const [focused, setFocused] = useState(false);
+  const { theme } = useTheme();                                             
+  const s = useMemo(() => mkStyles(theme), [theme]);                    
 
-  const isPassword = !!secureTextEntry;        // true si te pasan secureTextEntry
-  const [isSecure, setIsSecure] = useState(isPassword);   // empieza oculto si es password  
+  const [focused, setFocused] = useState(false);
+  const isPassword = !!secureTextEntry;
+  const [isSecure, setIsSecure] = useState(isPassword);
+
+  const placeholderColor = theme.colors.textMuted || "#6B7280";            
 
   return (
-    <View style={[styles.wrap, style]}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+    <View style={[s.wrap, style]}>
+      {label ? <Text style={s.label}>{label}</Text> : null}
       
-      <View style={styles.inputWrap}>
+      <View style={s.inputWrap}>
+        {/* Icono izquierdo (si lo pasas) */}
+        {leftIcon ? <View style={s.leftIcon}>{leftIcon}</View> : null}      
+
         <TextInput
           style={[
-            styles.input,
-            isPassword && styles.inputWithIcon,
-            focused && styles.inputFocused,
-            !!error && styles.inputError,
+            s.input,
+            isPassword && s.inputWithRightIcon,
+            !!leftIcon && s.inputWithLeftIcon,                              
+            focused && s.inputFocused,
+            !!error && s.inputError,
           ]}
-          placeholderTextColor={theme.colors.muted || theme.colors.textMuted || "#6B7280"}
+          placeholderTextColor={placeholderColor}                           
           onFocus={() => setFocused(true)}
           onBlur={(e) => {
             setFocused(false);
-            onBlur?.(e); // mantiene el onBlur de Formik si lo pasas
+            onBlur?.(e);
           }}
           autoCapitalize="none"
           autoCorrect={false}
           {...inputProps}
-          secureTextEntry={
-            isPassword ? isSecure : false
-          }
+          secureTextEntry={isPassword ? isSecure : false}
         />
 
-        {/* botón del ojito (solo si es password) */}
-        {isPassword && (
+        {/* Ojo (toggle) si es password, si no, muestra rightIcon si te lo pasan */}
+        {isPassword ? (
           <Pressable
             onPress={() => setIsSecure((v) => !v)}
-            style={styles.eyeBtn}
+            style={s.rightBtn}
             hitSlop={theme.hitSlop}
             accessibilityRole="button"
             accessibilityLabel={isSecure ? "Mostrar contraseña" : "Ocultar contraseña"}
@@ -57,14 +66,21 @@ export function TextField({
               color={focused ? theme.colors.secondary : (theme.colors.textMuted || "#6B7280")}
             />
           </Pressable>
-          )}
+        ) : (
+          rightIcon ? <View style={s.rightIcon}>{rightIcon}</View> : null    
+        )}
       </View>
-        {!!error && <Text style={styles.error}>{String(error)}</Text>}
+
+      {/* helperText (si no hay error) o error */}
+      {error
+        ? <Text style={s.error}>{String(error)}</Text>
+        : helperText ? <Text style={s.helper}>{helperText}</Text> : null}   
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+/* ---------- Estilos dependientes del tema ---------- */
+const mkStyles = (theme) => StyleSheet.create({
   wrap: {
     marginBottom: theme.spacing.md,
   },
@@ -76,28 +92,34 @@ const styles = StyleSheet.create({
   },
   inputWrap: {
     position: "relative",
+    justifyContent: "center",                                              
   },
   input: {
     height: 52,
     borderWidth: 1,
-    borderColor: theme.colors.border,   // gris suave
+    borderColor: theme.colors.border,
     borderRadius: 12,
     paddingHorizontal: 14,
     backgroundColor: theme.colors.surface,
     fontSize: 16,
     color: theme.colors.text,
   },
-  inputWithIcon: {
-    paddingRight: 44,
-  },
+
+  // Ajustes por iconos
+  inputWithRightIcon: { paddingRight: 44 },                                
+  inputWithLeftIcon: { paddingLeft: 44 },                                  
+
+  // Estados
   inputFocused: {
-    borderColor: theme.colors.secondary,  // azul al enfocar
+    borderColor: theme.colors.secondary,
   },
   inputError: {
-    borderColor: theme.colors.error,    // rojo si hay error
+    borderColor: theme.colors.error,
   },
-  eyeBtn: {
-    position:"absolute",
+
+  // Icono derecho (ojito o rightIcon)
+  rightBtn: {
+    position: "absolute",
     right: 12,
     top: "50%",
     marginTop: -10,
@@ -107,9 +129,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 2,
   },
+  rightIcon: {                                                             
+    position: "absolute",
+    right: 12,
+    top: "50%",
+    marginTop: -10,
+  },
+
+  // Icono izquierdo
+  leftIcon: {                                                                
+    position: "absolute",
+    left: 12,
+    top: "50%",
+    marginTop: -10,
+  },
+
+  // Mensajes
   error: {
     marginTop: 6,
     color: theme.colors.error,
+    fontSize: 13,
+  },
+  helper: {                                                                  
+    marginTop: 6,
+    color: theme.colors.textMuted,
     fontSize: 13,
   },
 });

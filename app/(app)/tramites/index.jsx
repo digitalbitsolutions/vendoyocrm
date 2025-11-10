@@ -1,449 +1,265 @@
-// --------------------------------------------------------------------------------------
-// Pantalla: Mis Trámites
-// - AppBar variante "section": flecha atrás + título a la izquierda
-// - Barra de acciones: filtros por estado + búsqueda + botón "Nuevo Trámite"
-// - Lista de cards: título, metadatos, estado (chip), adjuntos y acciones (Editar/Eliminar)
-// - TODO (próximo paso): conectar con backend real
-// --------------------------------------------------------------------------------------
-
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
-    Pressable,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Pressable,
+  Alert,
+  DeviceEventEmitter,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
-import AppBar from "../../../src/components/AppBar";
-import { theme } from "../../../src/style/theme";
 import { useRouter } from "expo-router";
+import AppBar from "../../../src/components/AppBar";
+import { useTheme } from "../../../src/style/theme";
 
-// --------------------------------------------------------------------------------------
-// Datos MOCK para probar layout (luego los cambiamos por tu fetch real)
-// --------------------------------------------------------------------------------------
+/* ================= Mock de datos (ajustaremos a tu backend luego) ================= */
 const MOCK_TRAMITES = [
-    {
-        id: "t1",
-        titulo: "Compraventa Inmueble - Calle Mallorca 128",
-        ref: "CV-2025-0037",
-        cliente: "Miguel, Yesan",
-        fechaInicio: "2025-06-23",
-        fechaFinEstimada: "2025-07-03",
-        descripcion: "Gestión completa de la compraventa de vivienda. Incluye verificación registral, contrato, firma notarial y registro.",
-        estado: "pendiente",   // "pendiente" | "proceso" | "completado"
-        adjuntos: [{ tipo: "img", nombre: "escritura.jpg" }],
-    },
-    {
-        id: "t2",
-        titulo: "Trámite de Compra-Venta Inmobiliaria",
-        ref: "CV-2025-0036",
-        cliente: "Miguel, Yesan",
-        fechaInicio: "2025-06-23",
-        fechaFinEstimada: "2025-07-06",
-        descripcion: "Proceso administrativo para formalizar la transferencia legal de una propiedad. Incluye validación documental.",
-        estado: "proceso",
-        adjuntos: [{ tipo: "pdf", nombre: "contrato.pdf" }],
-    },
-    {
-        id: "t3",
-        titulo: "Regularización de Escrituras",
-        ref: "REG-2025-0011",
-        cliente: "Yesan, Miguel",
-        fechaInicio: "2025-05-12",
-        fechaFinEstimada: "2025-06-15",
-        descripcion: "Ajuste de documentación y registro en entidad competente.",
-        estado: "completado",
-        adjuntos: [],
-    },
+  {
+    id: "t1",
+    titulo: "Compraventa Inmueble - Calle Mallorca 128",
+    ref: "CV-2025-0036",
+    cliente: "Miguel, Yesan",
+    estado: "Pendiente", // "Pendiente" | "En Proceso" | "Completado"
+    creadoEl: "2025-06-23",
+  },
+  {
+    id: "t2",
+    titulo: "Trámite de Compra-Venta Inmobiliaria",
+    ref: "CV-2025-0037",
+    cliente: "María López",
+    estado: "En Proceso",
+    creadoEl: "2025-06-24",
+  },
+  {
+    id: "t3",
+    titulo: "Alquiler – C/ Aragó 220, 3-1",
+    ref: "ALQ-2025-0142",
+    cliente: "José María Bardina",
+    estado: "Completado",
+    creadoEl: "2025-06-25",
+  },
 ];
 
-// --------------------------------------------------------------------------------------
-// Componentes pequeños reutilizables: Card, Chip de estado, Botoón de acción, Adjuntos.
-// --------------------------------------------------------------------------------------
-
-// Card simple con sombra redondeada
+/* ================= Sub-componentes mínimos reutilizables ================= */
 function Card({ children, style, onPress }) {
-    const Comp = onPress ? TouchableOpacity : View;
-    const pressProps = onPress
-        ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" }
-        : {};
-    return (
-        <Comp style={[styles.card, style]} {...pressProps}>
-            {children}
-        </Comp>
-    );
+  const Comp = onPress ? TouchableOpacity : View;
+  return (
+    <Comp
+      style={style}
+      {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" } : {})}
+    >
+      {children}
+    </Comp>
+  );
 }
 
-function Meta({ label, value }) {
-    if (!value) return null;
-    return (
-        <View style= {styles.metaRow}>
-            <Text style={styles.metaLabel}>{label}:</Text>
-            <Text style={styles.metaValue}>{value || "-"}</Text>
-        </View>
-    );
+function FilterChip({ label, active, onPress, s }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[s.chip, active && s.chipActive]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!active }}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      <Text style={[s.chipText, active && s.chipTextActive]}>{label}</Text>
+    </Pressable>
+  );
 }
 
-// Chip de estado: colores sutiles usando tu theme
-function StatusChip({ estado }) {
-    // Map de estilos por estado
-    const conf = {
-        pendiente: {
-            bg: "rgba(255,176,32,0.15)",
-            fg: theme.colors.warning,
-            label: "Pendiente",
-        },
-        proceso: {
-            bg: "rgba(0,102,204,0.15)",
-            fg: theme.colors.secondary,
-            label: "En Proceso",
-        },
-        completado: {
-            bg: "rgba(46,125,50,0.15)",
-            fg: theme.colors.success,
-            label: "Completado",
-        },
-    }[estado] || {
-        bg: "rgba(0,0,0,0.06)",
-        fg: theme.colors.textMuted,
-        label: "-",
-    };
-
-    return (
-        <View style={[styles.chip, { backgroundColor: conf.bg }]}>
-            <Text style={[styles.chipText, { color: conf.fg }]}>{conf.label}</Text>
-        </View>
-    );
-}
-
-// Botón de acción pequeño (Editar / Eliminar)
-function SmallAction({ icon, label, color = theme.colors.text, onPress }) {
-    return (
-        <Pressable
-            onPress={onPress}
-            style={({ pressed }) => [
-                styles.smallBtn,
-                pressed && { opacity: theme.opacity.pressed },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={label}
-        >
-            <Ionicons name={icon} size={16} color={color} />
-            <Text style={[styles.smallBtnText, { color }]}>{label}</Text>
-        </Pressable>
-    );
-}
-
-// Badge de adjunto (IMG/PDF)
-function AttachmentBadge({ tipo = "file", nombre = "" }) {
-    const map = {
-        img: { label: "IMG", bg: "#8B5CF6" },
-        pdf: { label: "PDF", bg: "#EF4444" },
-        file: { label: "FILE", bg: "#6B7280" },
-    };
-    const c = map[tipo] || map.file;
-    return (
-        <View style={styles.attach}>
-            <View style={[styles.attachIcon, { backgroundColor: c.bg}]}>
-                <Text style={styles.attachIconText}>{c.label}</Text>
-            </View>
-            <Text style={styles.attachName} numberOfLines={1}>
-                {nombre || "Ver"}
-            </Text>
-        </View>
-    );
-}
-
-// --------------------------------------------------------------------------------------
-// Tarjeta de Trámite (una fila de la lista)
-// --------------------------------------------------------------------------------------
-function TramiteCard({ item, onEditar, onEliminar }) {
-    return (
-        <Card style={{ padding: theme.spacing.lg }}>
-            {/* Título / Ref */}
-            <Text style={styles.title}>{item.titulo}</Text>
-
-            <View style={{ height: 8 }} />
-
-            {/* Metadatos */}
-            <Meta label="Ref" value={item.ref} />
-            <Meta label="Cliente" value={item.cliente} />
-            <Meta label="Fecha Inicio" value={item.fechaInicio} />
-            <Meta label="Fecha Fin Estimada" value={item.fechaFinEstimada} />
-
-            <View style={{ height: 8}} />
-
-            {/* Descripción */}
-            <Text style={styles.metaLabel}>Descripción</Text>
-            <Text style={styles.metaValue}>{item.descripcion}</Text>
-
-            {/* Adjuntos (si hay) */}
-            <View style={styles.attachBox}>
-                <Text style={styles.attachTitle}>Archivos Adjuntos:</Text>
-                <View style={styles.attachRow}>
-                    {item.adjuntos?.length
-                        ? item.adjuntos.map((a, idx) => (
-                            <AttachmentBadge key={idx} tipo={a.tipo} nombre="Ver" />
-                        ))
-                        : <Text style={styles.attachEmpty}>No hay adjuntos</Text>}
-                </View>
-            </View>
-
-            {/* Estado + acciones */}
-            <View style={styles.footerRow}>
-                <StatusChip estado={item.estado} />
-                <View style={{ flexDirection: "row", gap: 12 }}>
-                    <SmallAction
-                        icon="create-outline"
-                        label="Editar"
-                        color={theme.colors.warning}
-                        onPress={() => onEditar?.(item)}
-                    />
-                    <SmallAction
-                        icon="trash-outline"
-                        label="Eliminar"
-                        color={theme.colors.primary}
-                        onPress={() => onEliminar?.(item)}
-                    />
-                </View>
-            </View>
-        </Card>
-    );
-}
-
-// --------------------------------------------------------------------------------------
-// Pantalla principal
-// --------------------------------------------------------------------------------------
+/* ================= Pantalla ================= */
 export default function TramitesScreen() {
-    const router= useRouter();
+  const { theme } = useTheme();
+  const s = mkStyles(theme);
+  const router = useRouter();
 
-    // Estado UI: filtro por estado + búsqueda
-    const [estado, setEstado] = useState("todos");
-    const [q, setQ] = useState("");
+  // Estado
+  const [items, setItems] = useState(MOCK_TRAMITES);
+  const [estado, setEstado] = useState("Todos"); // Todos | Pendiente | En Proceso | Completado
+  const [q, setQ] = useState("");
 
-    // Filtro básico en memoria
-    const list = useMemo(() => {
-        return MOCK_TRAMITES.filter((t) => {
-            const okEstado = estado === "todos" ? true : t.estado === estado;
-            const hayQ = q.trim().toLowerCase();
-            const okTexto = !hayQ
-                ? true
-                : (t.titulo + t.ref + t.cliente + t.descripcion)
-                    .toLowerCase()
-                    .includes(hayQ);
-            return okEstado && okTexto;
-        });
-    }, [estado, q]);
-    
-    // Acciones (mock)
-    const nuevoTramite = () => {
-        // cuando tengas pantalla de creación: touter.push("/(app)/tramites/nuevo");
-        router.push("/(app)/tramites/nuevo");
+  // Filtro en memoria
+  const list = useMemo(() => {
+    const text = q.trim().toLowerCase();
+    return items.filter((t) => {
+      const okEstado = estado === "Todos" ? true : t.estado === estado;
+      const okTexto =
+        !text ||
+        (t.titulo + t.ref + t.cliente)
+          .toLowerCase()
+          .includes(text);
+      return okEstado && okTexto;
+    });
+  }, [items, estado, q]);
+
+  // Navegación
+  const nuevo = useCallback(() => router.push("/(app)/tramites/nuevo"), [router]);
+
+  const editar = useCallback(
+    (t) => {
+      DeviceEventEmitter.emit("tramite:prefill", t);
+      router.push(`/(app)/tramites/editar?id=${encodeURIComponent(t.id)}`);
+    },
+    [router]
+  );
+
+  const eliminar = useCallback((t) => {
+    Alert.alert(
+      "Eliminar trámite",
+      `¿Seguro que deseas eliminar “${t.titulo}”?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => setItems((prev) => prev.filter((x) => x.id !== t.id)),
+        },
+      ]
+    );
+  }, []);
+
+  // Suscripciones cross-pantalla (nuevo/editar/eliminar)
+  useEffect(() => {
+    const c1 = DeviceEventEmitter.addListener("tramite:created", (nuevo) => {
+      setItems((prev) => [nuevo, ...prev]);
+    });
+    const c2 = DeviceEventEmitter.addListener("tramite:updated", (upd) => {
+      setItems((prev) => prev.map((t) => (t.id === upd.id ? { ...t, ...upd } : t)));
+    });
+    const c3 = DeviceEventEmitter.addListener("tramite:deleted", (id) => {
+      setItems((prev) => prev.filter((t) => t.id !== id));
+    });
+    return () => {
+      c1.remove();
+      c2.remove();
+      c3.remove();
     };
-    const editar = (item) => alert(`Editar: ${item.ref} (TODO)`);
-    const eliminar = (item) => alert(`Eliminar: ${item.ref} (TODO)`);
+  }, []);
 
-    return (
-        <SafeAreaView style={styles.safe} edges={["top","left", "right", "bottom"]}>
-            {/* AppBar variante sección: flecha + título a la izquierda */}
-            <AppBar variant="section" title="Mis Trámites" />
+  return (
+    <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
+      {/* AppBar: flecha + título */}
+      <AppBar variant="section" title="Mis Trámites" showBorder={false} />
 
-            {/* Barra de acciones (filtros + búsqueda + CTA) */}
-            <View style={styles.actions}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: 8 }}
-                >
-                    <FilterChip label="Todos" active={estado === "todos"} onPress={() => setEstado("todos")} />
-                    <FilterChip label="Pendiente" active={estado === "pendiente"} onPress={() => setEstado("pendiente")} />
-                    <FilterChip label="En Proceso" active={estado === "proceso"} onPress={() => setEstado("proceso")} />
-                    <FilterChip label="Completado" active={estado === "completado"} onPress={() => setEstado("completado")} />
-
-                </ScrollView>
-
-                {/* Buscador */}
-                <View style={styles.searchWrap}>
-                    <Ionicons name="search" size={18} color={theme.colors.textMuted} />
-                    <TextInput
-                        value={q}
-                        onChangeText={setQ}
-                        placeholder="Buscar por título, ref, cliente..."
-                        placeholderTextColor={theme.colors.textMuted}
-                        style={styles.searchInput}
-                    />
-                </View>
-
-                {/* CTA: Nuevo Trámite */}
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={nuevoTramite}
-                    style={styles.cta}
-                >
-                    <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
-                    <Text style={styles.ctaText}>Nuevo Trámite</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Lista */}
-            <ScrollView
-                contentContainerStyle={styles.scroll}
-                showsVerticalScrollIndicator={false}
-            >
-                {list.length ? (
-                    list.map((t) => (
-                        <TramiteCard key={t.id} item={t} onEditar={editar} onEliminar={eliminar} />
-                    ))
-                ) : (
-                    <Card style={{ alignItems: "center", padding: theme.spacing.xl }}>
-                        <Ionicons name="documents-outline" size={32} color={theme.colors.textMuted} />
-                        <Text style={styles.emptyTitle}>No hay trámites</Text>
-                        <Text style={styles.emptyText}>
-                            Crea tu primer trámite con el botón "Nuevo Trámite".
-                        </Text>
-                    </Card>
-                )}
-            </ScrollView>
-        </SafeAreaView>
-    );
-}
-
-// Chip de filtro (barra superior)
-function FilterChip({ label, active, onPress }) {
-    return (
-        <Pressable
-            onPress={onPress}
-            style={[
-                styles.fchip,
-                active && styles.fchipActive,
-            ]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: !!active }}
+      {/* Acciones: filtros + buscador + CTA */}
+      <View style={s.actions}>
+        {/* Filtros por estado */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8 }}
         >
-            <Text style={[styles.fchipText, active && styles.fchipTextActive]}>
-                {label}
-            </Text>
-        </Pressable>
-    );
+          {["Todos", "Pendiente", "En Proceso", "Completado"].map((st) => (
+            <FilterChip
+              key={st}
+              label={st}
+              active={estado === st}
+              onPress={() => setEstado(st)}
+              s={s}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Buscador */}
+        <View style={s.searchWrap}>
+          <Ionicons name="search" size={18} color={theme.colors.textMuted} />
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder="Buscar por título, referencia o cliente…"
+            placeholderTextColor={theme.colors.textMuted}
+            style={s.searchInput}
+            returnKeyType="search"
+          />
+        </View>
+
+        {/* CTA: Nuevo trámite */}
+        <TouchableOpacity style={s.cta} onPress={nuevo} activeOpacity={theme.opacity.pressed}>
+          <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
+          <Text style={s.ctaText}>Nuevo Trámite</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Lista */}
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        {list.length ? (
+          list.map((t) => (
+            <Card key={t.id} style={s.card}>
+              <Text style={s.title}>{t.titulo}</Text>
+              <Text style={s.subLine}>
+                <Text style={s.muted}>Ref: </Text>
+                {t.ref}
+              </Text>
+              <Text style={s.subLine}>
+                <Text style={s.muted}>Cliente: </Text>
+                {t.cliente}
+              </Text>
+              <View style={s.row}>
+                <Text style={[s.badge, s[badgeByState(t.estado)]]}>{t.estado}</Text>
+                <Text style={[s.muted, { marginLeft: "auto" }]}>{formatDate(t.creadoEl)}</Text>
+              </View>
+
+              {/* Acciones */}
+              <View style={s.cardFooter}>
+                <TouchableOpacity
+                  style={[s.btn, s.btnEdit]}
+                  onPress={() => editar(t)}
+                  activeOpacity={theme.opacity.pressed}
+                  accessibilityLabel={`Editar ${t.titulo}`}
+                >
+                  <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
+                  <Text style={[s.btnText, { color: theme.colors.onAccent }]}>Editar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[s.btn, s.btnDelete]}
+                  onPress={() => eliminar(t)}
+                  activeOpacity={theme.opacity.pressed}
+                  accessibilityLabel={`Eliminar ${t.titulo}`}
+                >
+                  <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
+                  <Text style={[s.btnText, { color: theme.colors.onDanger }]}>Eliminar</Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          ))
+        ) : (
+          <Card style={[s.card, { alignItems: "center", paddingVertical: theme.spacing.xl }]}>
+            <Ionicons name="document-outline" size={32} color={theme.colors.textMuted} />
+            <Text style={s.emptyTitle}>No hay trámites</Text>
+            <Text style={s.emptyText}>Crea tu primer trámite con el botón “Nuevo Trámite”.</Text>
+          </Card>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
 
-// --------------------------------------------------------------------------------------
-// Estilos
-// --------------------------------------------------------------------------------------
-const styles = StyleSheet.create({
+/* ================= Helpers de UI/format ================= */
+function badgeByState(s) {
+  if (s === "Completado") return "badgeDone";
+  if (s === "En Proceso") return "badgeWip";
+  return "badgePend";
+}
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
+  } catch {
+    return String(iso || "");
+  }
+}
+
+/* ================= Estilos dependientes del tema ================= */
+const mkStyles = (theme) =>
+  StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
-  
-    // Scroll de contenido
-    scroll: {
-      padding: theme.spacing.lg,
-      gap: theme.spacing.lg,
-      paddingBottom: theme.spacing.xxl,
-    },
-  
-    // Card base
-    card: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      ...theme.shadow,
-    },
-  
-    // Título de cada trámite
-    title: {
-      fontSize: theme.font.h2,
-      fontWeight: "800",
-      color: theme.colors.text,
-      lineHeight: theme.font.h2 + 6,
-    },
-  
-    // Metadatos
-    metaLabel: {
-      color: theme.colors.text,
-      fontSize: theme.font.small,
-      fontWeight: "800",
-    },
-    metaValue: {
-      color: theme.colors.textMuted,
-      fontSize: theme.font.body,
-    },
-    metaRow: {
-        flexDirection: "row",
-        alignItems: "baseline",
-        gap: 6,
-        marginBottom: 2,
-    },
-  
-    // Caja adjuntos
-    attachBox: {
-      marginTop: theme.spacing.md,
-      marginBottom: theme.spacing.md,
-      padding: theme.spacing.md,
-      borderRadius: theme.radius.lg,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      backgroundColor: "#F9FAFB",
-    },
-    attachTitle: {
-      fontSize: theme.font.h3,
-      fontWeight: "800",
-      color: theme.colors.text,
-      marginBottom: 10,
-    },
-    attachRow: { flexDirection: "row", gap: 12, alignItems: "center" },
-    attachEmpty: { color: theme.colors.textMuted },
-  
-    // Badge de adjunto
-    attach: { alignItems: "center" },
-    attachIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
-      alignItems: "center",
-      justifyContent: "center",
-      ...theme.shadow,
-    },
-    attachIconText: { color: "#fff", fontWeight: "900", fontSize: 14 },
-    attachName: { marginTop: 6, color: theme.colors.textMuted, fontSize: theme.font.tiny },
-  
-    // Footer card
-    footerRow: {
-      marginTop: theme.spacing.md,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-  
-    // Chip de estado
-    chip: {
-      borderRadius: theme.radius.pill,
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-    },
-    chipText: {
-      fontSize: theme.font.small,
-      fontWeight: "800",
-    },
-  
-    // Botones de acción
-    smallBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: theme.radius.pill,
-      backgroundColor: "rgba(0,0,0,0.03)",
-    },
-    smallBtnText: {
-      fontSize: theme.font.small,
-      fontWeight: "800",
-    },
-  
-    // Barra de acciones (filtros + búsqueda + CTA)
+
     actions: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
@@ -453,27 +269,18 @@ const styles = StyleSheet.create({
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
-  
-    // Chips de filtro
-    fchip: {
+
+    chip: {
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
     },
-    fchipActive: {
-      backgroundColor: theme.colors.secondary,
-    },
-    fchipText: {
-      fontWeight: "700",
-      color: theme.colors.text,
-      fontSize: theme.font.small,
-    },
-    fchipTextActive: {
-      color: theme.colors.onSecondary,
-    },
-  
-    // Buscador
+    chipActive: { backgroundColor: theme.colors.secondary },
+    chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
+    chipTextActive: { color: theme.colors.onSecondary },
+
     searchWrap: {
       flexDirection: "row",
       alignItems: "center",
@@ -485,37 +292,91 @@ const styles = StyleSheet.create({
       backgroundColor: theme.colors.surface,
       paddingHorizontal: 12,
     },
-    searchInput: {
-      flex: 1,
-      color: theme.colors.text,
-      fontSize: theme.font.body,
+    searchInput: { flex: 1, color: theme.colors.text, fontSize: theme.font.body },
+
+    scroll: {
+      padding: theme.spacing.lg,
+      gap: theme.spacing.lg,
+      paddingBottom: theme.spacing.xxl,
     },
-  
-    // CTA
-    cta: {
-      height: 48,
+
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: theme.spacing.lg,
+      ...theme.shadow,
+    },
+
+    title: {
+      color: theme.colors.text,
+      fontSize: theme.font.h2,
+      fontWeight: "800",
+      marginBottom: 6,
+    },
+    subLine: { color: theme.colors.textMuted, marginBottom: 4, fontSize: theme.font.body },
+    muted: { color: theme.colors.textMuted },
+
+    row: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },
+
+    badge: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.secondary,
+      fontSize: theme.font.tiny,
+      fontWeight: "900",
+      overflow: "hidden",
+    },
+    badgePend: { backgroundColor: "rgba(255,176,32,0.15)", color: theme.colors.warning },
+    badgeWip: { backgroundColor: "rgba(76,163,255,0.18)", color: theme.colors.secondary },
+    badgeDone: { backgroundColor: "rgba(46,125,50,0.18)", color: theme.colors.success },
+
+    cardFooter: {
+      marginTop: theme.spacing.md,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: 10,
+    },
+    cta: {
+      height: 48,                               // misma altura
+      borderRadius: theme.radius.pill,          // pill
+      backgroundColor: theme.colors.secondary,  // color marca
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      gap: 8,
+      gap: 8,                                   // separación icono-texto
+      // sombra suave como en Clientes
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+      elevation: 4,
     },
     ctaText: {
-      color: theme.colors.onSecondary,
+      color: theme.colors.onSecondary,          // texto legible
       fontWeight: "800",
       fontSize: theme.font.body,
+      letterSpacing: 0.2,
     },
-  
-    // Empty-state
+
+    btn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 14,
+      height: 40,
+      borderRadius: theme.radius.md,
+    },
+    btnEdit: { backgroundColor: theme.colors.accent },
+    btnDelete: { backgroundColor: theme.colors.danger },
+    btnText: { fontWeight: "800" },
+
     emptyTitle: {
       marginTop: 8,
       fontSize: theme.font.h3,
       fontWeight: "800",
       color: theme.colors.text,
     },
-    emptyText: {
-      color: theme.colors.textMuted,
-      marginTop: 4,
-    },
+    emptyText: { color: theme.colors.textMuted, marginTop: 4 },
   });
