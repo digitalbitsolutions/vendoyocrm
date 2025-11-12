@@ -1,64 +1,69 @@
-import React from "react";                                                
-import { Pressable, Text, StyleSheet, Platform, View, ActivityIndicator } from "react-native"; 
-import { useTheme } from "../style/theme";                                 
+// src/components/Button.jsx
+import React from "react";
+import {
+  Pressable,
+  Text,
+  StyleSheet,
+  Platform,
+  View,
+  ActivityIndicator,
+} from "react-native";
+import { useTheme } from "../style/theme";
 
 export function Button({
   title,
   onPress,
-  disabled = false,                                                       
-  loading = false,                                            
-  variant = "primary",
-  fullWidth = false,                                                
-  leftIcon = null,                                                        
-  rightIcon = null,                                                     
+  disabled = false,
+  loading = false,
+  variant = "primary",      // "primary" | "secondary" | "danger" | "outline" | "ghost"
+  fullWidth = false,
+  leftIcon = null,
+  rightIcon = null,
 }) {
-  const { theme } = useTheme();                                           
-  const s = mkStyles(theme);                                              
+  const { theme } = useTheme();
+  const s = mkStyles(theme);
 
-  
+  // Color del texto por variante (siempre desde el theme)
   const textColor =
-    variant === "primary" ? theme.colors.onAccent :
+    variant === "primary"   ? theme.colors.onAccent :
     variant === "secondary" ? theme.colors.onSecondary :
-    variant === "danger" ? theme.colors.onSecondary :                     
-    theme.colors.text;
+    variant === "danger"    ? theme.colors.onDanger :
+    variant === "outline"   ? theme.colors.primary :
+    variant === "ghost"     ? theme.colors.primary :
+                              theme.colors.text;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      android_ripple={{ borderless: false }}
+      android_ripple={{ color: theme.colors.primary400, borderless: false }}
       style={({ pressed }) => [
         s.base,
-        s[variant],                                                       
-        fullWidth && { alignSelf: "stretch" },                            
+        s[variant],                  // aplica estilo de la variante
+        fullWidth && { alignSelf: "stretch" },
         (disabled || loading) && s.disabled,
-        pressed && { opacity: theme.opacity.pressed },
+        pressed && s.pressed,
       ]}
       hitSlop={theme.hitSlop}
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading, busy: loading }} 
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
-      {/* Contenido del botón en fila */}
-      <View style={s.content}>                                           
-        {/* Izquierda: spinner o icono */}
+      <View style={s.content}>
         {loading ? (
-          <ActivityIndicator size="small" color={textColor} style={{ marginRight: 8 }} />  
+          <ActivityIndicator size="small" color={textColor} style={{ marginRight: 8 }} />
         ) : (
-          leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null             
+          leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null
         )}
 
-        {/* Texto */}
         <Text style={[s.text, { color: textColor }]} numberOfLines={1}>
-          {loading ? "Cargando..." : title}                               
+          {loading ? "Cargando..." : title}
         </Text>
 
-        {/* Icono derecho */}
-        {rightIcon ? <View style={{ marginLeft: 8 }}>{rightIcon}</View> : null}            
+        {rightIcon ? <View style={{ marginLeft: 8 }}>{rightIcon}</View> : null}
       </View>
     </Pressable>
   );
 }
-
 
 const mkStyles = (theme) =>
   StyleSheet.create({
@@ -70,31 +75,35 @@ const mkStyles = (theme) =>
       paddingHorizontal: theme.spacing.lg,
       ...theme.shadow,
       ...(Platform.OS === "android" ? { overflow: "hidden" } : null),
-      backgroundColor: theme.colors.surface, // base neutra; variant define color final
+      backgroundColor: theme.colors.surface, // la variante define el color final
     },
 
-    // Variantes
-    primary: { backgroundColor: theme.colors.accent },                    
-    secondary: { backgroundColor: theme.colors.secondary },               
-    danger: { backgroundColor: theme.colors.danger },                     
-    outline: {                                                            
+    /* Variantes conectadas al theme */
+    primary:   { backgroundColor: theme.colors.primary },
+    secondary: { backgroundColor: theme.colors.secondary },
+    danger:    { backgroundColor: theme.colors.danger },
+
+    outline: {
       backgroundColor: "transparent",
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      borderColor: theme.colors.primary600 ?? theme.colors.primary,
+      shadowOpacity: 0,
     },
-    ghost: {                                                              
+
+    ghost: {
       backgroundColor: "transparent",
-      shadowOpacity: 0, // sin sombra para ghost
+      shadowOpacity: 0,
     },
 
     disabled: { opacity: theme.opacity.disabled },
+    pressed:  { opacity: theme.opacity.pressed },
 
     text: {
       fontSize: theme.font.body,
       fontWeight: "700",
     },
 
-    content: {                                                            
+    content: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",

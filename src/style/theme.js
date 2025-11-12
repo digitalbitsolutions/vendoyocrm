@@ -3,13 +3,11 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-let setBackgroundColorAsync = async () => {}; // fallback vacío
+let setBackgroundColorAsync = async () => {};
 try {
   const m = require("expo-system-ui");
   if (m && m.setBackgroundColorAsync) setBackgroundColorAsync = m.setBackgroundColorAsync;
-} catch (e) {
-  // sin módulo → sin problema
-}
+} catch (e) {}
 
 /* ------------------------------------------
  * Tokens base (compartidos por light/dark)
@@ -31,46 +29,81 @@ const base = {
 };
 
 /* ------------------------------------------
- * Paletas de color
+ * Paletas de color (Brand Vendoyo)
+ *  - primary  : #36AAA7 (turquesa)
+ *  - Variantes: para hover/pressed
  * ------------------------------------------ */
-const lightColors = {
-  primary:    "#FF3333",
-  secondary:  "#0066CC",
-  accent:     "#FFD600",
-  success:    "#2E7D32",
-  warning:    "#FFB020",
-  background: "#FAFAFA",
-  surface:    "#FFFFFF",
-  border:     "#E5E7EB",
-  text:       "#111827",
-  textMuted:  "#6B7280",
-  overlay:    "rgba(0,0,0,0.4)",
-  muted:      "#6B7280",
-  error:      "#FF3333",
-  onAccent:   "#111827",
-  onSecondary:"#FFFFFF",
-  danger:     "#FF4D4D",
-  onDanger:   "#FFFFFF",
+const brand = {
+  primary500: "#36AAA7",
+  primary400: "#58C5C1",
+  primary600: "#2F9693",
+  primary700: "#257A78",
 };
 
+/* Light mode */
+const lightColors = {
+  // Core brand
+  primary: brand.primary500,
+  primary400: brand.primary400,
+  primary600: brand.primary600,
+  primary700: brand.primary700,
+
+  // UI accents
+  secondary: "#0F4C4A",          // verde petróleo suave para iconos/acento
+  accent:    "#FFD166",          // acento cálido (chips/badges)
+
+  // Feedback
+  success:   "#2E7D32",
+  warning:   "#F59E0B",
+  danger:    "#E53935",
+  error:     "#E53935",
+
+  // Surfaces & text
+  background: "#F7FBFA",         // casi blanco con tinte menta
+  surface:    "#FFFFFF",
+  border:     "#DAE9E7",         // gris-menta (borde suave)
+  text:       "#0E1B1B",
+  textMuted:  "#4F6665",
+
+  // Overlays & contrasts
+  overlay:     "rgba(0,0,0,0.40)",
+  muted:       "#6B7280",
+  onAccent:    "#FFFFFF",        // contraste sobre primary
+  onSecondary: "#FFFFFF",
+  onDanger:    "#FFFFFF",
+};
+
+/* Dark mode */
 const darkColors = {
-  primary:    "#FF6666",
-  secondary:  "#4CA3FF",
-  accent:     "#FFE066",
-  success:    "#8BD694",
-  warning:    "#FFC366",
-  background: "#0B0F14",
-  surface:    "#151B22",
-  border:     "#243041",
-  text:       "#E5EAF0",
-  textMuted:  "#97A6B3",
-  overlay:    "rgba(0,0,0,0.6)",
-  muted:      "#97A6B3",
-  error:      "#FF6666",
-  onAccent:   "#111827",
-  onSecondary:"#0B0F14",
-  danger:     "#FF7B7B",
-  onDanger:   "#0B0F14",
+  // Core brand (ligeramente más brillante en dark)
+  primary: brand.primary400,
+  primary400: brand.primary400,
+  primary600: brand.primary600,
+  primary700: brand.primary700,
+
+  // UI accents
+  secondary: "#6AD3CF",          // acento claro para iconos sobre dark
+  accent:    "#FFD166",
+
+  // Feedback
+  success:   "#81C784",
+  warning:   "#FFB74D",
+  danger:    "#EF5350",
+  error:     "#EF5350",
+
+  // Surfaces & text
+  background: "#0A1414",
+  surface:    "#111C1C",
+  border:     "#1E2B2B",
+  text:       "#E6F4F3",
+  textMuted:  "#9EC6C4",
+
+  // Overlays & contrasts
+  overlay:     "rgba(0,0,0,0.60)",
+  muted:       "#9EA7B3",
+  onAccent:    "#0B0F14",        // contraste oscuro si usas accent claro
+  onSecondary: "#0B0F14",
+  onDanger:    "#0B0F14",
 };
 
 /* ------------------------------------------
@@ -81,10 +114,10 @@ export const createTheme = (mode = "light") => {
   return {
     ...base,
     colors,
+    brand,                 // por si quieres acceder a la escala directamente
     mode,
-    // Derivados útiles (para centralizar criterio del StatusBar, etc.)
     statusBarStyle: mode === "dark" ? "light" : "dark",
-    statusBarBg: colors.background, // úsalo si lo prefieres en layouts
+    statusBarBg: colors.background,
   };
 };
 
@@ -99,10 +132,9 @@ const ThemeCtx = createContext({
 });
 
 export function ThemeProvider({ children }) {
-  const system = useColorScheme(); // "light" | "dark" | null
+  const system = useColorScheme();
   const [mode, setMode] = useState("light");
 
-  // 1) Carga preferencia guardada; si no hay, usa el modo del sistema
   useEffect(() => {
     (async () => {
       try {
@@ -116,7 +148,6 @@ export function ThemeProvider({ children }) {
     })();
   }, [system]);
 
-  // 2) Memo del tema + helpers para cambiar/persistir
   const value = useMemo(() => {
     const theme = createTheme(mode);
 
@@ -134,7 +165,6 @@ export function ThemeProvider({ children }) {
     return { theme, mode, setMode: setModePersist, toggleMode };
   }, [mode]);
 
-  // 3) Ajusta el color de fondo del sistema (Android nav bar, splash flash)
   useEffect(() => {
     (async () => {
       try {
@@ -143,7 +173,6 @@ export function ThemeProvider({ children }) {
       } catch {}
     })();
   }, [mode]);
-  
 
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;
 }
@@ -152,8 +181,6 @@ export const useTheme = () => useContext(ThemeCtx);
 
 /* ------------------------------------------
  * Export legacy (modo claro fijo)
- *  - Mantiene vivas pantallas que aún lo importan estático,
- *    pero para UI dinámica usa SIEMPRE useTheme()
  * ------------------------------------------ */
 export const theme = createTheme("light");
 

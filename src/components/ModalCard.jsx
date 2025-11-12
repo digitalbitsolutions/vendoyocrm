@@ -1,48 +1,128 @@
-import React from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Animated,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import { useTheme } from "../style/theme";
 
-export default function ModalCard({ children }) {
-  const { theme } = useTheme();              // ← tema actual (light/dark)
-  const s = mkStyles(theme);                 // ← styles reactivos al tema
+/**
+ * ModalCard mejorado
+ * Props:
+ * - children: contenido
+ * - onDismiss?: () => void → cierra tocando el fondo
+ * - size?: "auto" | "half" | "full" → altura
+ * - visible?: boolean → para controlar animación de entrada/salida
+ */
+export default function ModalCard({
+  children,
+  onDismiss,
+  size = "auto",
+  visible = true,
+}) {
+  const { theme } = useTheme();
+  const s = mkStyles(theme);
+
+  // animación entrada/salida
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(80)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.spring(translateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 80,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
+  const heightStyle =
+    size === "full"
+      ? { flex: 1 }
+      : size === "half"
+      ? { height: "55%" }
+      : { alignSelf: "center" };
 
   return (
-    <SafeAreaView style={[s.backdrop]} edges={["top", "bottom"]}>
+    <Animated.View
+      style={[
+        s.backdrop,
+        { opacity },
+      ]}
+    >
+      <Pressable
+        onPress={onDismiss}
+        style={StyleSheet.absoluteFill}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Cerrar modal"
+      />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1, width: "100%" }}
+        style={{ flex: 1, width: "100%", justifyContent: "flex-end" }}
       >
-        {/* Card centrada y con ancho controlado por nosotros */}
-        <View style={s.card}>{children}</View>
+        <Animated.View
+          style={[
+            s.card,
+            heightStyle,
+            { transform: [{ translateY }] },
+          ]}
+        >
+          <SafeAreaView edges={["bottom"]}>{children}</SafeAreaView>
+        </Animated.View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </Animated.View>
   );
-}      
+}
+
 const mkStyles = (theme) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
-      alignItems: "center",
-      justifyContent: "flex-end",
-      // antes: style inline con theme.colors.overlay
       backgroundColor: theme.colors.overlay,
+      justifyContent: "flex-end",
     },
     card: {
-      // ⬇️ controla el ancho visual
       width: "94%",
-      maxWidth: 720, // para tablet
+      maxWidth: 720,
       alignSelf: "center",
-
       backgroundColor: theme.colors.surface,
       borderTopLeftRadius: theme.radius.xl,
       borderTopRightRadius: theme.radius.xl,
+      borderWidth: 1,
+      borderColor:
+        theme.mode === "dark"
+          ? theme.colors.border
+          : theme.colors.primary + "22", // toque sutil del brand en light
       ...theme.shadow,
       overflow: "hidden",
-
-      // opcional: borde sutil que ayuda en dark
-      borderWidth: 1,
-      borderColor: theme.colors.border,
+      paddingBottom: Platform.OS === "ios" ? theme.spacing.md : 0,
     },
   });
