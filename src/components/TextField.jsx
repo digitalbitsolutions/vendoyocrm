@@ -1,134 +1,70 @@
-// src/components/TextField.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, Pressable, Platform } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../style/theme";
 
 export function TextField({
   label,
-  value,
-  onChangeText,
-  placeholder,
-  keyboardType,
-  returnKeyType,
-  onSubmitEditing,
+  error,
+  style,
   onBlur,
-
-  // UX extra
-  helperText,
-  error,                    // string | boolean
-  maxLength,
-  showCounter = false,      // muestra 0/140 si hay maxLength
-
-  // variantes & tamaños
-  variant = "outline",      // "outline" | "filled" | "ghost"
-  size = "md",              // "sm" | "md" | "lg"
-
-  // iconos/slots
+  secureTextEntry,
   leftIcon = null,
   rightIcon = null,
-
-  // password / limpiar
-  secureTextEntry,
-  clearable = true,         // botón "x" si hay texto y no es password
-
-  // multiline
-  multiline = false,
-  minLines = 1,
-  maxLines = 6,
-
-  // estilo externo y resto de props (editable, testID, etc.)
-  style,
-  ...rest
+  helperText,
+  forceLight = false,   // ⬅️ nuevo: modo auth siempre claro
+  ...inputProps
 }) {
   const { theme } = useTheme();
-  const s = useMemo(() => mkStyles(theme), [theme]);
 
-  const inputRef = useRef(null);
+  // 🎨 paleta: o la del tema normal, o una fija "clara" para auth
+  const colors = useMemo(
+    () =>
+      forceLight
+        ? {
+            border: "#E5E7EB",
+            surface: "#FFFFFF",
+            text: "#111827",
+            textMuted: "#6B7280",
+            error: "#E53935",
+            secondary: "#0F4C4A",
+          }
+        : {
+            border: theme.colors.border,
+            surface: theme.colors.surface,
+            text: theme.colors.text,
+            textMuted: theme.colors.textMuted,
+            error: theme.colors.error,
+            secondary: theme.colors.secondary,
+          },
+    [forceLight, theme]
+  );
+
+  const s = useMemo(() => mkStyles(theme, colors), [theme, colors]);
+
   const [focused, setFocused] = useState(false);
-  const [isSecure, setIsSecure] = useState(!!secureTextEntry);
-  const [inputHeight, setInputHeight] = useState(undefined);
-
-  const isError = !!error;
   const isPassword = !!secureTextEntry;
-  const hasValue = (value ?? "").length > 0;
+  const [isSecure, setIsSecure] = useState(isPassword);
 
-  // tamaños
-  const SZ = {
-    sm: { h: 40, padH: 12, fs: 14 },
-    md: { h: 52, padH: 14, fs: 16 },
-    lg: { h: 60, padH: 16, fs: 17 },
-  }[size];
-
-  // colores por estado
-  const borderColor = isError
-    ? theme.colors.danger
-    : focused
-    ? theme.colors.primary
-    : theme.colors.border;
-
-  const bgColor =
-    variant === "filled" ? (theme.mode === "dark" ? "#0F1717" : "#F2F7F6")
-    : variant === "ghost" ? "transparent"
-    : theme.colors.surface;
-
-  // padding lateral para iconos
-  const leftPad = leftIcon ? SZ.padH + 26 : SZ.padH;
-  const rightPad = (isPassword || clearable || rightIcon) ? SZ.padH + 26 : SZ.padH;
-
-  // auto-height para multiline
-  const onContentSizeChange = (e) => {
-    if (!multiline) return;
-    const h = e?.nativeEvent?.contentSize?.height ?? SZ.h;
-    const lineHeight = 20; // aproximado
-    const minH = Math.max(SZ.h, minLines * lineHeight + 16);
-    const maxH = maxLines * lineHeight + 16;
-    setInputHeight(Math.min(Math.max(h, minH), maxH));
-  };
-
-  const placeholderColor = theme.colors.textMuted;
+  const placeholderColor = colors.textMuted || "#6B7280";
 
   return (
     <View style={[s.wrap, style]}>
-      {/* etiqueta */}
-      {label ? <Text style={[s.label, { fontSize: 13, color: theme.colors.text }]}>{label}</Text> : null}
+      {label ? <Text style={s.label}>{label}</Text> : null}
 
-      {/* contenedor del input */}
-      <View
-        style={[
-          s.inputWrap,
-          {
-            borderColor,
-            backgroundColor: bgColor,
-            borderWidth: variant === "ghost" ? 0 : 1,
-            borderRadius: theme.radius.lg,
-          },
-        ]}
-      >
-        {/* icono izquierdo */}
-        {leftIcon ? <View style={[s.iconLeft, { left: SZ.padH }]}>{leftIcon}</View> : null}
+      <View style={s.inputWrap}>
+        {/* Icono izquierdo (si lo pasas) */}
+        {leftIcon ? <View style={s.leftIcon}>{leftIcon}</View> : null}
 
-        {/* campo */}
         <TextInput
-          ref={inputRef}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor={placeholderColor}
           style={[
             s.input,
-            {
-              height: multiline ? inputHeight : SZ.h,
-              paddingLeft: leftPad,
-              paddingRight: rightPad,
-              fontSize: SZ.fs,
-              color: theme.colors.text,
-            },
+            isPassword && s.inputWithRightIcon,
+            !!leftIcon && s.inputWithLeftIcon,
+            focused && s.inputFocused,
+            !!error && s.inputError,
           ]}
-          selectionColor={theme.colors.primary400}
-          keyboardType={keyboardType}
-          returnKeyType={returnKeyType}
-          onSubmitEditing={onSubmitEditing}
+          placeholderTextColor={placeholderColor}
           onFocus={() => setFocused(true)}
           onBlur={(e) => {
             setFocused(false);
@@ -136,110 +72,117 @@ export function TextField({
           }}
           autoCapitalize="none"
           autoCorrect={false}
-          underlineColorAndroid="transparent"
-          {...rest}
+          {...inputProps}
           secureTextEntry={isPassword ? isSecure : false}
-          multiline={multiline}
-          onContentSizeChange={onContentSizeChange}
-          maxLength={maxLength}
         />
 
-        {/* icono derecho (prioridades: password toggle > clear > rightIcon) */}
+        {/* Ojo (toggle) si es password, si no, rightIcon si existe */}
         {isPassword ? (
           <Pressable
             onPress={() => setIsSecure((v) => !v)}
+            style={s.rightBtn}
             hitSlop={theme.hitSlop}
-            style={[s.iconBtn, { right: SZ.padH }]}
             accessibilityRole="button"
-            accessibilityLabel={isSecure ? "Mostrar contraseña" : "Ocultar contraseña"}
-            android_ripple={{ color: theme.colors.primary400, borderless: true }}
+            accessibilityLabel={
+              isSecure ? "Mostrar contraseña" : "Ocultar contraseña"
+            }
           >
             <Ionicons
               name={isSecure ? "eye" : "eye-off"}
               size={20}
-              color={focused ? theme.colors.primary : theme.colors.textMuted}
+              color={focused ? colors.secondary : (colors.textMuted || "#6B7280")}
             />
           </Pressable>
-        ) : clearable && hasValue ? (
-          <Pressable
-            onPress={() => onChangeText?.("")}
-            hitSlop={theme.hitSlop}
-            style={[s.iconBtn, { right: SZ.padH }]}
-            accessibilityRole="button"
-            accessibilityLabel="Limpiar texto"
-            android_ripple={{ color: theme.colors.primary400, borderless: true }}
-          >
-            <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
-          </Pressable>
-        ) : rightIcon ? (
-          <View style={[s.iconRight, { right: SZ.padH }]}>{rightIcon}</View>
-        ) : null}
+        ) : (
+          rightIcon ? <View style={s.rightIcon}>{rightIcon}</View> : null
+        )}
       </View>
 
-      {/* mensajes */}
-      {isError ? (
-        <Text style={[s.msg, { color: theme.colors.danger }]}>{String(error)}</Text>
+      {/* helperText (si no hay error) o error */}
+      {error ? (
+        <Text style={s.error}>{String(error)}</Text>
       ) : helperText ? (
-        <Text style={[s.msg, { color: theme.colors.textMuted }]}>{helperText}</Text>
-      ) : null}
-
-      {/* contador */}
-      {showCounter && typeof maxLength === "number" ? (
-        <View style={s.counterRow}>
-          <Text style={[s.counter, { color: theme.colors.textMuted }]}>
-            {(value?.length ?? 0)}/{maxLength}
-          </Text>
-        </View>
+        <Text style={s.helper}>{helperText}</Text>
       ) : null}
     </View>
   );
 }
 
-const mkStyles = (theme) =>
+/* ---------- Estilos dependientes del tema + paleta ---------- */
+const mkStyles = (theme, colors) =>
   StyleSheet.create({
-    wrap: { marginBottom: theme.spacing.md },
-    label: { marginBottom: 6, fontWeight: "700" },
+    wrap: {
+      marginBottom: theme.spacing.md,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 8,
+    },
     inputWrap: {
       position: "relative",
       justifyContent: "center",
-      ...theme.shadow,
-      ...(Platform.OS === "android" ? { elevation: 0 } : null), // sin sombra fuerte en Android
     },
     input: {
+      height: 52,
+      borderWidth: 1,
+      borderColor: colors.border,
       borderRadius: 12,
+      paddingHorizontal: 14,
+      backgroundColor: colors.surface,
+      fontSize: 16,
+      color: colors.text,
     },
-    iconLeft: {
+
+    // Ajustes por iconos
+    inputWithRightIcon: { paddingRight: 44 },
+    inputWithLeftIcon: { paddingLeft: 44 },
+
+    // Estados
+    inputFocused: {
+      borderColor: colors.secondary,
+    },
+    inputError: {
+      borderColor: colors.error,
+    },
+
+    // Icono derecho (ojito o rightIcon)
+    rightBtn: {
       position: "absolute",
+      right: 12,
       top: "50%",
-      marginTop: -12,
-      height: 24,
-      width: 24,
-      alignItems: "center",
+      marginTop: -10,
+      height: 20,
+      width: 20,
       justifyContent: "center",
+      alignItems: "center",
       zIndex: 2,
     },
-    iconRight: {
+    rightIcon: {
       position: "absolute",
+      right: 12,
       top: "50%",
-      marginTop: -12,
-      height: 24,
-      minWidth: 24,
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 2,
+      marginTop: -10,
     },
-    iconBtn: {
+
+    // Icono izquierdo
+    leftIcon: {
       position: "absolute",
+      left: 12,
       top: "50%",
-      marginTop: -12,
-      height: 24,
-      width: 24,
-      alignItems: "center",
-      justifyContent: "center",
-      borderRadius: 12,
-      zIndex: 2,
+      marginTop: -10,
     },
-    msg: { marginTop: 6, fontSize: 13 },
-    counterRow: { marginTop: 4, alignItems: "flex-end" },
-    counter: { fontSize: 12, letterSpacing: 0.2 },
+
+    // Mensajes
+    error: {
+      marginTop: 6,
+      color: colors.error,
+      fontSize: 13,
+    },
+    helper: {
+      marginTop: 6,
+      color: colors.textMuted,
+      fontSize: 13,
+    },
   });

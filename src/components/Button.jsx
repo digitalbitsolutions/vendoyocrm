@@ -99,8 +99,8 @@ const mkStyles = (theme) =>
     pressed:  { opacity: theme.opacity.pressed },
 
     text: {
-      fontSize: theme.font.body,
-      fontWeight: "700",
+      fontSize: theme.font.h3,
+      fontWeight: "900",
     },
 
     content: {

@@ -1,3 +1,4 @@
+// app/(app)/clientes/index.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
@@ -64,12 +65,17 @@ const MOCK_CLIENTES = [
 ];
 
 /* ----------------- UI helpers ----------------- */
+
+// Card genérica: ya no usa estilos globales, solo lo que reciba por `style`
 function Card({ children, style, onPress }) {
   const Comp = onPress ? TouchableOpacity : View;
+
   return (
     <Comp
-      style={[s.card, style]}
-      {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" } : {})}
+      style={style}
+      {...(onPress
+        ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" }
+        : {})}
     >
       {children}
     </Comp>
@@ -91,7 +97,7 @@ function FilterChip({ label, active, onPress }) {
 
 function ClienteCard({ item, onEditar, onEliminar, theme }) {
   return (
-    <Card style={{ padding: theme.spacing.lg }}>
+    <Card style={[s.card, { padding: theme.spacing.lg }]}>
       {/* Cabecera: avatar + nombre */}
       <View style={{ flexDirection: "row", gap: theme.spacing.lg }}>
         <View style={s.avatar} />
@@ -100,9 +106,15 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
 
           {!!item.documento && <Text style={s.line}>{item.documento}</Text>}
           {!!item.email && <Text style={s.line}>Email: {item.email}</Text>}
-          {!!item.whatsapp && <Text style={s.line}>WhatsApp: {item.whatsapp}</Text>}
-          {!!item.telefono && <Text style={s.line}>Teléfono: {item.telefono}</Text>}
-          {!!item.direccion && <Text style={s.line}>Dirección: {item.direccion}</Text>}
+          {!!item.whatsapp && (
+            <Text style={s.line}>WhatsApp: {item.whatsapp}</Text>
+          )}
+          {!!item.telefono && (
+            <Text style={s.line}>Teléfono: {item.telefono}</Text>
+          )}
+          {!!item.direccion && (
+            <Text style={s.line}>Dirección: {item.direccion}</Text>
+          )}
 
           <Text style={s.badges}>
             {item.estado === "activo" ? "🟢 Activo" : "⚪ Inactivo"}
@@ -116,21 +128,25 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
         <TouchableOpacity
           style={[s.btn, s.btnEdit]}
           onPress={() => onEditar?.(item)}
-          activeOpacity={theme.opacity.pressed}
+          activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Editar cliente ${item.nombre}`}
         >
           <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
-          <Text style={[s.btnText, { color: theme.colors.onAccent }]}>Editar</Text>
+          <Text style={[s.btnText, { color: theme.colors.onAccent }]}>
+            Editar
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[s.btn, s.btnDelete]}
           onPress={() => onEliminar?.(item)}
-          activeOpacity={theme.opacity.pressed}
+          activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Eliminar cliente ${item.nombre}`}
         >
           <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
-          <Text style={[s.btnText, { color: theme.colors.onDanger }]}>Eliminar</Text>
+          <Text style={[s.btnText, { color: theme.colors.onDanger }]}>
+            Eliminar
+          </Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -154,7 +170,14 @@ export default function ClientesScreen() {
       const okEstado = estado === "todos" ? true : c.estado === estado;
       const okTexto = !hayQ
         ? true
-        : (c.nombre + c.documento + c.email + c.whatsapp + c.telefono + c.direccion) // ✅ c.telefono (sin espacio)
+        : (
+            c.nombre +
+            c.documento +
+            c.email +
+            c.whatsapp +
+            c.telefono +
+            c.direccion
+          )
             .toLowerCase()
             .includes(hayQ);
       return okEstado && okTexto;
@@ -163,7 +186,10 @@ export default function ClientesScreen() {
 
   // Navegación
   const nuevoCliente = useCallback(() => {
-    router.push("/(app)/clientes/nuevo");
+    router.push({
+      pathname: "/clientes/nuevo",
+      params: { modal: true }
+    });
   }, [router]);
 
   const editar = useCallback(
@@ -180,7 +206,8 @@ export default function ClientesScreen() {
       {
         text: "Eliminar",
         style: "destructive",
-        onPress: () => setItems((prev) => prev.filter((c) => c.id !== item.id)),
+        onPress: () =>
+          setItems((prev) => prev.filter((c) => c.id !== item.id)),
       },
     ]);
   }, []);
@@ -211,10 +238,26 @@ export default function ClientesScreen() {
       {/* Acciones */}
       <View style={s.actions}>
         {/* Filtros */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-          <FilterChip label="Todos" active={estado === "todos"} onPress={() => setEstado("todos")} />
-          <FilterChip label="Activo" active={estado === "activo"} onPress={() => setEstado("activo")} />
-          <FilterChip label="Inactivo" active={estado === "inactivo"} onPress={() => setEstado("inactivo")} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8 }}
+        >
+          <FilterChip
+            label="Todos"
+            active={estado === "todos"}
+            onPress={() => setEstado("todos")}
+          />
+          <FilterChip
+            label="Activo"
+            active={estado === "activo"}
+            onPress={() => setEstado("activo")}
+          />
+          <FilterChip
+            label="Inactivo"
+            active={estado === "inactivo"}
+            onPress={() => setEstado("inactivo")}
+          />
         </ScrollView>
 
         {/* Buscador */}
@@ -231,7 +274,11 @@ export default function ClientesScreen() {
         </View>
 
         {/* CTA: Nuevo Cliente */}
-        <TouchableOpacity style={s.cta} onPress={nuevoCliente} activeOpacity={theme.opacity.pressed}>
+        <TouchableOpacity
+          style={s.cta}
+          onPress={nuevoCliente}
+          activeOpacity={theme.opacity?.pressed ?? 0.7}
+        >
           <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
           <Text style={s.ctaText}>Nuevo Cliente</Text>
         </TouchableOpacity>
@@ -240,12 +287,26 @@ export default function ClientesScreen() {
       {/* Lista */}
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {list.length ? (
-          list.map((c) => <ClienteCard key={c.id} item={c} onEditar={editar} onEliminar={eliminar} theme={theme} />)
+          list.map((c) => (
+            <ClienteCard
+              key={c.id}
+              item={c}
+              onEditar={editar}
+              onEliminar={eliminar}
+              theme={theme}
+            />
+          ))
         ) : (
-          <Card style={{ alignItems: "center", padding: theme.spacing.xl }}>
-            <Ionicons name="people-outline" size={32} color={theme.colors.textMuted} />{/* ✅ nombre del icono */}
+          <Card style={[s.card, { alignItems: "center", padding: theme.spacing.xl }]}>
+            <Ionicons
+              name="people-outline"
+              size={32}
+              color={theme.colors.textMuted}
+            />
             <Text style={s.emptyTitle}>No hay clientes</Text>
-            <Text style={s.emptyText}>Crea tu primer cliente con el botón "Nuevo Cliente".</Text>
+            <Text style={s.emptyText}>
+              Crea tu primer cliente con el botón "Nuevo Cliente".
+            </Text>
           </Card>
         )}
       </ScrollView>
@@ -254,7 +315,7 @@ export default function ClientesScreen() {
 }
 
 /* ----------------- Estilos (tema-dependientes) ----------------- */
-let s; // ⚠️ declaramos referencia para poder usarla arriba en helpers (Card/Chip)
+let s; // referencia global para helpers (FilterChip, ClienteCard)
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
@@ -275,7 +336,10 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", // ✅ dark friendly
+      backgroundColor:
+        theme.mode === "dark"
+          ? "rgba(255,255,255,0.06)"
+          : "rgba(0,0,0,0.04)",
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
@@ -302,7 +366,11 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.surface,
       paddingHorizontal: 12,
     },
-    searchInput: { flex: 1, color: theme.colors.text, fontSize: theme.font.body },
+    searchInput: {
+      flex: 1,
+      color: theme.colors.text,
+      fontSize: theme.font.body,
+    },
 
     // Contenido
     scroll: {
@@ -333,8 +401,16 @@ const mkStyles = (theme) =>
       fontWeight: "800",
       marginBottom: 6,
     },
-    line: { color: theme.colors.textMuted, marginBottom: 4, fontSize: theme.font.body },
-    badges: { color: theme.colors.textMuted, marginTop: 8, fontStyle: "italic" },
+    line: {
+      color: theme.colors.textMuted,
+      marginBottom: 4,
+      fontSize: theme.font.body,
+    },
+    badges: {
+      color: theme.colors.textMuted,
+      marginTop: 8,
+      fontStyle: "italic",
+    },
 
     cardFooter: {
       marginTop: theme.spacing.md,

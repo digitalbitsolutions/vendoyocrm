@@ -1,3 +1,4 @@
+// app/(app)/clientes/editar.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -15,7 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 
-import { useTheme } from "../../../src/style/theme";  // ✅ CAMBIO: hook del tema
+import { useTheme } from "../../../src/style/theme";
+import { Button } from "../../../src/components/Button";
 
 export const options = {
   presentation: "transparentModal",
@@ -27,8 +29,8 @@ export const options = {
 export default function EditarClienteScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();         // ✅ CAMBIO: tema actual
-  const s = mkStyles(theme);            // ✅ CAMBIO: estilos tema-dependientes
+  const { theme } = useTheme();
+  const s = useMemo(() => mkStyles(theme), [theme]);
   const { id: idFromQuery } = useLocalSearchParams();
 
   const [id, setId] = useState(idFromQuery || "");
@@ -42,11 +44,13 @@ export default function EditarClienteScreen() {
   const [direccion, setDireccion] = useState("");
   const [password, setPassword] = useState("");
 
+  // Prefill
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener("cliente:prefill", (c) => {
       setId(c?.id || idFromQuery || "");
+
       const [td, nd] =
-        (typeof c?.documento === "string" && c.documento.includes(":"))
+        typeof c?.documento === "string" && c.documento.includes(":")
           ? c.documento.split(":").map((s) => s.trim())
           : ["", ""];
       setTipoDoc(td || "");
@@ -64,23 +68,25 @@ export default function EditarClienteScreen() {
       setDireccion(c?.direccion || "");
       setPassword("");
     });
+
     return () => sub.remove();
   }, [idFromQuery]);
 
-  const canSave = useMemo(() => {
-    return (
+  const canSave = useMemo(
+    () =>
       (tipoDoc || "").trim() &&
       (numDoc || "").trim() &&
       (nombre || "").trim() &&
       (apellido || "").trim() &&
-      (email || "").trim()
-    );
-  }, [tipoDoc, numDoc, nombre, apellido, email]);
+      (email || "").trim(),
+    [tipoDoc, numDoc, nombre, apellido, email]
+  );
 
   const onClose = () => router.back();
 
   const onSave = () => {
     if (!canSave) return;
+
     const payload = {
       id: id || `c${Date.now()}`,
       tipoDoc: tipoDoc.trim(),
@@ -96,7 +102,9 @@ export default function EditarClienteScreen() {
     };
 
     payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
-    payload.nombreCompleto = `${payload.nombre}${payload.apellido ? ", " + payload.apellido : ""}`;
+    payload.nombreCompleto = `${payload.nombre}${
+      payload.apellido ? ", " + payload.apellido : ""
+    }`;
 
     DeviceEventEmitter.emit("cliente:updated", payload);
     router.back();
@@ -104,7 +112,10 @@ export default function EditarClienteScreen() {
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={s.card}>
           {/* Header */}
           <View style={s.header}>
@@ -115,7 +126,7 @@ export default function EditarClienteScreen() {
                 hitSlop={theme.hitSlop}
                 style={s.closeBtn}
                 accessibilityRole="button"
-                accessibilityLabel="cerrar"
+                accessibilityLabel="Cerrar"
               >
                 <Ionicons name="close" size={22} color={theme.colors.text} />
               </Pressable>
@@ -131,7 +142,11 @@ export default function EditarClienteScreen() {
                 style={s.idRow}
                 accessibilityLabel="Copiar ID"
               >
-                <Ionicons name="copy-outline" size={14} color={theme.colors.textMuted} />
+                <Ionicons
+                  name="copy-outline"
+                  size={14}
+                  color={theme.colors.textMuted}
+                />
                 <Text style={s.idText} numberOfLines={1}>
                   {id}
                 </Text>
@@ -143,57 +158,127 @@ export default function EditarClienteScreen() {
           <ScrollView
             contentContainerStyle={[
               s.content,
-              { paddingBottom: (theme.spacing.xxl + 110) + insets.bottom + 20 },
+              {
+                // más aire encima de la barra de guardar
+                paddingBottom: theme.spacing.xxl + 180 + insets.bottom,
+              },
             ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             <Label>Tipo de documento: *</Label>
-            <Input placeholder="Ej: DNI, NIE, Pasaporte..." value={tipoDoc} onChangeText={setTipoDoc} autoCapitalize="characters" returnKeyType="next" />
+            <Input
+              placeholder="Ej: DNI, NIE, Pasaporte..."
+              value={tipoDoc}
+              onChangeText={setTipoDoc}
+              autoCapitalize="characters"
+              returnKeyType="next"
+            />
 
             <Label>Número de documento: *</Label>
-            <Input placeholder="Ej: 12345678X" value={numDoc} onChangeText={setNumDoc} autoCapitalize="characters" returnKeyType="next" />
+            <Input
+              placeholder="Ej: 12345678X"
+              value={numDoc}
+              onChangeText={setNumDoc}
+              autoCapitalize="characters"
+              returnKeyType="next"
+            />
 
             <Label>Nombre: *</Label>
-            <Input placeholder="Ej: Miguel" value={nombre} onChangeText={setNombre} autoCapitalize="words" returnKeyType="next" />
+            <Input
+              placeholder="Ej: Miguel"
+              value={nombre}
+              onChangeText={setNombre}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
 
             <Label>Apellido: *</Label>
-            <Input placeholder="Ej: Yesan" value={apellido} onChangeText={setApellido} autoCapitalize="words" returnKeyType="next" />
+            <Input
+              placeholder="Ej: Yesan"
+              value={apellido}
+              onChangeText={setApellido}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
 
             <Label>Email: *</Label>
-            <Input placeholder="Ej: cliente@correo.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} returnKeyType="next" />
+            <Input
+              placeholder="Ej: cliente@correo.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="next"
+            />
 
             <Label>Teléfono:</Label>
-            <Input placeholder="Ej: +34 600 000 000" value={telefono} onChangeText={setTelefono} keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"} returnKeyType="next" />
+            <Input
+              placeholder="Ej: +34 600 000 000"
+              value={telefono}
+              onChangeText={setTelefono}
+              keyboardType={
+                Platform.OS === "ios"
+                  ? "numbers-and-punctuation"
+                  : "phone-pad"
+              }
+              returnKeyType="next"
+            />
 
             <Label>WhatsApp:</Label>
-            <Input placeholder="Ej: +34 600 000 000" value={whatsapp} onChangeText={setWhatsapp} keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"} returnKeyType="next" />
+            <Input
+              placeholder="Ej: +34 600 000 000"
+              value={whatsapp}
+              onChangeText={setWhatsapp}
+              keyboardType={
+                Platform.OS === "ios"
+                  ? "numbers-and-punctuation"
+                  : "phone-pad"
+              }
+              returnKeyType="next"
+            />
 
             <Label>Dirección:</Label>
-            <Input placeholder="Ej: Calle Mayor, 123, Barcelona" value={direccion} onChangeText={setDireccion} autoCapitalize="words" returnKeyType="next" />
+            <Input
+              placeholder="Ej: Calle Mayor, 123, Barcelona"
+              value={direccion}
+              onChangeText={setDireccion}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
 
             <Label>Contraseña (dejar en blanco para no cambiar):</Label>
-            <Input placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword} secureTextEntry />
+            <Input
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
           </ScrollView>
 
-          {/* Save bar */}
-          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + 20 }]}>
-            <Pressable
+          {/* Save bar con más padding inferior */}
+          <View
+            style={[
+              s.saveBar,
+              s.saveBarShadow,
+              { paddingBottom: insets.bottom + theme.spacing.xl + 10, },
+            ]}
+          >
+            <Button
+              title="Guardar cambios"
               onPress={onSave}
               disabled={!canSave}
-              style={({ pressed }) => [
-                s.saveCta,
-                pressed && { opacity: theme.opacity.pressed },
-                !canSave && { opacity: theme.opacity.disabled },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Guardar cambios"
-              accessibilityState={{ disabled: !canSave }}
-              hitSlop={theme.hitSlop}
-            >
-              <Ionicons name="save-outline" size={18} color={theme.colors.onSecondary} />
-              <Text style={s.saveCtaText}>Guardar cambios</Text>
-            </Pressable>
+              fullWidth
+              variant="secondary"
+              leftIcon={
+                <Ionicons
+                  name="save-outline"
+                  size={18}
+                  color={theme.colors.onSecondary}
+                />
+              }
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -209,7 +294,7 @@ function Label({ children }) {
 }
 
 function Input(props) {
-  const { theme } = useTheme(); // ✅ placeholder compatible con dark
+  const { theme } = useTheme();
   const s = mkStyles(theme);
   return (
     <TextInput
@@ -227,7 +312,7 @@ const mkStyles = (theme) =>
       flex: 1,
       alignItems: "center",
       justifyContent: "flex-end",
-      backgroundColor: theme.colors.overlay, // ✅ antes inline
+      backgroundColor: theme.colors.overlay,
     },
     card: {
       width: "90%",
@@ -239,7 +324,7 @@ const mkStyles = (theme) =>
       ...theme.shadow,
       overflow: "hidden",
       borderWidth: 1,
-      borderColor: theme.colors.border, // ✅ ayuda en dark
+      borderColor: theme.colors.border,
     },
     header: {
       paddingTop: theme.spacing.md,
@@ -269,7 +354,8 @@ const mkStyles = (theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.05)" : "#F1F5F9", // ✅ mejor contraste
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.05)" : "#F1F5F9",
     },
     idText: {
       maxWidth: 220,
@@ -320,23 +406,7 @@ const mkStyles = (theme) =>
       right: 0,
       bottom: 0,
       backgroundColor: theme.colors.surface,
-      paddingTop: 10,
+      paddingTop: 12,
       paddingHorizontal: theme.spacing.lg,
-    },
-    saveCta: {
-      height: 56,
-      borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.secondary,
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "row",
-      gap: 8,
-      marginHorizontal: 16,
-      marginBottom: 12,
-    },
-    saveCtaText: {
-      color: theme.colors.onSecondary,
-      fontWeight: "900",
-      fontSize: theme.font.h3,
     },
   });
