@@ -1,52 +1,38 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+// app/(app)/historial/index.jsx
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+  Platform,
+  Animated,
+} from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import AppBar from "../../../src/components/AppBar";
+import ActivityItem from "../../../src/components/ActivityItem";
 import { useTheme } from "../../../src/style/theme";
 
-/* ---------- Utils ---------- */
-const formatDateTime = (iso) => {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString("es-ES", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  } catch {
-    return iso;
-  }
-};
+/* ---------------- CONFIG ----------------
+ * Cambia aquí si quieres mostrar/ocultar el pill:
+ * - true  -> pill visible (con tamaño reducido)
+ * - false -> pill oculto (solo AppBar queda)
+ */
+const SHOW_PILL = false;
 
-/* ---------- Mock ---------- */
+/* ---------- Mock / util ---------- */
 const MOCK = [
-  {
-    id: "a1",
-    type: "create",
-    title: "Nuevo trámite 1 creado por Miguel Yesan.",
-    metaDate: "2025-09-02T13:21:00Z",
-  },
-  {
-    id: "a2",
-    type: "create",
-    title: "Nuevo trámite 1 creado por Miguel Yesan.",
-    metaDate: "2025-09-02T13:21:00Z",
-  },
+  { id: "a1", type: "create", title: "Nuevo trámite 1 creado por Miguel Yesan.", metaDate: "2025-09-02T13:21:00Z" },
+  { id: "a2", type: "create", title: "Nuevo trámite 2 creado por Miguel Yesan.", metaDate: "2025-09-02T13:21:00Z" },
   {
     id: "a3",
     type: "update",
     title:
       "José María Bardina actualizó los datos del trámite Trámite de Compra-Venta Inmobiliaria.",
     refLabel: "Referencia:",
-    beforeAfter: {
-      "Antes:": "Recomendado por Miguel",
-      "Después:": "CV-2025-0036",
-    },
+    beforeAfter: { "Antes:": "Recomendado por Miguel", "Después:": "CV-2025-0036" },
     metaDate: "2025-06-23T10:46:00Z",
   },
   {
@@ -62,10 +48,7 @@ const MOCK = [
     title:
       "José María Bardina actualizó los datos del trámite Trámite de Compra-Venta Inmobiliaria.",
     refLabel: "Fecha estimada de finalización:",
-    beforeAfter: {
-      "Antes:": "2025-07-05",
-      "Después:": "2025-07-06",
-    },
+    beforeAfter: { "Antes:": "2025-07-05", "Después:": "2025-07-06" },
     metaDate: "2025-06-23T10:43:00Z",
   },
   {
@@ -77,209 +60,231 @@ const MOCK = [
   },
 ];
 
-/* ---------- Pantalla ---------- */
+const formatDateTime = (iso) => {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString("es-ES", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return iso;
+  }
+};
+
+/* ---------- Screen (pill reducido / opcional) ---------- */
 export default function HistorialScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const s = mkStyles(theme);
 
   const [items, setItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+
+  // Animated scroll value
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const AFlatList = Animated.createAnimatedComponent(FlatList);
 
   useEffect(() => {
-    setItems(MOCK);
+    const t = setTimeout(() => {
+      setItems(MOCK);
+      setLoadingInitial(false);
+    }, 220);
+    return () => clearTimeout(t);
   }, []);
 
-  const list = useMemo(() => items, [items]);
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setItems((prev) => [...MOCK]);
+      setRefreshing(false);
+    }, 700);
+  }, []);
 
-  /* ---------- Sub-componentes UI (dentro para usar theme) ---------- */
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      const isLast = index === items.length - 1;
+      return <ActivityItem item={item} isLast={isLast} />;
+    },
+    [items]
+  );
 
-  function SectionCard({ title, children, style }) {
+  const keyExtractor = useCallback((item) => item.id, []);
+
+  const ListEmpty = () => (
+    <View style={s.empty}>
+      <Text style={s.emptyTitle}>No hay actividad todavía</Text>
+      <Text style={s.emptyHint}>Cuando haya acciones recientes las verás aquí.</Text>
+    </View>
+  );
+
+  /* Animaciones para el pill (si está activo):
+     - SHRINK más suave y menos agresivo
+     - fontWeight reducido para que no compita con AppBar
+  */
+  const SHRINK_AT = 48;
+  const pillPadding = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [theme.spacing.md * 0.9, theme.spacing.xs * 1.1],
+    extrapolate: "clamp",
+  });
+  const pillFontSize = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [theme.font.h3 + 6, theme.font.h3], // pequeño ajuste
+    extrapolate: "clamp",
+  });
+  const pillLineHeight = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [theme.font.h3 + 10, theme.font.h3 + 6],
+    extrapolate: "clamp",
+  });
+  const pillScale = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [1, 0.98],
+    extrapolate: "clamp",
+  });
+  const pillScaleX = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [1, 0.92],
+    extrapolate: "clamp",
+  });
+  const pillTranslateY = scrollY.interpolate({
+    inputRange: [0, SHRINK_AT],
+    outputRange: [0, -4],
+    extrapolate: "clamp",
+  });
+
+  /* Header con pill animada (sticky) - si SHOW_PILL === false devolvemos un spacer */
+  function ListHeader() {
+    const AView = Animated.View;
+    const AText = Animated.Text;
+
+    if (!SHOW_PILL) {
+      // pequeño spacer para separar el contenido del AppBar
+      return <View style={{ height: theme.spacing.lg / 1.4, backgroundColor: theme.colors.background }} />;
+    }
+
     return (
-      <View style={[s.card, style]}>
-        {!!title && <Text style={s.cardTitle}>{title}</Text>}
-        {children}
+      <View style={s.headerWrap}>
+        <AView
+          style={[
+            s.pillContainer,
+            {
+              paddingVertical: pillPadding,
+              transform: [{ translateY: pillTranslateY }, { scale: pillScale }, { scaleX: pillScaleX }],
+            },
+          ]}
+        >
+          <AText
+            style={[
+              s.pillTitle,
+              {
+                fontSize: pillFontSize,
+                lineHeight: pillLineHeight,
+              },
+            ]}
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel="Últimas Acciones"
+          >
+            Últimas Acciones
+          </AText>
+        </AView>
+
+        <View style={s.pillSeparator} />
       </View>
     );
   }
 
-  function Divider() {
-    return <View style={s.divider} />;
-  }
-
-  function MetaDate({ iso }) {
-    return (
-      <View style={s.metaRow}>
-        <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
-        <Text style={s.metaText}>{formatDateTime(iso)}</Text>
-      </View>
-    );
-  }
-
-  function DiffTable({ label, beforeAfter }) {
-    if (!beforeAfter) return null;
-    const entries = Object.entries(beforeAfter);
-    return (
-      <View style={s.diffWrap}>
-        {!!label && <Text style={s.diffLabel}>{label}</Text>}
-        <View style={s.diffGrid}>
-          {entries.map(([k, v]) => (
-            <View key={k} style={s.diffRow}>
-              <Text style={s.diffKey}>{k}</Text>
-              <Text style={s.diffVal}>{v}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  function ActivityItem({ item, isLast }) {
-    const t = item.type || "create";
-    const iconName = t === "create" ? "time-outline" : "refresh-outline";
-    const tint = t === "create" ? theme.colors.secondary : theme.colors.accent;
-
-    return (
-      <View style={s.item}>
-        {/* Línea del timeline */}
-        <View pointerEvents="none" style={[s.timeline, isLast && { opacity: 0 }]} />
-
-        {/* Icono a la izquierda */}
-        <View style={[s.iconBox, { borderColor: tint }]}>
-          <Ionicons name={iconName} size={16} color={tint} />
-        </View>
-
-        {/* Contenido */}
-        <View style={{ flex: 1 }}>
-          <Text style={s.itemTitle}>{item.title}</Text>
-          {item.refLabel ? <Text style={s.refLink}>{item.refLabel}</Text> : null}
-          <DiffTable label={null} beforeAfter={item.beforeAfter} />
-          <MetaDate iso={item.metaDate} />
-          <Divider />
-        </View>
-      </View>
-    );
-  }
+  const stickyIndices = SHOW_PILL ? [0] : [];
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <AppBar variant="section" title="Historial de Actividad" showBorder={false} />
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: theme.spacing.lg,
-          paddingTop: theme.spacing.sm,       // margen superior afinado (pegado al AppBar sin “chocar”)
-          paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
-          gap: theme.spacing.lg,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <SectionCard title="Últimas Acciones" style={{ paddingTop: theme.spacing.sm, marginTop: theme.spacing.sm }}>
-          {list.map((it, idx) => (
-            <ActivityItem key={it.id} item={it} isLast={idx === list.length - 1} />
-          ))}
-        </SectionCard>
-      </ScrollView>
+      {loadingInitial ? (
+        <View style={s.loaderWrap}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <AFlatList
+          data={items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={{
+            paddingHorizontal: theme.spacing.lg,
+            paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
+            paddingTop: 6,
+          }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+          ListEmptyComponent={ListEmpty}
+          ListHeaderComponent={ListHeader}
+          stickyHeaderIndices={stickyIndices}
+          ItemSeparatorComponent={() => <View style={s.itemSeparator} />}
+          removeClippedSubviews={true}
+          initialNumToRender={8}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+          scrollEventThrottle={16}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
-/* ---------- Estilos dependientes del tema ---------- */
+/* ---------- Styles ---------- */
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
 
-    card: {
-      backgroundColor: theme.colors.surface,
+    /* Header wrapper: fondo igual al background para que no se vea contenido "por debajo" */
+    headerWrap: {
+      backgroundColor: theme.colors.background,
+      paddingTop: theme.spacing.sm,
+      paddingBottom: theme.spacing.xs,
+      zIndex: 30,
+    },
+
+    /* Pill: reducido y menos pesado visualmente */
+    pillContainer: {
+      alignSelf: "center",
+      width: "74%", // menos ancho para que no domine la pantalla
       borderRadius: theme.radius.xl,
+      paddingHorizontal: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      padding: theme.spacing.lg,
       ...theme.shadow,
+      ...(Platform.OS === "android" ? { elevation: 4 } : null),
     },
-    cardTitle: {
-      fontSize: theme.font.h2,
-      fontWeight: "900",
+    pillTitle: {
+      fontWeight: "700", // menos pesado que 900
       color: theme.colors.text,
-      marginBottom: theme.spacing.sm,
+      textAlign: "center",
     },
 
-    item: {
-      flexDirection: "row",
-      gap: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      position: "relative",
+    /* separador debajo del pill para respirar */
+    pillSeparator: {
+      height: theme.spacing.md / 1.2,
     },
 
-    timeline: {
-      position: "absolute",
-      left: 14,
-      top: 0,
-      bottom: 0,
-      width: 1,
-      backgroundColor: theme.colors.border,
-    },
-    iconBox: {
-      width: 28,
-      height: 28,
-      borderRadius: theme.radius.sm,
-      borderWidth: 2,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 2,
-      backgroundColor: theme.colors.surface,
-    },
-    itemTitle: {
-      color: theme.colors.text,
-      fontSize: theme.font.body,
-      lineHeight: 22,
-      fontWeight: "600",
-      marginBottom: 6,
-    },
+    /* Loader / empty */
+    loaderWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
+    empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: theme.spacing.lg },
+    emptyTitle: { fontSize: theme.font.h3, fontWeight: "700", color: theme.colors.textMuted, marginBottom: 6 },
+    emptyHint: { color: theme.colors.textMuted, textAlign: "center" },
 
-    refLink: {
-      color: theme.colors.secondary,
-      fontWeight: "800",
-      marginBottom: 6,
-    },
-
-    diffWrap: {
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      borderRadius: theme.radius.lg,
-      padding: theme.spacing.sm,
-      backgroundColor: theme.colors.surface,
-      marginBottom: theme.spacing.sm,
-    },
-    diffLabel: {
-      color: theme.colors.secondary,
-      fontWeight: "800",
-      marginBottom: theme.spacing.sm,
-    },
-    diffGrid: { gap: 6 },
-    diffRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      gap: theme.spacing.lg,
-    },
-    diffKey: {
-      color: theme.colors.textMuted,
-      fontWeight: "800",
-      width: 110,
-    },
-    diffVal: { color: theme.colors.text, flex: 1 },
-
-    metaRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginTop: 2,
-    },
-    metaText: { color: theme.colors.textMuted, fontSize: theme.font.small },
-
-    divider: {
+    /* Separador entre items */
+    itemSeparator: {
       height: 1,
       backgroundColor: theme.colors.border,
-      marginTop: theme.spacing.md,
-      marginLeft: 44,
+      marginVertical: theme.spacing.md / 2,
+      marginHorizontal: theme.spacing.lg / 2,
+      opacity: 0.6,
     },
   });
