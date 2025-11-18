@@ -1,21 +1,22 @@
-import React, { useMemo, useState, useEffect } from "react";
+// app/(app)/reportes/index.jsx
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   Pressable,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Platform,
   Alert,
-  TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AppBar from "../../../src/components/AppBar";
 import { useTheme } from "../../../src/style/theme";
 
-/* =================== Utils fecha & CSV =================== */
+/* ------------------ Utils: fecha & CSV ------------------ */
 const toISO = (d) => {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((d || "").trim());
   if (!m) return null;
@@ -28,8 +29,6 @@ const toHuman = (iso) => {
   const s = String(iso).slice(0, 10);
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (!m) return "";
-  const y = parseInt(m[1], 10);
-  if (y < 1900) return "—";
   return `${m[3]}/${m[2]}/${m[1]}`;
 };
 
@@ -43,19 +42,12 @@ const toCSV = (rows) => {
   return `${headers.join(",")}\n${body}`;
 };
 
-/* =================== Mock + filtro local (simula backend) =================== */
-async function fetchReportsMock({ cliente, estado, fIni, fFin }) {
-  const data = [
+/* ------------------ Mock con paginación (para desarrollo) ------------------ */
+/* Reemplaza fetchReportsFromAPI por llamadas reales cuando tengas backend.
+   Debe devolver: { data: [...], total: N } */
+function makeMockData(count = 60) {
+  const base = [
     {
-      id: "r1",
-      cliente: "Miguel, Yesan",
-      tramite: "1",
-      estado: "Pendiente",
-      fechaInicio: "2025-09-02",
-      fechaFin: "0001-11-30",
-    },
-    {
-      id: "r2",
       cliente: "Miguel, Yesan",
       tramite: "Compraventa Inmueble - Calle Mallorca 128",
       estado: "Pendiente",
@@ -63,77 +55,371 @@ async function fetchReportsMock({ cliente, estado, fIni, fFin }) {
       fechaFin: "2025-07-03",
     },
     {
-      id: "r3",
       cliente: "Miguel, Yesan",
       tramite: "Trámite de Compra-Venta Inmobiliaria",
-      estado: "Pendiente",
+      estado: "En Proceso",
       fechaInicio: "2025-06-23",
       fechaFin: "2025-07-06",
     },
+    {
+      cliente: "Ana Pérez",
+      tramite: "Cambio titularidad - Calle Girona 45",
+      estado: "Completado",
+      fechaInicio: "2025-05-10",
+      fechaFin: "2025-05-20",
+    },
+    {
+      cliente: "Pedro Gómez",
+      tramite: "Legalización documento X",
+      estado: "Pendiente",
+      fechaInicio: "2025-09-02",
+      fechaFin: "0001-11-30",
+    },
   ];
-
-  return data.filter((r) => {
-    if (cliente && cliente !== "Todos" && !r.cliente.toLowerCase().includes(String(cliente).toLowerCase())) {
-      return false;
-    }
-    if (estado && estado !== "Todos" && r.estado !== estado) return false;
-
-    const ri = new Date(r.fechaInicio).getTime();
-    const rf = new Date(r.fechaFin).getTime();
-    const iOk = !fIni || ri >= new Date(fIni).getTime();
-    const fOk = !fFin || rf <= new Date(fFin).getTime();
-    return iOk && fOk;
+  const arr = new Array(count).fill(0).map((_, i) => {
+    const src = base[i % base.length];
+    return {
+      id: `r-${i + 1}`,
+      ...src,
+      tramite: `${src.tramite} #${String(i + 1).padStart(3, "0")}`,
+    };
   });
+  return arr;
+}
+const MOCK_FULL = makeMockData(60);
+
+async function fetchReportsMock({ cliente, estado, fIni, fFin, page = 1, pageSize = 10 }) {
+  // filtrar
+  let data = MOCK_FULL.filter((r) => {
+    if (cliente && cliente !== "Todos" && !r.cliente.toLowerCase().includes(String(cliente).toLowerCase()))
+      return false;
+    if (estado && estado !== "Todos" && r.estado !== estado) return false;
+    if (fIni) {
+      const ri = new Date(r.fechaInicio).getTime();
+      if (ri < new Date(fIni).getTime()) return false;
+    }
+    if (fFin && r.fechaFin !== "0001-11-30") {
+      const rf = new Date(r.fechaFin).getTime();
+      if (rf > new Date(fFin).getTime()) return false;
+    }
+    return true;
+  });
+
+  const total = data.length;
+  const start = (page - 1) * pageSize;
+  const slice = data.slice(start, start + pageSize);
+  // simula latencia
+  await new Promise((res) => setTimeout(res, 250));
+  return { data: slice, total };
 }
 
-/* =================== Hook para backend (enchufar luego) =================== */
+/* Hook / adaptador (cambiar a tu API real fácilmente) */
 async function fetchReportsFromAPI(filters) {
+  // Ejemplo: si tu backend acepta page/pageSize devuelve { data, total }
   return fetchReportsMock(filters);
 }
 
-/* =================== Helpers UI =================== */
+/* ------------------ Helpers UI ------------------ */
 function stateToStyle(s) {
   if (s === "Completado") return "stateDone";
   if (s === "En Proceso") return "stateWip";
   return "statePend";
 }
 
-/* =================== Pantalla =================== */
+/* ------------------ Main component ------------------ */
 export default function ReportesScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const s = mkStyles(theme);
 
-  // Filtros
+  // filtros controlados (cliente está debounced)
+  const [clienteInput, setClienteInput] = useState("");
   const [cliente, setCliente] = useState("Todos");
   const [estado, setEstado] = useState("Todos");
   const [fIniHuman, setFIniHuman] = useState("");
   const [fFinHuman, setFFinHuman] = useState("");
 
-  // Datos/UI
+  // paginación & datos
   const [rows, setRows] = useState([]);
-  const [sort, setSort] = useState({ by: "fechaInicio", dir: "asc" });
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 12;
+  const [total, setTotal] = useState(0);
 
-  const load = async () => {
-    const fIni = toISO(fIniHuman);
-    const fFin = toISO(fFinHuman);
-    const data = await fetchReportsFromAPI({ cliente, estado, fIni, fFin });
-    setRows(data);
+  // flags
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+
+  // debounce cliente input
+  const debounceRef = useRef(null);
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setCliente(clienteInput.trim() === "" ? "Todos" : clienteInput.trim());
+      setPage(1);
+    }, 450);
+    return () => clearTimeout(debounceRef.current);
+  }, [clienteInput]);
+
+  // carga (page aware)
+  const loadPage = useCallback(
+    async ({ page: loadPage = 1, append = false } = {}) => {
+      if (loadPage === 1) {
+        setLoading(true);
+        setError(null);
+      } else {
+        setLoadingMore(true);
+      }
+
+      try {
+        const fIni = toISO(fIniHuman);
+        const fFin = toISO(fFinHuman);
+        const res = await fetchReportsFromAPI({
+          cliente,
+          estado,
+          fIni,
+          fFin,
+          page: loadPage,
+          pageSize,
+        });
+        const data = Array.isArray(res.data) ? res.data : [];
+        const tot = typeof res.total === "number" ? res.total : data.length;
+
+        setTotal(tot);
+        setRows((prev) => (append ? [...prev, ...data] : data));
+      } catch (e) {
+        setError(e?.message || "Error al obtener datos");
+        Alert.alert("Error", e?.message || "No se pudieron obtener los reportes.");
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
+      }
+    },
+    [cliente, estado, fIniHuman, fFinHuman]
+  );
+
+  // inicial / reload cuando cambian filtros o page
+  useEffect(() => {
+    loadPage({ page: 1, append: false });
     setPage(1);
+  }, [cliente, estado, fIniHuman, fFinHuman, loadPage]);
+
+  // cargar más cuando page incrementa por onEndReached
+  useEffect(() => {
+    if (page === 1) return;
+    loadPage({ page, append: true });
+  }, [page, loadPage]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setPage(1);
+    loadPage({ page: 1, append: false });
+  }, [loadPage]);
+
+  const onEndReached = useCallback(() => {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (loadingMore || loading) return;
+    if (page < totalPages) setPage((p) => p + 1);
+  }, [page, total, pageSize, loadingMore, loading]);
+
+  /* Export CSV -> Documents (mejor para usuario final) */
+  const onExport = useCallback(async () => {
+    try {
+      const FileSystem = (await import("expo-file-system")).default;
+      const Sharing = (await import("expo-sharing")).default;
+
+      const csv = toCSV(rows.length ? rows : []); // exporta lo cargado (podrías exportar `sorted` o toda la colección via API)
+      if (!csv) {
+        Alert.alert("Sin datos", "No hay filas para exportar.");
+        return;
+      }
+
+      const filename = `reporte_vendoyo_${Date.now()}.csv`;
+      const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
+      const uri = `${dir}${filename}`;
+
+      await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+
+      const can = await Sharing.isAvailableAsync();
+      if (can) {
+        await Sharing.shareAsync(uri, { UTI: "public.comma-separated-values-text" });
+      } else {
+        Alert.alert("Exportado", `CSV creado en: ${uri}`);
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Exportar error", "Instala 'expo-file-system' y 'expo-sharing' o revisa permisos.");
+    }
+  }, [rows]);
+
+  /* HeaderButton (memo) */
+  const [sort, setSort] = useState({ by: "fechaInicio", dir: "asc" });
+  const toggleSort = useCallback(
+    (by) => {
+      setSort((s) => {
+        const active = s.by === by;
+        return { by, dir: active && s.dir === "asc" ? "desc" : "asc" };
+      });
+    },
+    [setSort]
+  );
+
+  /* ReportRow (memo) */
+  const ReportRow = useCallback(
+    ({ item }) => (
+      <View style={s.rowCard} accessible accessibilityRole="listitem">
+        <Text style={s.rowTitle}>{item.tramite}</Text>
+
+        <View style={s.rowLine}>
+          <Text style={s.rowLabel}>Cliente:</Text>
+          <Text style={s.rowValue}>{item.cliente}</Text>
+        </View>
+
+        <View style={s.rowLine}>
+          <Text style={s.rowLabel}>Estado:</Text>
+          <Text style={[s.rowValue, s[stateToStyle(item.estado)]]}>{item.estado}</Text>
+        </View>
+
+        <View style={s.rowGrid}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.rowLabel}>Inicio</Text>
+            <Text style={s.rowValue}>{toHuman(item.fechaInicio)}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.rowLabel}>Final</Text>
+            <Text style={s.rowValue}>{toHuman(item.fechaFin)}</Text>
+          </View>
+        </View>
+      </View>
+    ),
+    [s]
+  );
+
+  /* UI: filtros (memoizado) */
+  const Filters = useCallback(
+    () => (
+      <View style={s.filtersCard}>
+        <Text style={s.filterTitle}>Filtros</Text>
+
+        <Text style={s.label}>Cliente</Text>
+        <TextInput
+          style={s.input}
+          placeholder="Todos o escribe un nombre"
+          placeholderTextColor={theme.colors.textMuted}
+          value={clienteInput}
+          onChangeText={setClienteInput}
+          accessibilityLabel="Filtro por cliente"
+        />
+
+        <Text style={s.label}>Estado</Text>
+        <View style={s.chipsRow}>
+          {["Todos", "Pendiente", "En Proceso", "Completado"].map((st) => {
+            const active = estado === st;
+            return (
+              <Pressable
+                key={st}
+                onPress={() => {
+                  setEstado(st);
+                  setPage(1);
+                }}
+                style={[s.chip, active && s.chipActive]}
+                hitSlop={theme.hitSlop}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[s.chipText, active && s.chipTextActive]}>{st}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={s.label}>Fecha de Inicio</Text>
+        <TextInput
+          style={s.input}
+          placeholder="dd/mm/aaaa"
+          placeholderTextColor={theme.colors.textMuted}
+          keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+          value={fIniHuman}
+          onChangeText={setFIniHuman}
+        />
+
+        <Text style={s.label}>Fecha Final</Text>
+        <TextInput
+          style={s.input}
+          placeholder="dd/mm/aaaa"
+          placeholderTextColor={theme.colors.textMuted}
+          keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+          value={fFinHuman}
+          onChangeText={setFFinHuman}
+        />
+
+        <Pressable
+          style={s.genBtn}
+          onPress={() => {
+            setPage(1);
+            loadPage({ page: 1, append: false });
+          }}
+          hitSlop={theme.hitSlop}
+          accessibilityRole="button"
+        >
+          <Ionicons name="bar-chart-outline" size={18} color={theme.colors.onSecondary} />
+          <Text style={s.genTxt}>Generar Reporte</Text>
+        </Pressable>
+      </View>
+    ),
+    [s, clienteInput, estado, fIniHuman, fFinHuman, theme]
+  );
+
+  /* HeaderButtons render */
+  const HeaderButtons = useCallback(
+    () => (
+      <View style={s.tableHeader}>
+        {[
+          { label: "Cliente", by: "cliente" },
+          { label: "Nombre del trámite", by: "tramite" },
+          { label: "Estado", by: "estado" },
+          { label: "Fecha inicio", by: "fechaInicio" },
+          { label: "Fecha final", by: "fechaFin" },
+        ].map((h) => {
+          const active = sort.by === h.by;
+          const nextDir = active && sort.dir === "asc" ? "desc" : "asc";
+          return (
+            <Pressable
+              key={h.by}
+              onPress={() => toggleSort(h.by)}
+              style={s.thBtn}
+              hitSlop={theme.hitSlop}
+              accessibilityRole="button"
+              accessibilityLabel={`Ordenar por ${h.label}`}
+            >
+              <Text style={[s.thText, active && { color: theme.colors.secondary }]}>{h.label}</Text>
+              <Ionicons
+                name={!active ? "swap-vertical-outline" : sort.dir === "asc" ? "caret-up-outline" : "caret-down-outline"}
+                size={16}
+                color={active ? theme.colors.secondary : theme.colors.textMuted}
+              />
+            </Pressable>
+          );
+        })}
+      </View>
+    ),
+    [s, sort, toggleSort, theme]
+  );
+
+  /* empty / footer UI */
+  const ListFooter = () => {
+    if (loadingMore) return <ActivityIndicator style={{ marginVertical: 12 }} color={theme.colors.secondary} />;
+    return null;
   };
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  // Orden
-  const sorted = useMemo(() => {
+  /* sorted client-side fallback (si quieres orden server-side, aplica en la API) */
+  const sortedRows = useMemo(() => {
     const list = [...rows];
     list.sort((a, b) => {
-      const av = a[sort.by];
-      const bv = b[sort.by];
+      const av = a[sort.by] ?? "";
+      const bv = b[sort.by] ?? "";
       if (av === bv) return 0;
       const res = av > bv ? 1 : -1;
       return sort.dir === "asc" ? res : -res;
@@ -141,205 +427,67 @@ export default function ReportesScreen() {
     return list;
   }, [rows, sort]);
 
-  // Paginación
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
-
-  // Export CSV
-  const onExport = async () => {
-    try {
-      const FileSystem = (await import("expo-file-system")).default;
-      const Sharing = (await import("expo-sharing")).default;
-      const csv = toCSV(sorted);
-      const uri = FileSystem.cacheDirectory + `reporte_${Date.now()}.csv`;
-      await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
-      const can = await Sharing.isAvailableAsync();
-      if (can) {
-        await Sharing.shareAsync(uri, { UTI: "public.comma-separated-values-text" });
-      } else {
-        Alert.alert("Exportado", `Archivo CSV creado en: ${uri}`);
-      }
-    } catch (e) {
-      Alert.alert("Módulos requeridos", "Instala: expo-file-system y expo-sharing");
-    }
-  };
-
-  // Botón de cabecera (vive dentro para usar theme)
-  const HeaderButton = ({ label, by }) => {
-    const active = sort.by === by;
-    const nextDir = active && sort.dir === "asc" ? "desc" : "asc";
-    return (
-      <Pressable onPress={() => setSort({ by, dir: nextDir })} style={s.thBtn} hitSlop={theme.hitSlop}>
-        <Text style={[s.thText, active && { color: theme.colors.secondary }]}>{label}</Text>
-        <Ionicons
-          name={!active ? "swap-vertical-outline" : sort.dir === "asc" ? "caret-up-outline" : "caret-down-outline"}
-          size={16}
-          color={active ? theme.colors.secondary : theme.colors.textMuted}
-        />
-      </Pressable>
-    );
-  };
-
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <AppBar variant="section" title="Reportes" showBorder={false} />
 
       {/* CTA Exportar */}
       <View style={s.actions}>
-        <TouchableOpacity style={s.cta} onPress={onExport} activeOpacity={theme.opacity.pressed}>
+        <Pressable
+          style={s.cta}
+          onPress={onExport}
+          accessibilityRole="button"
+          accessibilityLabel="Exportar CSV"
+        >
           <Ionicons name="download-outline" size={18} color={theme.colors.onSecondary} />
           <Text style={s.ctaText}>Exportar CSV</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: theme.spacing.lg,
-          paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
-          gap: theme.spacing.lg,
-        }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Filtros */}
-        <View style={s.filtersCard}>
-          <Text style={s.filterTitle}>Filtros</Text>
-
-          <Text style={s.label}>Cliente</Text>
-          <TextInput
-            style={s.input}
-            placeholder="Todos o escribe un nombre"
-            placeholderTextColor={theme.colors.textMuted}
-            value={cliente}
-            onChangeText={setCliente}
-          />
-
-          <Text style={s.label}>Estado</Text>
-          <View style={s.chipsRow}>
-            {["Todos", "Pendiente", "En Proceso", "Completado"].map((st) => {
-              const active = estado === st;
-              return (
-                <Pressable
-                  key={st}
-                  onPress={() => setEstado(st)}
-                  style={[s.chip, active && s.chipActive]}
-                  hitSlop={theme.hitSlop}
-                >
-                  <Text style={[s.chipText, active && s.chipTextActive]}>{st}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Text style={s.label}>Fecha de Inicio</Text>
-          <TextInput
-            style={s.input}
-            placeholder="dd/mm/aaaa"
-            placeholderTextColor={theme.colors.textMuted}
-            keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
-            value={fIniHuman}
-            onChangeText={setFIniHuman}
-          />
-
-          <Text style={s.label}>Fecha Final</Text>
-          <TextInput
-            style={s.input}
-            placeholder="dd/mm/aaaa"
-            placeholderTextColor={theme.colors.textMuted}
-            keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
-            value={fFinHuman}
-            onChangeText={setFFinHuman}
-          />
-
-          <Pressable style={s.genBtn} onPress={load} hitSlop={theme.hitSlop}>
-            <Ionicons name="bar-chart-outline" size={18} color={theme.colors.onSecondary} />
-            <Text style={s.genTxt}>Generar Reporte</Text>
-          </Pressable>
-        </View>
-
-        {/* Encabezados de “tabla” */}
-        <View style={s.tableHeader}>
-          <HeaderButton label="Cliente" by="cliente" />
-          <HeaderButton label="Nombre del trámite" by="tramite" />
-          <HeaderButton label="Estado" by="estado" />
-          <HeaderButton label="Fecha inicio" by="fechaInicio" />
-          <HeaderButton label="Fecha final" by="fechaFin" />
-        </View>
-
-        {/* Lista */}
-        <View style={{ gap: 10 }}>
-          {pageRows.map((r) => (
-            <View key={r.id} style={s.rowCard}>
-              <Text style={s.rowTitle}>{r.tramite}</Text>
-
-              <View style={s.rowLine}>
-                <Text style={s.rowLabel}>Cliente:</Text>
-                <Text style={s.rowValue}>{r.cliente}</Text>
+      <FlatList
+        contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingBottom: Math.max(insets.bottom, theme.spacing.xl) }}
+        data={sortedRows}
+        keyExtractor={(r) => r.id}
+        ListHeaderComponent={
+          <>
+            <Filters />
+            <HeaderButtons />
+            {loading && (
+              <View style={{ paddingVertical: 8 }}>
+                <ActivityIndicator color={theme.colors.secondary} />
               </View>
-
-              <View style={s.rowLine}>
-                <Text style={s.rowLabel}>Estado:</Text>
-                <Text style={[s.rowValue, s[stateToStyle(r.estado)]]}>{r.estado}</Text>
-              </View>
-
-              <View style={s.rowGrid}>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowLabel}>Inicio</Text>
-                  <Text style={s.rowValue}>{toHuman(r.fechaInicio)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowLabel}>Final</Text>
-                  <Text style={s.rowValue}>{toHuman(r.fechaFin)}</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-
-          {!pageRows.length && (
+            )}
+          </>
+        }
+        renderItem={ReportRow}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ListEmptyComponent={() =>
+          !loading ? (
             <View style={s.emptyBox}>
               <Ionicons name="cloud-offline-outline" size={22} color={theme.colors.textMuted} />
-              <Text style={{ color: theme.colors.textMuted }}>Sin resultados</Text>
+              <Text style={{ color: theme.colors.textMuted, marginTop: 6 }}>Sin resultados</Text>
             </View>
-          )}
-        </View>
-
-        {/* Paginación */}
-        <View style={s.pagination}>
-          <Pressable
-            style={[s.pageBtn, page === 1 && s.pageBtnDisabled]}
-            onPress={() => page > 1 && setPage(page - 1)}
-            disabled={page === 1}
-            hitSlop={theme.hitSlop}
-          >
-            <Ionicons name="chevron-back" size={18} color={theme.colors.onSecondary} />
-          </Pressable>
-
-          <View style={s.pageBadge}>
-            <Text style={s.pageBadgeTxt}>
-              {page} / {totalPages}
-            </Text>
-          </View>
-
-          <Pressable
-            style={[s.pageBtn, page === totalPages && s.pageBtnDisabled]}
-            onPress={() => page < totalPages && setPage(page + 1)}
-            disabled={page === totalPages}
-            hitSlop={theme.hitSlop}
-          >
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.onSecondary} />
-          </Pressable>
-        </View>
-      </ScrollView>
+          ) : null
+        }
+        onEndReachedThreshold={0.6}
+        onEndReached={onEndReached}
+        ListFooterComponent={ListFooter}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+        initialNumToRender={8}
+        windowSize={6}
+        removeClippedSubviews={true}
+      />
     </SafeAreaView>
   );
 }
 
-/* =================== Estilos dependientes del tema =================== */
+/* ------------------ Estilos (RN friendly) ------------------ */
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
 
-    // Acciones (CTA Exportar)
+    // CTA export
     actions: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
@@ -355,7 +503,7 @@ const mkStyles = (theme) =>
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      gap: 8,
+      paddingHorizontal: 14,
     },
     ctaText: { color: theme.colors.onSecondary, fontWeight: "800", fontSize: theme.font.body },
 
@@ -366,18 +514,12 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
       marginTop: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
       ...theme.shadow,
-      gap: 8,
     },
-    filterTitle: { fontWeight: "900", fontSize: theme.font.h3, color: theme.colors.text, marginBottom: 4 },
+    filterTitle: { fontWeight: "900", fontSize: theme.font.h3, color: theme.colors.text, marginBottom: 8 },
 
-    label: {
-      marginTop: theme.spacing.sm,
-      marginBottom: 6,
-      fontSize: theme.font.small,
-      fontWeight: "800",
-      color: theme.colors.text,
-    },
+    label: { marginTop: 8, marginBottom: 6, fontSize: theme.font.small, fontWeight: "800", color: theme.colors.text },
     input: {
       height: 44,
       paddingHorizontal: 12,
@@ -389,104 +531,29 @@ const mkStyles = (theme) =>
       fontSize: theme.font.body,
     },
 
-    chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-    chip: {
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-    },
+    chipsRow: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
+    chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: theme.radius.pill, backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", marginRight: 8, marginBottom: 8 },
     chipActive: { backgroundColor: theme.colors.secondary },
     chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
     chipTextActive: { color: theme.colors.onSecondary },
 
-    genBtn: {
-      marginTop: theme.spacing.md,
-      height: 48,
-      borderRadius: theme.radius.pill,
-      backgroundColor: theme.colors.secondary,
-      alignItems: "center",
-      justifyContent: "center",
-      flexDirection: "row",
-      gap: 8,
-    },
+    genBtn: { marginTop: 12, height: 48, borderRadius: theme.radius.pill, backgroundColor: theme.colors.secondary, alignItems: "center", justifyContent: "center", flexDirection: "row", paddingHorizontal: 14 },
     genTxt: { color: theme.colors.onSecondary, fontWeight: "900", fontSize: theme.font.body },
 
-    tableHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      flexWrap: "wrap",
-      gap: 8,
-      paddingHorizontal: theme.spacing.lg,
-      marginTop: theme.spacing.sm,
-      marginBottom: theme.spacing.sm,
-    },
-    thBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-      paddingVertical: 10,
-      paddingHorizontal: 14,
-      borderRadius: theme.radius.pill,
-    },
+    tableHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", paddingHorizontal: 0, marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
+    thBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 12, borderRadius: theme.radius.pill, backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", marginRight: 8, marginBottom: 8 },
     thText: { fontSize: theme.font.small, fontWeight: "800", color: theme.colors.text },
 
-    rowCard: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      padding: theme.spacing.lg,
-      ...theme.shadow,
-      gap: 8,
-    },
-    rowTitle: { fontSize: theme.font.h3, fontWeight: "900", color: theme.colors.text },
-    rowLine: { flexDirection: "row", gap: 8, alignItems: "baseline" },
-    rowLabel: { color: theme.colors.textMuted, fontSize: theme.font.small, fontWeight: "700" },
+    rowCard: { backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.lg, marginBottom: theme.spacing.md, ...theme.shadow },
+    rowTitle: { fontSize: theme.font.h3, fontWeight: "900", color: theme.colors.text, marginBottom: 8 },
+    rowLine: { flexDirection: "row", alignItems: "baseline", marginBottom: 6 },
+    rowLabel: { color: theme.colors.textMuted, fontSize: theme.font.small, fontWeight: "700", marginRight: 8 },
     rowValue: { color: theme.colors.text, fontSize: theme.font.body, flexShrink: 1 },
-    rowGrid: { flexDirection: "row", gap: 16, marginTop: 4 },
+    rowGrid: { flexDirection: "row", marginTop: 4 },
 
     statePend: { color: theme.colors.warning, fontWeight: "800" },
     stateWip: { color: theme.colors.secondary, fontWeight: "800" },
     stateDone: { color: theme.colors.success, fontWeight: "800" },
 
-    emptyBox: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: theme.spacing.lg,
-      backgroundColor: theme.colors.surface,
-      borderRadius: theme.radius.xl,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      gap: 6,
-    },
-
-    pagination: {
-      marginTop: theme.spacing.lg,
-      marginBottom: 0,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 10,
-    },
-    pageBtn: {
-      height: 40,
-      width: 40,
-      borderRadius: 20,
-      backgroundColor: theme.colors.secondary,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    pageBtnDisabled: { opacity: theme.opacity.disabled },
-    pageBadge: {
-      paddingHorizontal: 14,
-      height: 40,
-      borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    pageBadgeTxt: { fontWeight: "800", color: theme.colors.text },
+    emptyBox: { alignItems: "center", justifyContent: "center", padding: theme.spacing.lg, backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, borderWidth: 1, borderColor: theme.colors.border, marginTop: theme.spacing.md, marginBottom: theme.spacing.md },
   });

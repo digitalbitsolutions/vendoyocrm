@@ -1,15 +1,18 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+// app/(app)/tramites/index.jsx
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TextInput,
   TouchableOpacity,
   Pressable,
   Alert,
   DeviceEventEmitter,
   Platform,
+  Keyboard,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,14 +20,16 @@ import { useRouter } from "expo-router";
 import AppBar from "../../../src/components/AppBar";
 import { useTheme } from "../../../src/style/theme";
 
-/* ================= Mock de datos (ajustaremos a tu backend luego) ================= */
+/* ------------------------------------
+   MOCK inicial (sustituir por API luego)
+   ------------------------------------ */
 const MOCK_TRAMITES = [
   {
     id: "t1",
     titulo: "Compraventa Inmueble - Calle Mallorca 128",
     ref: "CV-2025-0036",
     cliente: "Miguel, Yesan",
-    estado: "Pendiente", // "Pendiente" | "En Proceso" | "Completado"
+    estado: "Pendiente",
     creadoEl: "2025-06-23",
   },
   {
@@ -45,20 +50,10 @@ const MOCK_TRAMITES = [
   },
 ];
 
-/* ================= Sub-componentes mínimos reutilizables ================= */
-function Card({ children, style, onPress }) {
-  const Comp = onPress ? TouchableOpacity : View;
-  return (
-    <Comp
-      style={style}
-      {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" } : {})}
-    >
-      {children}
-    </Comp>
-  );
-}
-
-function FilterChip({ label, active, onPress, s }) {
+/* -------------------------
+   Pequeños componentes memo
+   ------------------------- */
+const FilterChip = React.memo(function FilterChip({ label, active, onPress, s }) {
   return (
     <Pressable
       onPress={onPress}
@@ -70,35 +65,71 @@ function FilterChip({ label, active, onPress, s }) {
       <Text style={[s.chipText, active && s.chipTextActive]}>{label}</Text>
     </Pressable>
   );
+});
+
+const EmptyList = ({ s }) => (
+  <View style={[s.card, { alignItems: "center", paddingVertical: 32 }]}>
+    <Ionicons name="document-outline" size={36} color={s.theme.colors.textMuted} />
+    <Text style={s.emptyTitle}>No hay trámites</Text>
+    <Text style={s.emptyText}>Crea tu primer trámite con el botón “Nuevo Trámite”.</Text>
+  </View>
+);
+
+/* -------------------------
+   Helper formatting
+   ------------------------- */
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
+  } catch {
+    return String(iso || "");
+  }
+}
+function badgeByState(s) {
+  if (s === "Completado") return "badgeDone";
+  if (s === "En Proceso") return "badgeWip";
+  return "badgePend";
 }
 
-/* ================= Pantalla ================= */
+/* ----------------------------------
+   Pantalla principal: TramitesScreen
+   ---------------------------------- */
 export default function TramitesScreen() {
   const { theme } = useTheme();
   const s = mkStyles(theme);
+  s.theme = theme;
+
   const router = useRouter();
 
-  // Estado
   const [items, setItems] = useState(MOCK_TRAMITES);
-  const [estado, setEstado] = useState("Todos"); // Todos | Pendiente | En Proceso | Completado
+  const [estado, setEstado] = useState("Todos");
   const [q, setQ] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Filtro en memoria
-  const list = useMemo(() => {
-    const text = q.trim().toLowerCase();
+  const searchTimeout = useRef(null);
+  const [debouncedQ, setDebouncedQ] = useState("");
+
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => setDebouncedQ(q.trim().toLowerCase()), 300);
+    return () => clearTimeout(searchTimeout.current);
+  }, [q]);
+
+  const filtered = useMemo(() => {
+    const text = debouncedQ || "";
     return items.filter((t) => {
       const okEstado = estado === "Todos" ? true : t.estado === estado;
-      const okTexto =
+      const hayTexto =
         !text ||
-        (t.titulo + t.ref + t.cliente)
-          .toLowerCase()
-          .includes(text);
-      return okEstado && okTexto;
+        (t.titulo + " " + (t.ref || "") + " " + (t.cliente || "")).toLowerCase().includes(text);
+      return okEstado && hayTexto;
     });
-  }, [items, estado, q]);
+  }, [items, estado, debouncedQ]);
 
-  // Navegación
-  const nuevo = useCallback(() => router.push("/(app)/tramites/nuevo"), [router]);
+  const nuevo = useCallback(() => {
+    router.push("/(app)/tramites/nuevo");
+  }, [router]);
 
   const editar = useCallback(
     (t) => {
@@ -109,21 +140,16 @@ export default function TramitesScreen() {
   );
 
   const eliminar = useCallback((t) => {
-    Alert.alert(
-      "Eliminar trámite",
-      `¿Seguro que deseas eliminar “${t.titulo}”?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () => setItems((prev) => prev.filter((x) => x.id !== t.id)),
-        },
-      ]
-    );
+    Alert.alert("Eliminar trámite", `¿Seguro que deseas eliminar “${t.titulo}”?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () => setItems((prev) => prev.filter((x) => x.id !== t.id)),
+      },
+    ]);
   }, []);
 
-  // Suscripciones cross-pantalla (nuevo/editar/eliminar)
   useEffect(() => {
     const c1 = DeviceEventEmitter.addListener("tramite:created", (nuevo) => {
       setItems((prev) => [nuevo, ...prev]);
@@ -141,31 +167,80 @@ export default function TramitesScreen() {
     };
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+      setItems((prev) => [...prev]);
+    } catch (e) {
+      Alert.alert("Error", "No se pudieron actualizar los trámites.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <View style={s.card}>
+        <Text style={s.title}>{item.titulo}</Text>
+
+        <Text style={s.subLine}>
+          <Text style={s.muted}>Ref: </Text>
+          {item.ref}
+        </Text>
+
+        <Text style={s.subLine}>
+          <Text style={s.muted}>Cliente: </Text>
+          {item.cliente}
+        </Text>
+
+        <View style={s.row}>
+          <Text style={[s.badge, s[badgeByState(item.estado)]]}>{item.estado}</Text>
+          <Text style={[s.muted, { marginLeft: "auto" }]}>{formatDate(item.creadoEl)}</Text>
+        </View>
+
+        <View style={s.cardFooter}>
+          <TouchableOpacity
+            style={[s.btn, s.btnEdit]}
+            onPress={() => editar(item)}
+            activeOpacity={theme.opacity.pressed}
+            accessibilityLabel={`Editar ${item.titulo}`}
+          >
+            <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
+            <Text style={[s.btnText, { color: theme.colors.onAccent }]}>Editar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[s.btn, s.btnDelete]}
+            onPress={() => eliminar(item)}
+            activeOpacity={theme.opacity.pressed}
+            accessibilityLabel={`Eliminar ${item.titulo}`}
+          >
+            <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
+            <Text style={[s.btnText, { color: theme.colors.onDanger }]}>Eliminar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ),
+    [s, editar, eliminar, theme]
+  );
+
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      {/* AppBar: flecha + título */}
       <AppBar variant="section" title="Mis Trámites" showBorder={false} />
 
-      {/* Acciones: filtros + buscador + CTA */}
       <View style={s.actions}>
-        {/* Filtros por estado */}
-        <ScrollView
+        <FlatList
+          data={["Todos", "Pendiente", "En Proceso", "Completado"]}
           horizontal
+          keyExtractor={(x) => x}
+          renderItem={({ item }) => (
+            <FilterChip label={item} active={estado === item} onPress={() => setEstado(item)} s={s} />
+          )}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
-        >
-          {["Todos", "Pendiente", "En Proceso", "Completado"].map((st) => (
-            <FilterChip
-              key={st}
-              label={st}
-              active={estado === st}
-              onPress={() => setEstado(st)}
-              s={s}
-            />
-          ))}
-        </ScrollView>
+          contentContainerStyle={{ paddingRight: 8 }}
+        />
 
-        {/* Buscador */}
         <View style={s.searchWrap}>
           <Ionicons name="search" size={18} color={theme.colors.textMuted} />
           <TextInput
@@ -175,87 +250,42 @@ export default function TramitesScreen() {
             placeholderTextColor={theme.colors.textMuted}
             style={s.searchInput}
             returnKeyType="search"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            accessibilityLabel="Buscar trámites"
           />
         </View>
 
-        {/* CTA: Nuevo trámite */}
         <TouchableOpacity style={s.cta} onPress={nuevo} activeOpacity={theme.opacity.pressed}>
           <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
           <Text style={s.ctaText}>Nuevo Trámite</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Lista */}
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {list.length ? (
-          list.map((t) => (
-            <Card key={t.id} style={s.card}>
-              <Text style={s.title}>{t.titulo}</Text>
-              <Text style={s.subLine}>
-                <Text style={s.muted}>Ref: </Text>
-                {t.ref}
-              </Text>
-              <Text style={s.subLine}>
-                <Text style={s.muted}>Cliente: </Text>
-                {t.cliente}
-              </Text>
-              <View style={s.row}>
-                <Text style={[s.badge, s[badgeByState(t.estado)]]}>{t.estado}</Text>
-                <Text style={[s.muted, { marginLeft: "auto" }]}>{formatDate(t.creadoEl)}</Text>
-              </View>
-
-              {/* Acciones */}
-              <View style={s.cardFooter}>
-                <TouchableOpacity
-                  style={[s.btn, s.btnEdit]}
-                  onPress={() => editar(t)}
-                  activeOpacity={theme.opacity.pressed}
-                  accessibilityLabel={`Editar ${t.titulo}`}
-                >
-                  <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
-                  <Text style={[s.btnText, { color: theme.colors.onAccent }]}>Editar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[s.btn, s.btnDelete]}
-                  onPress={() => eliminar(t)}
-                  activeOpacity={theme.opacity.pressed}
-                  accessibilityLabel={`Eliminar ${t.titulo}`}
-                >
-                  <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
-                  <Text style={[s.btnText, { color: theme.colors.onDanger }]}>Eliminar</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))
-        ) : (
-          <Card style={[s.card, { alignItems: "center", paddingVertical: theme.spacing.xl }]}>
-            <Ionicons name="document-outline" size={32} color={theme.colors.textMuted} />
-            <Text style={s.emptyTitle}>No hay trámites</Text>
-            <Text style={s.emptyText}>Crea tu primer trámite con el botón “Nuevo Trámite”.</Text>
-          </Card>
-        )}
-      </ScrollView>
+      <FlatList
+        data={filtered}
+        keyExtractor={(i) => i.id}
+        renderItem={renderItem}
+        contentContainerStyle={s.listContent}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ListEmptyComponent={<EmptyList s={s} />}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            tintColor={theme.colors.textMuted}
+            colors={[theme.colors.secondary]}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      />
     </SafeAreaView>
   );
 }
 
-/* ================= Helpers de UI/format ================= */
-function badgeByState(s) {
-  if (s === "Completado") return "badgeDone";
-  if (s === "En Proceso") return "badgeWip";
-  return "badgePend";
-}
-function formatDate(iso) {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
-  } catch {
-    return String(iso || "");
-  }
-}
-
-/* ================= Estilos dependientes del tema ================= */
+/* -------------------------
+   Estilos dependientes del tema
+   ------------------------- */
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
@@ -264,18 +294,18 @@ const mkStyles = (theme) =>
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.sm,
-      gap: theme.spacing.md,
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
+      gap: theme.spacing.md,
     },
 
     chip: {
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor:
-        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      marginRight: 8,
     },
     chipActive: { backgroundColor: theme.colors.secondary },
     chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
@@ -291,12 +321,12 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
       paddingHorizontal: 12,
+      marginTop: theme.spacing.sm,
     },
     searchInput: { flex: 1, color: theme.colors.text, fontSize: theme.font.body },
 
-    scroll: {
+    listContent: {
       padding: theme.spacing.lg,
-      gap: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
     },
 
@@ -339,22 +369,22 @@ const mkStyles = (theme) =>
       gap: 10,
     },
     cta: {
-      height: 48,                               // misma altura
-      borderRadius: theme.radius.pill,          // pill
-      backgroundColor: theme.colors.secondary,  // color marca
+      height: 48,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.secondary,
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      gap: 8,                                   // separación icono-texto
-      // sombra suave como en Clientes
+      gap: 8,
       shadowColor: "#000",
       shadowOpacity: 0.12,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 3 },
       elevation: 4,
+      marginTop: theme.spacing.sm,
     },
     ctaText: {
-      color: theme.colors.onSecondary,          // texto legible
+      color: theme.colors.onSecondary,
       fontWeight: "800",
       fontSize: theme.font.body,
       letterSpacing: 0.2,
