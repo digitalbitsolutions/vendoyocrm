@@ -1,28 +1,19 @@
-// app/(app)/dashboard/_layout.jsx
+// src/components/Drawer/CustomDrawerContent.jsx
 import React, { useMemo, useCallback } from "react";
-import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
-import { Drawer } from "expo-router/drawer";
-import { useRouter, usePathname } from "expo-router";
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  Platform,
-  useWindowDimensions,
-} from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "../../../src/style/theme";
-import { useAuth } from "../../../src/context/AuthContext";
+import { useRouter, usePathname } from "expo-router";
+import { useTheme } from "../../style/theme";
+import { useAuth } from "../../context/AuthContext";
 
-/* Helper: si la ruta está activa */
+/* Helper */
 function isActive(pathname, href) {
   if (!pathname || !href) return false;
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-/* Item memoizado para evitar re-renders innecesarios */
+/* Drawer item memoizado */
 const DrawerItem = React.memo(function DrawerItem({ icon, label, onPress, active }) {
   const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
@@ -50,19 +41,18 @@ const DrawerItem = React.memo(function DrawerItem({ icon, label, onPress, active
           style={{ width: 26, marginLeft: 6 }}
         />
       </View>
-
       <Text style={[s.itemText, active && s.itemTextActive]}>{label}</Text>
     </Pressable>
   );
 });
 
-/* Contenido personalizado del Drawer */
-function CustomDrawerContent(props) {
+/* Componente exportado */
+export default function CustomDrawerContent(props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { signOut } = useAuth();
   const pathname = usePathname();
   const { theme } = useTheme();
+  const { signOut } = useAuth();
   const s = useMemo(() => mkStyles(theme), [theme]);
 
   const MENU = useMemo(
@@ -94,7 +84,6 @@ function CustomDrawerContent(props) {
 
   return (
     <SafeAreaView style={[s.drawerRoot]} edges={["top", "bottom"]}>
-      {/* Header */}
       <View style={s.header}>
         <Text style={s.headerTitle}>Menú</Text>
         <Pressable
@@ -108,7 +97,6 @@ function CustomDrawerContent(props) {
         </Pressable>
       </View>
 
-      {/* Lista */}
       <ScrollView
         contentContainerStyle={[s.menu, { paddingBottom: insets.bottom + theme.spacing.lg }]}
         showsVerticalScrollIndicator={false}
@@ -125,65 +113,28 @@ function CustomDrawerContent(props) {
 
         <View style={{ height: theme.spacing.md }} />
 
-        {/* Cerrar sesión: ancho completo interior con borde red */}
-        <View style={s.logoutWrap}>
-          <Pressable
-            onPress={onSignOut}
-            style={({ pressed }) => [s.logoutBtn, pressed && { opacity: theme.opacity.pressed }]}
-            hitSlop={theme.hitSlop}
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar sesión"
-          >
-            <Ionicons name="log-out" size={20} color={theme.colors.danger} />
-            <Text style={s.logoutText}>Cerrar sesión</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={onSignOut}
+          style={({ pressed }) => [s.logoutBtn, pressed && { opacity: theme.opacity.pressed }]}
+          hitSlop={theme.hitSlop}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+        >
+          <Ionicons name="log-out" size={18} color={theme.colors.danger} />
+          <Text style={s.logoutText}>Cerrar sesión</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* Layout con Drawer (opciones dependientes del tema) */
-export default function DashboardLayout() {
-  const { theme } = useTheme();
-  const { width } = useWindowDimensions();
-
-  // Drawer width responsivo: no más de 360, y porcentaje si pantalla pequeña
-  const drawerWidth = Math.min(360, Math.round(width * 0.78));
-
-  return (
-    <Drawer
-      screenOptions={{
-        headerShown: false,
-        drawerPosition: "right",
-        drawerType: "front",
-        overlayColor: theme.colors.overlay,
-        drawerStyle: {
-          width: drawerWidth,
-          backgroundColor: theme.colors.surface,
-          borderLeftWidth: 1,
-          borderLeftColor: theme.mode === "dark" ? theme.colors.border : theme.colors.primary + "22",
-        },
-        swipeEdgeWidth: 40,
-        sceneContainerStyle: {
-          backgroundColor: theme.colors.background,
-        },
-      }}
-      drawerContent={(p) => <CustomDrawerContent {...p} />}
-    >
-      <Drawer.Screen name="index" options={{ headerShown: false }} />
-    </Drawer>
-  );
-}
-
-/* ---------- Estilos dependientes del tema (sin `gap`) ---------- */
+/* Estilos */
 const mkStyles = (theme) =>
   StyleSheet.create({
     drawerRoot: {
       flex: 1,
       backgroundColor: theme.colors.surface,
     },
-
     header: {
       height: 56,
       paddingHorizontal: theme.spacing.lg,
@@ -207,22 +158,19 @@ const mkStyles = (theme) =>
       justifyContent: "center",
       ...(Platform.OS === "ios" ? {} : { overflow: "hidden" }),
     },
-
     menu: {
       paddingTop: theme.spacing.lg,
       paddingBottom: theme.spacing.lg,
       paddingHorizontal: theme.spacing.md,
       backgroundColor: theme.colors.surface,
     },
-
-    /* item: usando marginBottom en lugar de gap para RN */
     item: {
       flexDirection: "row",
       alignItems: "center",
       paddingVertical: 12,
       paddingHorizontal: 10,
       borderRadius: theme.radius.lg,
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
     },
     itemActive: {
       backgroundColor: "rgba(0,0,0,0.04)",
@@ -230,8 +178,8 @@ const mkStyles = (theme) =>
     itemLeft: {
       flexDirection: "row",
       alignItems: "center",
-      width: 48,
-      marginRight: 8,
+      width: 36,
+      marginRight: 12,
     },
     activeDot: {
       width: 6,
@@ -242,33 +190,26 @@ const mkStyles = (theme) =>
     },
     itemText: {
       color: theme.colors.text,
-      fontSize: theme.font.h3,
+      fontSize: 16,
       fontWeight: "700",
     },
     itemTextActive: {
       color: theme.colors.secondary,
     },
-
-    /* Logout */
-    logoutWrap: {
-      paddingHorizontal: theme.spacing.md,
-      marginTop: theme.spacing.lg,
-    },
     logoutBtn: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      width: "100%",
-      paddingVertical: 14,
-      borderRadius: theme.radius.xl,
-      borderWidth: 1.5,
+      marginTop: theme.spacing.lg,
+      paddingVertical: 12,
+      borderRadius: theme.radius.pill,
+      borderWidth: 1,
       borderColor: theme.colors.danger,
       backgroundColor: "transparent",
     },
     logoutText: {
       color: theme.colors.danger,
-      fontSize: theme.font.small,
-      fontWeight: "700",
-      marginLeft: 8,
+      fontSize: 15,
+      fontWeight: "600",
     },
   });

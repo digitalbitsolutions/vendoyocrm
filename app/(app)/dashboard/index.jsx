@@ -1,9 +1,4 @@
-// --------------------------------------------------------------------------------------
-// Dashboard (Home) tras el login — versión segura (sin globals)
-// - Tema dinámico con useTheme + mkStyles(theme)
-// - Helpers Card/MetricCard definidos DENTRO del componente
-// --------------------------------------------------------------------------------------
-
+// app/(app)/dashboard/index.jsx
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,7 +14,6 @@ export default function DashboardScreen() {
   const { theme } = useTheme();       // lee el tema activo (light/dark)
   const s = mkStyles(theme);          // genera estilos reactivos
 
-  // Helpers locales ahora DENTRO del componente (acceden a s/theme sin globals)
   function getInitials(name = "") {
     const parts = name.trim().split(/\s+/);
     const first = parts[0]?.[0] ?? "";
@@ -27,7 +21,6 @@ export default function DashboardScreen() {
     return (first + last).toUpperCase();
   }
 
-  // Card base reutilizable
   function Card({ children, style, onPress, testID }) {
     const Comp = onPress ? TouchableOpacity : View;
     const pressProps = onPress
@@ -40,10 +33,9 @@ export default function DashboardScreen() {
     );
   }
 
-  // Tarjeta de métrica
   function MetricCard({ title, value, subtitle, onPress, testID }) {
     return (
-      <Card style={s.metric} onPress={onPress} testID={testID}>
+      <Card style={[s.metric, { marginBottom: theme.spacing.md }]} onPress={onPress} testID={testID}>
         <Text style={s.metricTitle}>{title}</Text>
         <Text style={s.metricValue}>{value}</Text>
         {subtitle ? <Text style={s.metricSubtitle}>{subtitle}</Text> : null}
@@ -51,7 +43,6 @@ export default function DashboardScreen() {
     );
   }
 
-  // Saludo
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     if (h < 12) return "Buenos días";
@@ -59,14 +50,12 @@ export default function DashboardScreen() {
     return "Buenas noches";
   }, []);
 
-  // MOCK
   const data = { visitasWeb: 3457, recibidos: 3, enProceso: 0, completados: 0 };
 
-  // Navegación
   const goTramites = () => router.push("/(app)/tramites");
   const goPerfil   = () => router.push("/(app)/perfil");
   const goSoporte  = () => router.push("/(app)/soporte");
-  const goAjustes  = () => router.push("/(app)/ajustes"); // <-- ✅ RUTA corregida
+  const goAjustes  = () => router.push("/(app)/ajustes");
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
@@ -78,7 +67,7 @@ export default function DashboardScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         {/* Bienvenida + usuario */}
-        <Card style={{ padding: theme.spacing.lg }}>
+        <Card style={{ padding: theme.spacing.lg, marginBottom: theme.spacing.lg }}>
           <Text style={s.h1}>Dashboard de VendoYo.es</Text>
           <Text style={s.subtitle}>{greeting}, {user?.name || "Usuario"}.</Text>
 
@@ -124,31 +113,31 @@ export default function DashboardScreen() {
           />
         </View>
 
-        {/* Placeholders de bloques */}
-        <Card style={s.block}>
+        {/* Bloques grandes */}
+        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites por Estado</Text>
           <Text style={s.blockHint}>Aquí insertaremos un gráfico de barras o donut.</Text>
         </Card>
 
-        <Card style={s.block}>
+        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites por Conexión</Text>
           <Text style={s.blockHint}>Placeholder para un gráfico por plataforma (iOS/Android/Web).</Text>
         </Card>
 
-        <Card style={s.block}>
+        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites Recibidos Mensuales</Text>
           <Text style={s.blockHint}>Aquí irá un gráfico de líneas por meses.</Text>
         </Card>
 
-        <Card style={s.block}>
+        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Asistente Inteligente de trámites</Text>
           <Text style={s.blockHint}>En la próxima iteración conectamos un textarea + botón para generar sugerencias.</Text>
         </Card>
 
         {/* Enlaces rápidos */}
         <View style={s.quickLinks}>
-          <TouchableOpacity onPress={goTramites}><Text style={s.link}>Ir a trámites</Text></TouchableOpacity>
-          <TouchableOpacity onPress={goSoporte}><Text style={s.link}>Contactar Soporte</Text></TouchableOpacity>
+          <TouchableOpacity onPress={goTramites} style={{ marginBottom: theme.spacing.sm }}><Text style={s.link}>Ir a trámites</Text></TouchableOpacity>
+          <TouchableOpacity onPress={goSoporte} style={{ marginBottom: theme.spacing.sm }}><Text style={s.link}>Contactar Soporte</Text></TouchableOpacity>
           <TouchableOpacity onPress={goAjustes}><Text style={s.link}>Ajustes</Text></TouchableOpacity>
         </View>
       </ScrollView>
@@ -160,7 +149,7 @@ export default function DashboardScreen() {
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
-    scroll: { padding: theme.spacing.lg, gap: theme.spacing.lg },
+    scroll: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl },
 
     // Tipografía
     h1: { fontSize: theme.font.h2, fontWeight: "600", color: theme.colors.text },
@@ -177,20 +166,21 @@ const mkStyles = (theme) =>
     },
 
     // Usuario
-    userRow: { marginTop: theme.spacing.md, flexDirection: "row", alignItems: "center", gap: theme.spacing.md },
+    userRow: { marginTop: theme.spacing.md, flexDirection: "row", alignItems: "center" },
     avatar: {
       width: 56, height: 56, borderRadius: 28,
       backgroundColor: theme.colors.border,
       alignItems: "center", justifyContent: "center",
+      marginRight: theme.spacing.md
     },
     avatarText: { fontSize: 18, fontWeight: "800", color: theme.colors.text },
     userName: { fontSize: theme.font.body, fontWeight: "700", color: theme.colors.text },
     userEmail: { fontSize: theme.font.small, color: theme.colors.textMuted },
     userAction: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: theme.radius.lg, backgroundColor: theme.colors.primary },
-    userActionText: { color: theme.colors.onDanger, fontWeight: "700", fontSize: theme.font.small },
+    userActionText: { color: theme.colors.onAccent, fontWeight: "700", fontSize: theme.font.small },
 
-    // Métricas
-    grid: { flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.md },
+    // Métricas: usamos percent width + marginBottom para spacing
+    grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
     metric: {
       width: "47.5%",
       paddingVertical: theme.spacing.lg,
@@ -210,6 +200,6 @@ const mkStyles = (theme) =>
     blockHint: { color: theme.colors.textMuted, fontSize: theme.font.small },
 
     // Links rápidos
-    quickLinks: { alignItems: "center", gap: theme.spacing.sm, paddingBottom: theme.spacing.xl },
+    quickLinks: { alignItems: "center", paddingBottom: theme.spacing.xl },
     link: { color: theme.colors.primary, fontWeight: "700", fontSize: theme.font.small },
   });
