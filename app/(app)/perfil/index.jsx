@@ -1,3 +1,4 @@
+// app/(app)/perfil/index.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
@@ -10,14 +11,14 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  ActionSheetIOS
+  ActionSheetIOS,
 } from "react-native";
 import {
   launchImageLibraryAsync,
   requestMediaLibraryPermissionsAsync,
   launchCameraAsync,
   requestCameraPermissionsAsync,
-  MediaTypeOptions
+  MediaTypeOptions,
 } from "expo-image-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,35 +31,47 @@ import { Button } from "../../../src/components/Button";
 import { getProfile, updateProfile } from "../../../src/services/profile";
 import { uploadImage } from "../../../src/services/uploads";
 
+/**
+ * PerfilScreen — pantalla principal de perfil
+ * Mejoras:
+ *  - protección contra setState after unmount
+ *  - mejor control de permisos y errors
+ *  - accesibilidad en botones
+ *  - placeholders y estados (uploading)
+ */
 export default function PerfilScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const s = mkStyles(theme);
 
-  // ---------- Estado principal ----------
+  // Estado
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // ---------- Cargar perfil ----------
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const p = await getProfile();
-      setProfile(p);
-    } catch (e) {
-      Alert.alert("Error", e?.message || "No se pudo cargar el perfil.");
-    } finally {
-      setLoading(false);
-    }
+  // Guard para evitar setState si el componente se desmonta mientras hay async
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const p = await getProfile();
+        if (mounted) setProfile(p);
+      } catch (e) {
+        if (mounted) Alert.alert("Error", e?.message || "No se pudo cargar el perfil.");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  useEffect(() => { load(); }, [load]);
-
+  // Refresh manual (pull-to-refresh)
   const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     try {
-      setRefreshing(true);
       const p = await getProfile();
       setProfile(p);
     } catch (e) {
@@ -68,17 +81,17 @@ export default function PerfilScreen() {
     }
   }, []);
 
-  // ---------- Helpers de avatar ----------
+  /* ---------------- Avatar handling ---------------- */
   const handlePicked = useCallback(async (asset) => {
+    if (!asset?.uri) return;
+    setUploading(true);
     try {
-      if (!asset?.uri) return;
-      setUploading(true);
-      // sube (en mock devuelve la misma uri)
+      // uploadImage debe recibir { uri, name, type } — el mock puede devolver la misma url
       const up = await uploadImage(
-        { uri: asset.uri, name: asset.fileName, type: asset.mimeType },
+        { uri: asset.uri, name: asset.fileName || "avatar.jpg", type: asset.type || "image/jpeg" },
         { folder: "avatars" }
       );
-      // guarda en perfil
+      // actualizamos en backend (updateProfile debe devolver el perfil actualizado)
       const updated = await updateProfile({ avatarUrl: up.url });
       setProfile(updated);
     } catch (e) {
@@ -98,7 +111,7 @@ export default function PerfilScreen() {
       mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.9
+      quality: 0.9,
     });
     if (result.canceled) return;
     await handlePicked(result.assets?.[0]);
@@ -114,7 +127,7 @@ export default function PerfilScreen() {
       mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.9
+      quality: 0.9,
     });
     if (result.canceled) return;
     await handlePicked(result.assets?.[0]);
@@ -132,6 +145,7 @@ export default function PerfilScreen() {
     }
   }, []);
 
+  // Muestra opciones para cambiar avatar (ActionSheet iOS / Alert Android)
   const chooseAvatar = useCallback(() => {
     const hasPhoto = !!profile?.avatarUrl;
     const run = async (key) => {
@@ -156,19 +170,18 @@ export default function PerfilScreen() {
         { text: "Tomar foto", onPress: () => run("camera") },
         { text: "Elegir de galería", onPress: () => run("library") },
         ...(hasPhoto ? [{ text: "Quitar foto", style: "destructive", onPress: () => run("remove") }] : []),
-        { text: "Cancelar", style: "cancel" }
+        { text: "Cancelar", style: "cancel" },
       ]);
     }
   }, [profile?.avatarUrl, openCamera, openLibrary, removeAvatar]);
 
-  // ---------- UI derivada ----------
+  /* ---------------- UI derivada ---------------- */
   const initials = useMemo(() => {
     const name = profile?.name || "";
     const parts = name.trim().split(/\s+/).slice(0, 2);
     return parts.map((p) => p?.[0]?.toUpperCase() || "").join("") || "VY";
   }, [profile]);
 
-  // ---------- Render ----------
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <AppBar variant="section" title="Mi perfil" showBorder={false} />
@@ -176,13 +189,9 @@ export default function PerfilScreen() {
       <ScrollView
         contentContainerStyle={s.scroll}
         refreshControl={
-          <RefreshControl
-            tintColor={theme.colors.textMuted}
-            colors={[theme.colors.secondary]}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
+          <RefreshControl tintColor={theme.colors.textMuted} colors={[theme.colors.secondary]} refreshing={refreshing} onRefresh={onRefresh} />
         }
+        showsVerticalScrollIndicator={false}
       >
         {/* Card Perfil */}
         <View style={s.card}>
@@ -196,7 +205,7 @@ export default function PerfilScreen() {
               accessibilityHint="Abre opciones para tomar foto, elegir de galería o quitar"
             >
               {profile?.avatarUrl ? (
-                <Image source={{ uri: profile.avatarUrl }} style={s.avatar} />
+                <Image source={{ uri: profile.avatarUrl }} style={s.avatar} accessibilityLabel="Avatar del usuario" />
               ) : (
                 <View style={[s.avatar, s.avatarFallback]}>
                   <Text style={s.avatarInitials}>{initials}</Text>
@@ -204,12 +213,8 @@ export default function PerfilScreen() {
               )}
 
               {/* Overlay "editar" */}
-              <View style={s.camBadge}>
-                {uploading ? (
-                  <ActivityIndicator size="small" color={theme.colors.onSecondary} />
-                ) : (
-                  <Ionicons name="camera" size={16} color={theme.colors.onSecondary} />
-                )}
+              <View style={s.camBadge} pointerEvents="none" accessibilityElementsHidden>
+                {uploading ? <ActivityIndicator size="small" color={theme.colors.onSecondary} /> : <Ionicons name="camera" size={16} color={theme.colors.onSecondary} />}
               </View>
             </Pressable>
 
@@ -222,9 +227,7 @@ export default function PerfilScreen() {
               </Text>
 
               <View style={s.badgeRow}>
-                <Text style={[s.roleBadge, roleTone(profile?.role, s)]}>
-                  {profile?.role ? String(profile.role || "").toUpperCase() : "USER"}
-                </Text>
+                <Text style={[s.roleBadge, roleTone(profile?.role, s)]}>{profile?.role ? String(profile.role || "").toUpperCase() : "USER"}</Text>
                 {!!profile?.phone && <Text style={s.phone}>• {profile.phone}</Text>}
               </View>
             </View>
@@ -236,11 +239,7 @@ export default function PerfilScreen() {
             <Text style={s.metaText}>
               Miembro desde{" "}
               {profile?.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "short",
-                    day: "2-digit"
-                  })
+                ? new Date(profile.createdAt).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "2-digit" })
                 : "-"}
             </Text>
           </View>
@@ -250,33 +249,15 @@ export default function PerfilScreen() {
             <Text style={s.metaText}>
               Última actualización{" "}
               {profile?.updatedAt
-                ? new Date(profile.updatedAt).toLocaleString("es-ES", {
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                  })
+                ? new Date(profile.updatedAt).toLocaleString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
                 : "-"}
             </Text>
           </View>
 
           {/* Acciones principales */}
           <View style={s.actionsRow}>
-            <Button
-              title="Editar perfil"
-              onPress={() => router.push("/(app)/perfil/editar")}
-              leftIcon={<Ionicons name="create-outline" size={18} color={theme.colors.onAccent} />}
-              variant="primary"
-              fullWidth
-            />
-            <Button
-              title="Cambiar contraseña"
-              onPress={() => router.push("/(app)/perfil/seguridad")}
-              leftIcon={<Ionicons name="key-outline" size={18} color={theme.colors.text} />}
-              variant="outline"
-              fullWidth
-            />
+            <Button title="Editar perfil" onPress={() => router.push("/(app)/perfil/editar")} leftIcon={<Ionicons name="create-outline" size={18} color={theme.colors.onAccent} />} variant="primary" fullWidth />
+            <Button title="Cambiar contraseña" onPress={() => router.push("/(app)/perfil/seguridad")} leftIcon={<Ionicons name="key-outline" size={18} color={theme.colors.text} />} variant="outline" fullWidth />
           </View>
         </View>
 
@@ -313,7 +294,7 @@ const mkStyles = (theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
-      ...theme.shadow
+      ...theme.shadow,
     },
 
     headerRow: { flexDirection: "row", gap: theme.spacing.lg, alignItems: "center" },
@@ -321,7 +302,7 @@ const mkStyles = (theme) =>
     avatarWrap: { width: 84, height: 84 },
     avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: theme.colors.border },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
-    avatarInitials: { fontSize: 28, fontWeight: "800", color: theme.colors.textMuted },
+    avatarInitials: { fontSize: 24, fontWeight: "800", color: theme.colors.textMuted },
 
     camBadge: {
       position: "absolute",
@@ -334,7 +315,7 @@ const mkStyles = (theme) =>
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 2,
-      borderColor: theme.colors.surface
+      borderColor: theme.colors.surface,
     },
 
     name: { fontSize: theme.font.h2, fontWeight: "800", color: theme.colors.text },
@@ -346,8 +327,8 @@ const mkStyles = (theme) =>
       paddingVertical: 6,
       borderRadius: theme.radius.pill,
       fontSize: theme.font.tiny,
-      fontWeight: "900",
-      overflow: "hidden"
+      fontWeight: "700",
+      overflow: "hidden",
     },
     roleAdmin: { backgroundColor: "rgba(255, 99, 132, .16)", color: "#ff5480" },
     roleManager: { backgroundColor: "rgba(76, 163, 255, .16)", color: theme.colors.secondary },
@@ -367,7 +348,7 @@ const mkStyles = (theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
-      backgroundColor: theme.colors.surface
+      backgroundColor: theme.colors.surface,
     },
-    loadingText: { color: theme.colors.textMuted }
+    loadingText: { color: theme.colors.textMuted },
   });
