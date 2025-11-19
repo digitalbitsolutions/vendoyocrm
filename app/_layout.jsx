@@ -1,48 +1,64 @@
+// app/_layout.jsx
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { AuthProvider } from "../src/context/AuthContext";
+import { View, StyleSheet, ActivityIndicator, Text } from "react-native";
+
+import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { ThemeProvider, useTheme } from "../src/style/theme";
 
-/** Shell que lee el tema y configura navegación + StatusBar */
-function AppShell() {
+function AppContent() {
   const { theme } = useTheme();
+  const { isLoading, booting } = useAuth();
+
+  // Debug: Mostrar estado de carga
+  console.log("AppContent - isLoading:", isLoading, "booting:", booting);
+
+  // Si aún estamos cargando, mostramos pantalla de carga simple
+  if (booting || isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={{ marginTop: 10, color: theme.colors.text }}>Cargando aplicación...</Text>
+      </View>
+    );
+  }
 
   return (
-    <>
-      {/* StatusBar base (AppBar puede sobreescribir en cada pantalla) */}
-      <StatusBar
-        style={theme.statusBarStyle}          // "light" en dark, "dark" en light
-        backgroundColor={theme.statusBarBg}   // usa el bg del tema (coherente con brand)
-        animated
-      />
-
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style={theme.statusBarStyle} backgroundColor={theme.statusBarBg} />
       <Stack
         screenOptions={{
           headerShown: false,
-          // Fondo de TODAS las pantallas (evita flashes al cambiar de modo)
           contentStyle: { backgroundColor: theme.colors.background },
-          // Transición suave entre stacks
-          animation: "fade",                  // requiere react-navigation >= 6.x
+          animation: "fade",
           gestureEnabled: true,
         }}
       >
-        {/* Stacks principales */}
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </View>
   );
 }
 
-export default function RootLayout() {
+export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <AppShell />
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

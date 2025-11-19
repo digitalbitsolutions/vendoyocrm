@@ -9,6 +9,7 @@ import {
   Switch,
   StyleSheet,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -33,227 +34,172 @@ const schema = Yup.object({
 
 export default function Login() {
   const router = useRouter();
-  const { signIn, isLoading } = useAuth();
-  const { theme } = useTheme(); // solo usamos spacing/radius
-
+  const { signIn } = useAuth();
+  const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
-
-  // 🎨 fondo corporativo FIJO para todo el auth (no depende de dark/light)
-  const brandBg = "#36AAA7";
-
   const [remember, setRemember] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (isLoading) return null;
+  const handleSubmit = async (values) => {
+    try {
+      setIsSubmitting(true);
+      await signIn({
+        email: values.email,
+        password: values.password,
+        remember,
+      });
+    } catch (error) {
+      Alert.alert("Error", error.message || "Error al iniciar sesión");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const mkStyles = (theme) =>
+    StyleSheet.create({
+      container: {
+        flex: 1,
+        backgroundColor: theme.colors.background,
+        padding: theme.spacing.lg,
+      },
+      scrollContent: {
+        flexGrow: 1,
+        justifyContent: "center",
+      },
+      logoContainer: {
+        alignItems: "center",
+        marginBottom: theme.spacing.xxl,
+      },
+      logo: {
+        width: 200,
+        height: 80,
+        resizeMode: "contain",
+      },
+      title: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: theme.colors.text,
+        marginBottom: theme.spacing.lg,
+        textAlign: "center",
+      },
+      row: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginVertical: theme.spacing.md,
+      },
+      rememberText: {
+        color: theme.colors.text,
+        marginLeft: theme.spacing.sm,
+      },
+      forgotPassword: {
+        color: theme.colors.primary,
+        fontWeight: "500",
+      },
+      button: {
+        marginTop: theme.spacing.lg,
+      },
+      signupContainer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: theme.spacing.xl,
+      },
+      signupText: {
+        color: theme.colors.text,
+      },
+      signupLink: {
+        color: theme.colors.primary,
+        fontWeight: "bold",
+        marginLeft: 4,
+      },
+    });
 
   return (
-    <View style={[s.bg, { backgroundColor: brandBg }]}>
-      <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
-        <KeyboardAvoidingView
-          behavior={Platform.select({ ios: "padding", android: undefined })}
-          style={{ flex: 1 }}
+    <SafeAreaView style={s.container} edges={["bottom"]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={s.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <ScrollView
-            contentContainerStyle={s.scroll}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            showsVerticalScrollIndicator={false}
+          <View style={s.logoContainer}>
+            <Image source={LOGO} style={s.logo} />
+          </View>
+
+          <Text style={s.title}>Iniciar sesión</Text>
+
+          <Formik
+            initialValues={{ email: "", password: "" }}
+            validationSchema={schema}
+            onSubmit={handleSubmit}
           >
-            {/* Tarjeta de login */}
-            <View style={s.card}>
-              {/* Header con logo + tagline + título */}
-              <View style={s.header}>
-                <Image source={LOGO} style={s.logo} resizeMode="contain" />
+            {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+              <>
+                <TextField
+                  label="Correo electrónico"
+                  placeholder="tucorreo@ejemplo.com"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={values.email}
+                  onChangeText={handleChange("email")}
+                  onBlur={handleBlur("email")}
+                  error={touched.email && errors.email}
+                  autoCorrect={false}
+                />
 
-                {/* tagline pegado al logo y separado del título */}
-                <Text style={s.tagline}>Inmobiliaria con tarifa plana</Text>
+                <TextField
+                  label="Contraseña"
+                  placeholder="•••••••"
+                  secureTextEntry
+                  value={values.password}
+                  onChangeText={handleChange("password")}
+                  onBlur={handleBlur("password")}
+                  error={touched.password && errors.password}
+                  onSubmitEditing={handleSubmit}
+                  returnKeyType="go"
+                />
 
-                <Text style={s.title}>Iniciar sesión</Text>
-              </View>
-
-              <Formik
-                initialValues={{ email: "", password: "" }}
-                validationSchema={schema}
-                onSubmit={async (values, helpers) => {
-                  try {
-                    await signIn({
-                      email: values.email,
-                      password: values.password,
-                      remember,
-                    });
-                    router.replace("/(app)/dashboard");
-                  } catch (e) {
-                    helpers.setSubmitting(false);
-                    helpers.setFieldError(
-                      "email",
-                      e?.message || "Credenciales inválidas"
-                    );
-                  }
-                }}
-              >
-                {({
-                  handleChange,
-                  handleBlur,
-                  handleSubmit,
-                  values,
-                  errors,
-                  touched,
-                  isSubmitting,
-                }) => (
-                  <>
-                    <TextField
-                      label="E-mail"
-                      value={values.email}
-                      onChangeText={handleChange("email")}
-                      onBlur={handleBlur("email")}
-                      error={touched.email && errors.email}
-                      keyboardType="email-address"
-                      autoComplete="email"
-                      returnKeyType="next"
-                      // 👇 siempre claro en auth
-                      forceLight
+                <View style={s.row}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Switch
+                      value={remember}
+                      onValueChange={setRemember}
+                      trackColor={{ false: "#E5E7EB", true: "#0F4C4A" }}
                     />
+                    <Text style={s.rememberText}>Recordarme</Text>
+                  </View>
 
-                    <TextField
-                      label="Contraseña"
-                      value={values.password}
-                      onChangeText={handleChange("password")}
-                      onBlur={handleBlur("password")}
-                      error={touched.password && errors.password}
-                      secureTextEntry
-                      autoComplete="password"
-                      style={{ marginTop: theme.spacing.sm }}
-                      returnKeyType="done"
-                      onSubmitEditing={handleSubmit}
-                      // 👇 idem
-                      forceLight
-                    />
+                  <Text
+                    style={s.forgotPassword}
+                    onPress={() => router.push("/(auth)/forgot-password")}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Text>
+                </View>
 
-                    {/* Recordar sesión */}
-                    <View style={s.row}>
-                      <Switch
-                        value={remember}
-                        onValueChange={setRemember}
-                        trackColor={{
-                          false: "#E5E7EB", // gris fijo
-                          true: "#0F4C4A",  // verde petróleo fijo
-                        }}
-                        thumbColor="#FFFFFF"
-                      />
-                      <Text style={s.rowText}>Recordar sesión</Text>
-                    </View>
+                <Button
+                  title={isSubmitting ? "Entrando..." : "INICIAR SESIÓN"}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                  style={s.button}
+                />
+              </>
+            )}
+          </Formik>
 
-                    {/* CTA */}
-                    <Button
-                      title={isSubmitting ? "Entrando..." : "INICIAR SESIÓN"}
-                      onPress={handleSubmit}
-                      disabled={
-                        isSubmitting ||
-                        !values.email ||
-                        !values.password ||
-                        !!errors.email ||
-                        !!errors.password
-                      }
-                      variant="primary"
-                      fullWidth
-                    />
-
-                    {/* Enlaces */}
-                    <View style={s.links}>
-                      <Text
-                        style={s.link}
-                        onPress={() => router.push("/(auth)/register")}
-                      >
-                        Registrarse
-                      </Text>
-                      <Text
-                        style={[s.link, { marginTop: theme.spacing.sm }]}
-                        onPress={() => router.push("/(auth)/forget")}
-                      >
-                        ¿Olvidaste tu contraseña?
-                      </Text>
-                    </View>
-                  </>
-                )}
-              </Formik>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+          <View style={s.signupContainer}>
+            <Text style={s.signupText}>¿No tienes una cuenta?</Text>
+            <Text
+              style={s.signupLink}
+              onPress={() => router.push("/(auth)/register")}
+            >
+              Regístrate
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
-const mkStyles = (theme) =>
-  StyleSheet.create({
-    bg: {
-      flex: 1,
-    },
-
-    scroll: {
-      flexGrow: 1,
-      padding: theme.spacing.lg,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-
-    card: {
-      width: "100%",
-      maxWidth: 420,
-      backgroundColor: "#FFFFFF", // siempre blanco
-      borderRadius: theme.radius.xl,
-      padding: theme.spacing.xl,
-      ...theme.shadow,
-      borderWidth: 1,
-      borderColor: "#E5E7EB", // gris claro fijo
-    },
-
-    header: {
-      alignItems: "center",
-      marginBottom: theme.spacing.lg,
-    },
-
-    // ✅ logo más grande
-    logo: {
-      width: 170,
-      height: 110,
-      marginBottom: -40, // casi pegado al slogan
-    },
-
-    // ✅ slogan pegado al logo y separado del título
-    tagline: {
-      color: "#111827",
-      fontSize: theme.font.tiny,
-      fontWeight: "600",
-      textAlign: "center",
-      marginTop: 0,                     // pegado al logo
-      marginBottom: theme.spacing.xxl,   // espacio ANTES de "Iniciar sesión"
-    },
-
-    title: {
-      color: "#111827",
-      fontSize: theme.font.h1,
-      fontWeight: "800",
-      textAlign: "center",
-    },
-
-    row: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginVertical: theme.spacing.md,
-    },
-    rowText: {
-      marginLeft: theme.spacing.sm,
-      color: "#111827",
-      fontSize: theme.font.small,
-    },
-
-    links: {
-      alignItems: "center",
-      marginTop: theme.spacing.lg,
-    },
-    link: {
-      color: "#E53935",
-      fontWeight: "700",
-      fontSize: theme.font.small,
-    },
-  });

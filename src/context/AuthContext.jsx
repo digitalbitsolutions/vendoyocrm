@@ -1,115 +1,103 @@
-// ------------------------------------------------------------------------------------
-// Contexto global de Autenticación para toda la app.
-// - Restaura la sesión guardada al arrancar (token + user).
-// - Expone estado (user, token, isAuthenticated, isLoading)
-//   y acciones (signIn, signUp, signOut, reloadSession).
-// - Oculta los detalles de almacenamiento y backend a las pantallas.
-// ------------------------------------------------------------------------------------
-
+// src/context/AuthContext.jsx
 import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 
-// Importamos únicamente la API pública del servicio de auth (sin UI)
-import { login, register, logout, getSession } from "../services/auth";
+import { login, loginWithToken, logout, getSession } from "../services/auth";
 
-// 1. Creamos el contexto (el "canal" para compartir auth)
+// 1. Contexto
 const AuthContext = createContext(null);
 
-// 2. Hook de conveniencia para consumir el contexto
 export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) {
-        // Esto ayuda a detectar usos fuera del provider
-        throw new Error("useAuth() debe usarse dentro de <AuthProvider>");
-    }
-    return ctx;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth() debe usarse dentro de <AuthProvider>");
+  return ctx;
 }
 
-// 3. Proveedor que envuelve a la app (lo pondremos en app/_layout.jsx)
 export function AuthProvider({ children }) {
-    // ----- Estado en memoria (vive mientras la app está abierta) -----
-    const [user, setUser] = useState(null);          // objeto user (id, email, name. role...)
-    const [token, setToken] = useState(null);        // string token (JWT o similar)
-    const [booting, setBooting] = useState(true);    // true mientras restauramos sesión inicial
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [booting, setBooting] = useState(true);
 
-    // Al montar el provider: intentamos restaurar la sesión desde almacenamiento seguro
-    useEffect(() => {
-        let alive = true;
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadSession = async () => {
+      try {
+        console.log("Cargando sesión...");
+        const sess = await getSession();
+        console.log("Sesión cargada:", sess ? "Sesión encontrada" : "Sin sesión");
+        
+        if (!isMounted) return;
+        
+        if (sess?.token) {
+          setToken(sess.token);
+          setUser(sess.user);
+        }
+      } catch (error) {
+        console.error("Error al cargar la sesión:", error);
+      } finally {
+        if (isMounted) {
+          console.log("Finalizando carga de sesión");
+          setBooting(false);
+        }
+      }
+    };
+    
+    loadSession();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-        (async () => {
-            try {
-                // getSession() -> { token, user } | null (lo trae del storage seguro)
-                const sess = await getSession();
-                if (alive && sess?.token) {
-                    setToken(sess.token);
-                    setUser(sess.user);
-                }
-            } finally {
-                if (alive) setBooting(false);
-            }
-        })();
-        return () => {
-            alive = false;
-        };
-    }, []);
+  const actions = useMemo(() => ({
+    /** Inicio clásico con email/password */
+    async signIn({ email, password, remember = false }) {
+      // login() debe encargarse de persistir en storage (secure/local) si es necesario
+      const sess = await login({ email, password, remember });
+      setToken(sess.token);
+      setUser(sess.user);
+      return sess;
+    },
 
-    // Acciones expuestas a toda la app (memorizadas para no re-crear funciones)
-    const actions = useMemo(
-        () => ({
-            /** Iniciar sesión con email/password */
-            async signIn({ email, password }) {
-                const sess = await login({ email, password });   // guarda en storage dentro del servicio
-                setToken(sess.token);
-                setUser(sess.user);
-                return sess;   // a veces la pantalla quiere leer user inmediatamente
-            },
 
-            /** Registro de usuario + deja sesión iniciada */
-            async signUp({ name, email, password }) {
-                const sess = await register({ name, email, password }).catch((e) => {
-                    throw new Error(e?.message || "No se pudo registrar");
-                });
-                setToken(sess.token);
-                setUser(sess.user);
-                return sess;
-            },
+    /** Registro — si lo necesitas implementa register() en services/auth */
+    async signUp({ name, email, password }) {
+      throw new Error("signUp no implementado en este snippet");
+    },
 
-            /** Cerrar sesión global: borra storage y limpia estado */
-            async signOut() {
-                await logout();
-                setToken(null);
-                setUser(null);
-            },
+    /** Cerrar sesión global */
+    async signOut() {
+      await logout();
+      setToken(null);
+      setUser(null);
+    },
 
-            /** Releer sesión desde storage (por si cambió desde fuera) */
-            async reloadSession() {
-                const sess = await getSession();
-                setToken(sess?.token ?? null);
-                setUser(sess?.user ?? null);
-            },
-        }),
-        []
-    );
+    /** Releer sesión desde storage (por si cambió desde fuera) */
+    async reloadSession() {
+      try {
+        const sess = await getSession();
+        setToken(sess?.token ?? null);
+        setUser(sess?.user ?? null);
+      } catch (e) {
+        console.warn("reloadSession:", e);
+      }
+    },
 
-    // Objeto de valor que veraán los componentes que hagan useAuth()
-    const value = useMemo(
-        () => ({
-            // Estado
-            user,
-            token,
-            isAuthenticated: !!token,   // bool: hay token
-            isLoading: booting,         // bool: estamos bootstrapping
+  }), []);
 
-            // Acciones
-            ...actions,
-        }),
-        [user, token, booting, actions]
-    );
+  const value = useMemo(() => ({
+    user,
+    token,
+    isAuthenticated: !!token,
+    isLoading: booting,
+    ...actions
+  }), [user, token, booting, actions]);
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

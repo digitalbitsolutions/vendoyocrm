@@ -224,15 +224,8 @@ export default function Ajustes() {
             />
           </Group>
 
-          <Group title="Privacidad y seguridad">
-            <SwitchRow
-              icon="finger-print-outline"
-              title="Bloqueo biométrico"
-              subtitle="Requerir Face/Touch ID para abrir"
-              value={cfg.privacy?.biometricLock}
-              onValueChange={toggle("privacy.biometricLock")}
-            />
-<Row
+          <Group title="Seguridad">
+            <Row
               icon="key-outline"
               title="Gestión de sesiones"
               subtitle="Cerrar sesión en otros dispositivos"
