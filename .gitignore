@@ -55,3 +55,20 @@ expo-diag*.json
 coverage/
 jest-stare/
 
+# Firebase / Google config (si existen)
+google-services.json
+GoogleService-Info.plist
+
+# Fastlane creds / match
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**
+fastlane/credentials.json
+
+# Bundles / metro cache
+*.keystore
+*.jks
+
+# macOS Spotlight
+.AppleDouble
+.LSOverride
