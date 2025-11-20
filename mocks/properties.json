@@ -1,0 +1,20 @@
+[
+    {
+        "id": "prop_001",
+        "title": "Piso en Gracia, Barcelona",
+        "price": 250000,
+        "type": "venta",
+        "address": "Carrer de Provença 123",
+        "photos": [],
+        "status": "available"
+    },
+    {
+        "id": "prop_002",
+        "title": "Apartamento en Eixample",
+        "price": 1500,
+        "type": "alquiler",
+        "address": "Passeig de Gràcia 45",
+        "photos": [],
+        "status": "available"
+    }
+]
