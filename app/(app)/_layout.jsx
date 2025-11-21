@@ -30,7 +30,7 @@ export default function AppLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        <Stack.Screen name="ajustes/index" options={{ headerShown: false }} />
         {/* Agrega aquí más pantallas de la sección autenticada */}
       </Stack>
     </>
