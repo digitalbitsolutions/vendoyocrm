@@ -7,7 +7,10 @@ import React, {
   useState,
 } from "react";
 
-import { login, loginWithToken, logout, getSession } from "../services/auth";
+// login vendrá desde el conmutador central (mock / real)
+import * as API from "../services/api";
+// otros helpers de sesión (persistencia) siguen viniendo del servicio auth
+import { loginWithToken, logout, getSession } from "../services/auth";
 
 // 1. Contexto
 const AuthContext = createContext(null);
@@ -58,8 +61,8 @@ export function AuthProvider({ children }) {
   const actions = useMemo(() => ({
     /** Inicio clásico con email/password */
     async signIn({ email, password, remember = false }) {
-      // login() debe encargarse de persistir en storage (secure/local) si es necesario
-      const sess = await login({ email, password, remember });
+      // ahora usamos API.login que delega a mocks o al cliente real
+      const sess = await API.login({ email, password, remember });
       setToken(sess.token);
       setUser(sess.user);
       return sess;
