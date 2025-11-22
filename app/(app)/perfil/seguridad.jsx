@@ -1,5 +1,5 @@
 // app/(app)/perfil/seguridad.jsx
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -44,23 +44,21 @@ function passwordStrength(pw = "") {
 
 /* --- Campo genérico (label + error) --- */
 function Field({ label, error, children, theme }) {
+  const fs = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: { marginBottom: theme.spacing.md },
+        label: { color: theme.colors.text, fontWeight: "700", marginBottom: 6 },
+        error: { color: theme.colors.error, marginTop: 6 },
+      }),
+    [theme]
+  );
+
   return (
-    <View style={{ marginBottom: theme.spacing.md }}>
-      {!!label && (
-        <Text
-          style={{
-            color: theme.colors.text,
-            fontWeight: "700",
-            marginBottom: 6,
-          }}
-        >
-          {label}
-        </Text>
-      )}
+    <View style={fs.wrap}>
+      {!!label && <Text style={fs.label}>{label}</Text>}
       {children}
-      {!!error && (
-        <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>
-      )}
+      {!!error && <Text style={fs.error}>{error}</Text>}
     </View>
   );
 }
