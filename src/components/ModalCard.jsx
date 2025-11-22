@@ -1,3 +1,4 @@
+// src/components/ModalCard.jsx
 import React, { useEffect, useRef } from "react";
 import {
   View,
@@ -60,14 +61,10 @@ export default function ModalCard({
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, opacity, translateY]);
 
-  const heightStyle =
-    size === "full"
-      ? { flex: 1 }
-      : size === "half"
-      ? { height: "55%" }
-      : { alignSelf: "center" };
+  const sizeStyle =
+    size === "full" ? s.cardFull : size === "half" ? s.cardHalf : s.cardAuto;
 
   return (
     <Animated.View style={[s.backdrop, { opacity }]}>
@@ -81,11 +78,9 @@ export default function ModalCard({
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1, width: "100%", justifyContent: "flex-end" }}
+        style={s.kavContainer}
       >
-        <Animated.View
-          style={[s.card, heightStyle, { transform: [{ translateY }] }]}
-        >
+        <Animated.View style={[s.card, sizeStyle, { transform: [{ translateY }] }]}>
           <SafeAreaView edges={["bottom"]}>{children}</SafeAreaView>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -100,6 +95,14 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.overlay,
       justifyContent: "flex-end",
     },
+
+    // Contenedor para KeyboardAvoidingView (antes era inline)
+    kavContainer: {
+      flex: 1,
+      width: "100%",
+      justifyContent: "flex-end",
+    },
+
     card: {
       width: "94%",
       maxWidth: 720,
@@ -115,5 +118,17 @@ const mkStyles = (theme) =>
       ...theme.shadow,
       overflow: "hidden",
       paddingBottom: Platform.OS === "ios" ? theme.spacing.md : 0,
+    },
+
+    // variantes de tamaño (antes eran inline)
+    cardFull: {
+      flex: 1,
+      width: "100%",
+    },
+    cardHalf: {
+      height: "55%",
+    },
+    cardAuto: {
+      alignSelf: "center",
     },
   });
