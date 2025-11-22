@@ -1,3 +1,4 @@
+// app/(app)/tramites/editar.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
@@ -34,7 +35,7 @@ export default function EditarTramiteScreen() {
   const id = params?.id ? String(params.id) : null;
 
   const { theme } = useTheme();
-  const s = mkStyles(theme);
+  const s = mkStyles(theme, insets);
 
   // Form
   const [titulo, setTitulo] = useState("");
@@ -140,10 +141,7 @@ export default function EditarTramiteScreen() {
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.container}>
         <View style={s.card}>
           <View style={s.header}>
             <View style={s.headerTop}>
@@ -178,11 +176,7 @@ export default function EditarTramiteScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={[
-              s.content,
-              // dejamos suficiente espacio inferior para que el botón no tape contenido
-              { paddingBottom: insets.bottom + 140 },
-            ]}
+            contentContainerStyle={s.contentWithPadding}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -282,7 +276,7 @@ export default function EditarTramiteScreen() {
               </Pressable>
             </View>
 
-            <Text style={[s.label, { marginTop: 12 }]}>Descripción</Text>
+            <Text style={s.labelWithTop}>Descripción</Text>
             <TextInput
               value={descripcion}
               onChangeText={setDescripcion}
@@ -290,18 +284,11 @@ export default function EditarTramiteScreen() {
               placeholderTextColor={theme.colors.textMuted}
               multiline
               numberOfLines={4}
-              style={[s.input, { height: 120, textAlignVertical: "top" }]}
+              style={[s.input, s.textarea]}
             />
           </ScrollView>
 
-          {/* AJUSTE MINIMO: mantengo estilos, solo dejo más espacio inferior para el botón */}
-          <View
-            style={[
-              s.saveBar,
-              s.saveBarShadow,
-              { paddingBottom: insets.bottom + 16 },
-            ]}
-          >
+          <View style={s.saveBarWithPadding}>
             <Pressable
               onPress={onSubmit}
               disabled={!canSave}
@@ -328,14 +315,18 @@ export default function EditarTramiteScreen() {
   );
 }
 
-/* ---------- estilos reactivos (cambios mínimos respecto a tu versión) ---------- */
-const mkStyles = (theme) =>
+/* ---------- estilos reactivos ---------- */
+const mkStyles = (theme, insets) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
       alignItems: "center",
       justifyContent: "flex-end",
       backgroundColor: theme.colors.overlay ?? "rgba(0,0,0,0.35)",
+    },
+
+    container: {
+      flex: 1,
     },
 
     card: {
@@ -400,9 +391,21 @@ const mkStyles = (theme) =>
     },
 
     content: { padding: theme.spacing.lg, gap: theme.spacing.sm },
+    contentWithPadding: {
+      padding: theme.spacing.lg,
+      gap: theme.spacing.sm,
+      paddingBottom: (insets?.bottom || 0) + 140,
+    },
 
     label: {
       marginTop: theme.spacing.sm,
+      marginBottom: 6,
+      fontSize: theme.font.small,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
+    labelWithTop: {
+      marginTop: 12,
       marginBottom: 6,
       fontSize: theme.font.small,
       fontWeight: "800",
@@ -418,6 +421,11 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.surface,
       color: theme.colors.text,
       fontSize: theme.font.body,
+    },
+
+    textarea: {
+      height: 120,
+      textAlignVertical: "top",
     },
 
     chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
@@ -454,8 +462,24 @@ const mkStyles = (theme) =>
       paddingTop: 10,
       paddingHorizontal: theme.spacing.lg,
     },
+    saveBarWithPadding: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: theme.colors.surface,
+      paddingTop: 10,
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: (insets?.bottom || 0) + 16,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      shadowColor: "#000",
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: -2 },
+      elevation: 3,
+    },
 
-    // AJUSTE MIN: dejamos margenBottom mayor para que el botón no se vea cortado
     saveCta: {
       height: 56,
       borderRadius: theme.radius.pill,
@@ -465,7 +489,6 @@ const mkStyles = (theme) =>
       flexDirection: "row",
       gap: 8,
       marginHorizontal: 16,
-      // nota: marginBottom lo dejamos suficientemente alto para que no corte en pantallas con notch
       marginBottom: 18,
     },
     saveCtaText: {
