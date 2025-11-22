@@ -6,11 +6,7 @@ module.exports = {
     version: "1.0.0",
     orientation: "portrait",
     userInterfaceStyle: "automatic",
-    splash: {
-      image: "./assets/images/splash.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff",
-    },
+    
     updates: {
       fallbackToCacheTimeout: 0,
     },

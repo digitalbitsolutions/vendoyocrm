@@ -181,6 +181,13 @@ export default function Ajustes() {
     [persist]
   );
 
+  // --- IMPORTANT: hooks (useMemo) must be called unconditionally and in the same order ---
+  // overlay animated style (not created inline inside JSX)
+  const overlayAnimatedStyle = useMemo(
+    () => [{ backgroundColor: overlayColor }, { opacity: fade }],
+    [overlayColor, fade]
+  );
+
   if (!cfg) {
     return (
       <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
@@ -196,12 +203,6 @@ export default function Ajustes() {
       </SafeAreaView>
     );
   }
-
-  // overlay animated style (not created inline inside JSX)
-  const overlayAnimatedStyle = useMemo(
-    () => [{ backgroundColor: overlayColor }, { opacity: fade }],
-    [overlayColor, fade]
-  );
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>

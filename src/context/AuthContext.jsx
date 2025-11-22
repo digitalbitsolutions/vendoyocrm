@@ -6,12 +6,13 @@ import React, {
   useCallback,
   useMemo,
   useState,
+  useRef,
 } from "react";
 
 // login vendrá desde el conmutador central (mock / real)
 import * as API from "../services/api";
 // otros helpers de sesión (persistencia) siguen viniendo del servicio auth
-import { loginWithToken, logout, getSession } from "../services/auth";
+import { logout, getSession } from "../services/auth";
 
 // 1. Contexto
 const AuthContext = createContext(null);
@@ -25,16 +26,29 @@ export function useAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [booting, setBooting] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // ref para evitar imprimir repetidamente el mismo mensaje en dev
+  const _devLogged = useRef({});
+
+  const devLog = useCallback((msg, once = false) => {
+    // __DEV__ es la variable global de React Native (true en dev)
+    if (typeof __DEV__ !== "undefined" && !__DEV__) return;
+    if (once) {
+      if (_devLogged.current[msg]) return;
+      _devLogged.current[msg] = true;
+    }
+    // usamos console.debug para mensajes de desarrollo no intrusivos
+    // (console.warn genera mucho ruido en algunos entornos)
+    console.debug(msg);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadSession = async () => {
       try {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("AuthProvider: cargando sesión...");
-        }
+        devLog("AuthProvider: cargando sesión...", true);
 
         const sess = await getSession();
 
@@ -43,23 +57,17 @@ export function AuthProvider({ children }) {
         if (sess?.token) {
           setToken(sess.token);
           setUser(sess.user);
-          if (process.env.NODE_ENV === "development") {
-            console.warn("AuthProvider: sesión encontrada.");
-          }
+          devLog("AuthProvider: sesión encontrada.", true);
         } else {
-          if (process.env.NODE_ENV === "development") {
-            console.warn("AuthProvider: sin sesión.");
-          }
+          devLog("AuthProvider: sin sesión.", true);
         }
       } catch (error) {
         // mostramos errores con console.error (permitido por ESLint config)
         console.error("Error al cargar la sesión:", error);
       } finally {
         if (isMounted) {
-          setBooting(false);
-          if (process.env.NODE_ENV === "development") {
-            console.warn("AuthProvider: carga de sesión finalizada.");
-          }
+          setIsLoading(false);
+          devLog("AuthProvider: carga de sesión finalizada.", true);
         }
       }
     };
@@ -69,7 +77,7 @@ export function AuthProvider({ children }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [devLog]);
 
   // -----------------------
   // Callbacks para acciones
@@ -112,6 +120,7 @@ export function AuthProvider({ children }) {
       setToken(sess?.token ?? null);
       setUser(sess?.user ?? null);
     } catch (err) {
+      // aquí usamos warn porque no es crítico
       console.warn("AuthProvider.reloadSession:", err);
     }
   }, []);
@@ -131,10 +140,10 @@ export function AuthProvider({ children }) {
       user,
       token,
       isAuthenticated: !!token,
-      isLoading: booting,
+      isLoading,
       ...actions,
     }),
-    [user, token, booting, actions]
+    [user, token, isLoading, actions]
   );
 
   return (

@@ -1,5 +1,5 @@
 // app/_layout.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -12,10 +12,16 @@ function AppContent() {
   const { theme } = useTheme();
   const { isLoading } = useAuth();
 
-  // sólo en desarrollo — evita logs en producción y elimina la warning de ESLint
-  if (__DEV__) {
-    console.warn("AppContent - isLoading:", isLoading);
-  }
+  // evitamos logs repetidos: sólo logueamos cuando isLoading cambia
+  const prevRef = useRef();
+  useEffect(() => {
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
+      if (prevRef.current !== isLoading) {
+        console.debug("AppContent - isLoading:", isLoading);
+        prevRef.current = isLoading;
+      }
+    }
+  }, [isLoading]);
 
   const s = useMemo(() => mkStyles(theme), [theme]);
 
