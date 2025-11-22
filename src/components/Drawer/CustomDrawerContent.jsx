@@ -39,8 +39,8 @@ const DrawerItem = React.memo(function DrawerItem({
       style={({ pressed }) => [
         s.item,
         active && s.itemActive,
-        pressed && !active && { backgroundColor: "rgba(0,0,0,0.03)" },
-        pressed && { opacity: theme.opacity.pressed },
+        pressed && !active && s.pressedOverlay,
+        pressed && s.pressed,
       ]}
       hitSlop={theme.hitSlop}
       accessibilityRole="button"
@@ -48,12 +48,12 @@ const DrawerItem = React.memo(function DrawerItem({
       accessibilityState={{ selected: !!active }}
     >
       <View style={s.itemLeft}>
-        {active ? <View style={s.activeDot} /> : <View style={{ width: 6 }} />}
+        {active ? <View style={s.activeDot} /> : <View style={s.placeholderDot} />}
         <Ionicons
           name={icon}
           size={22}
           color={active ? theme.colors.secondary : theme.colors.textMuted}
-          style={{ width: 26, marginLeft: 6 }}
+          style={s.icon}
         />
       </View>
       <Text style={[s.itemText, active && s.itemTextActive]}>{label}</Text>
@@ -97,6 +97,8 @@ export default function CustomDrawerContent(props) {
     router.replace("/(auth)/login");
   }, [props.navigation, signOut, router]);
 
+  const paddingBottom = insets.bottom + theme.spacing.lg;
+
   return (
     <SafeAreaView style={[s.drawerRoot]} edges={["top", "bottom"]}>
       <View style={s.header}>
@@ -113,10 +115,7 @@ export default function CustomDrawerContent(props) {
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          s.menu,
-          { paddingBottom: insets.bottom + theme.spacing.lg },
-        ]}
+        contentContainerStyle={[s.menu, { paddingBottom }]}
         showsVerticalScrollIndicator={false}
       >
         {MENU.map((it) => (
@@ -129,13 +128,13 @@ export default function CustomDrawerContent(props) {
           />
         ))}
 
-        <View style={{ height: theme.spacing.md }} />
+        <View style={s.spacer} />
 
         <Pressable
           onPress={onSignOut}
           style={({ pressed }) => [
             s.logoutBtn,
-            pressed && { opacity: theme.opacity.pressed },
+            pressed && s.pressed,
           ]}
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
@@ -209,6 +208,21 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.secondary,
       marginRight: 4,
     },
+    placeholderDot: {
+      width: 6,
+      height: 6,
+      marginRight: 4,
+    },
+    icon: {
+      width: 26,
+      marginLeft: 6,
+    },
+    pressed: {
+      opacity: theme.opacity.pressed,
+    },
+    pressedOverlay: {
+      backgroundColor: "rgba(0,0,0,0.03)",
+    },
     itemText: {
       color: theme.colors.text,
       fontSize: 16,
@@ -232,5 +246,8 @@ const mkStyles = (theme) =>
       color: theme.colors.danger,
       fontSize: 15,
       fontWeight: "600",
+    },
+    spacer: {
+      height: theme.spacing.md,
     },
   });
