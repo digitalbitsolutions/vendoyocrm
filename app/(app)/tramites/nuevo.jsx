@@ -1,5 +1,5 @@
 // app/(app)/tramites/nuevo.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,10 +12,7 @@ import {
   DeviceEventEmitter,
   Alert,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -61,31 +58,34 @@ export default function NuevoTramiteScreen() {
     []
   );
 
-  const toISO = (d) => {
+  const toISO = useCallback((d) => {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((d || "").trim());
     if (!m) return null;
     const [, dd, mm, yyyy] = m;
     return `${yyyy}-${mm}-${dd}`;
-  };
+  }, []);
 
-  const onClose = (dirty) => {
-    if (dirty) {
-      Alert.alert(
-        "Cambios sin guardar",
-        "Tienes cambios sin guardar. ¿Cerrar y perder los cambios?",
-        [
-          { text: "Cancelar", style: "cancel" },
-          {
-            text: "Cerrar",
-            style: "destructive",
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } else {
-      router.back();
-    }
-  };
+  const onClose = useCallback(
+    (dirty) => {
+      if (dirty) {
+        Alert.alert(
+          "Cambios sin guardar",
+          "Tienes cambios sin guardar. ¿Cerrar y perder los cambios?",
+          [
+            { text: "Cancelar", style: "cancel" },
+            {
+              text: "Cerrar",
+              style: "destructive",
+              onPress: () => router.back(),
+            },
+          ]
+        );
+      } else {
+        router.back();
+      }
+    },
+    [router]
+  );
 
   // Keep consistent spacing with NuevoCliente (button height estimate)
   const SAVE_BTN_HEIGHT = theme.button?.height ?? 56;
@@ -142,9 +142,7 @@ export default function NuevoTramiteScreen() {
                 const payload = {
                   id: `t-${Date.now()}`,
                   titulo: String(values.titulo || "").trim(),
-                  ref: String(values.ref || "")
-                    .trim()
-                    .toUpperCase(),
+                  ref: String(values.ref || "").trim().toUpperCase(),
                   cliente: String(values.cliente || "").trim(),
                   fechaInicio: null,
                   fechaFinEstimada: toISO(values.fechaFin) || null,
@@ -158,11 +156,7 @@ export default function NuevoTramiteScreen() {
                 Alert.alert("Listo", "Trámite creado correctamente.");
                 router.back();
               } catch (e) {
-                console.error(e);
-                Alert.alert(
-                  "Error",
-                  e?.message || "No se pudo crear el trámite."
-                );
+                Alert.alert("Error", e?.message || "No se pudo crear el trámite.");
               } finally {
                 setSubmitting(false);
               }
@@ -278,10 +272,7 @@ export default function NuevoTramiteScreen() {
                     <Label s={s}>Documentos</Label>
                     <Pressable
                       onPress={() =>
-                        Alert.alert(
-                          "Pendiente",
-                          "Integrar selector de archivos"
-                        )
+                        Alert.alert("Pendiente", "Integrar selector de archivos")
                       }
                       style={({ pressed }) => [
                         s.attachBtn,
@@ -295,9 +286,7 @@ export default function NuevoTramiteScreen() {
                         color={theme.colors.secondary}
                       />
                       <Text style={s.attachText}>
-                        {filesCount
-                          ? `${filesCount} archivo(s)`
-                          : "Adjuntar archivos"}
+                        {filesCount ? `${filesCount} archivo(s)` : "Adjuntar archivos"}
                       </Text>
                     </Pressable>
 
