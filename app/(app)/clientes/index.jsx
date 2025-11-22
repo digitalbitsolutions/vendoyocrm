@@ -18,44 +18,84 @@ import { useRouter } from "expo-router";
 import AppBar from "../../../src/components/AppBar";
 import { useTheme } from "../../../src/style/theme";
 
-/* ----------------- MOCK ----------------- */
+/* ----------------- MOCK (pone tu mock real aquí) ----------------- */
 const MOCK_CLIENTES = [
-  /* ...tu mock... (igual) ... */
+  {
+    id: "c1",
+    nombre: "Sergio, Carlos",
+    documento: "NIE: z2628852a",
+    email: "sergicarrillo96@gmail.com",
+    whatsapp: "611568818",
+    telefono: "",
+    direccion: "carrer de josep estivill 36",
+    estado: "activo",
+    notas: "",
+    tags: ["Barcelona"],
+    totalTramites: 0,
+    createdAt: "2025-06-21",
+  },
+  {
+    id: "c2",
+    nombre: "Miguel, Yesan",
+    documento: "DNI: 00286658",
+    email: "manager@digitalbitsolutions.com",
+    whatsapp: "653252923",
+    telefono: "",
+    direccion: "Gracia",
+    estado: "activo",
+    notas: "",
+    tags: ["VIP"],
+    totalTramites: 1,
+    createdAt: "2025-06-19",
+  },
+  {
+    id: "c3",
+    nombre: "María López",
+    documento: "NIE: X1234567Z",
+    email: "maria@example.com",
+    whatsapp: "600000002",
+    telefono: "931112223",
+    direccion: "Hospitalet",
+    estado: "inactivo",
+    notas: "Pendiente de reactivar",
+    tags: [],
+    totalTramites: 0,
+    createdAt: "2025-05-10",
+  },
 ];
 
-/* ----------------- UI helpers ----------------- */
+/* ----------------- UI helpers (memoized) ----------------- */
 
 function Card({ children, style, onPress }) {
   const Comp = onPress ? TouchableOpacity : View;
-
   return (
     <Comp
       style={style}
-      {...(onPress
-        ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" }
-        : {})}
+      {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" } : {})}
     >
       {children}
     </Comp>
   );
 }
 
-function FilterChip({ label, active, onPress, styles }) {
+const FilterChip = React.memo(function FilterChip({ label, active, onPress, styles }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.fchip, active && styles.fchipActive]}
+      style={({ pressed }) => [
+        styles.fchip,
+        active && styles.fchipActive,
+        pressed && !active && { opacity: 0.85 },
+      ]}
       accessibilityRole="button"
       accessibilityState={{ selected: !!active }}
     >
-      <Text style={[styles.fchipText, active && styles.fchipTextActive]}>
-        {label}
-      </Text>
+      <Text style={[styles.fchipText, active && styles.fchipTextActive]}>{label}</Text>
     </Pressable>
   );
-}
+});
 
-function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
+const ClienteCard = React.memo(function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
   return (
     <Card style={[styles.card, styles.cardPadded]}>
       <View style={styles.headerRow}>
@@ -65,15 +105,9 @@ function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
 
           {!!item.documento && <Text style={styles.line}>{item.documento}</Text>}
           {!!item.email && <Text style={styles.line}>Email: {item.email}</Text>}
-          {!!item.whatsapp && (
-            <Text style={styles.line}>WhatsApp: {item.whatsapp}</Text>
-          )}
-          {!!item.telefono && (
-            <Text style={styles.line}>Teléfono: {item.telefono}</Text>
-          )}
-          {!!item.direccion && (
-            <Text style={styles.line}>Dirección: {item.direccion}</Text>
-          )}
+          {!!item.whatsapp && <Text style={styles.line}>WhatsApp: {item.whatsapp}</Text>}
+          {!!item.telefono && <Text style={styles.line}>Teléfono: {item.telefono}</Text>}
+          {!!item.direccion && <Text style={styles.line}>Dirección: {item.direccion}</Text>}
 
           <Text style={styles.badges}>
             {item.estado === "activo" ? "🟢 Activo" : "⚪ Inactivo"}
@@ -89,11 +123,7 @@ function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Editar cliente ${item.nombre}`}
         >
-          <Ionicons
-            name="create-outline"
-            size={16}
-            color={theme.colors.onAccent}
-          />
+          <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
           <Text style={[styles.btnText, styles.btnTextAccent]}>Editar</Text>
         </TouchableOpacity>
 
@@ -103,17 +133,13 @@ function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Eliminar cliente ${item.nombre}`}
         >
-          <Ionicons
-            name="trash-outline"
-            size={16}
-            color={theme.colors.onDanger}
-          />
+          <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
           <Text style={[styles.btnText, styles.btnTextDanger]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
     </Card>
   );
-}
+});
 
 /* ----------------- Pantalla ----------------- */
 export default function ClientesScreen() {
@@ -132,12 +158,12 @@ export default function ClientesScreen() {
       const okTexto = !hayQ
         ? true
         : (
-            c.nombre +
-            c.documento +
-            c.email +
-            c.whatsapp +
-            c.telefono +
-            c.direccion
+            (c.nombre || "") +
+            (c.documento || "") +
+            (c.email || "") +
+            (c.whatsapp || "") +
+            (c.telefono || "") +
+            (c.direccion || "")
           )
             .toLowerCase()
             .includes(hayQ);
@@ -146,10 +172,7 @@ export default function ClientesScreen() {
   }, [items, estado, q]);
 
   const nuevoCliente = useCallback(() => {
-    router.push({
-      pathname: "/(app)/clientes/nuevo",
-      params: { modal: true },
-    });
+    router.push({ pathname: "/(app)/clientes/nuevo", params: { modal: true } });
   }, [router]);
 
   const editar = useCallback(
@@ -161,47 +184,37 @@ export default function ClientesScreen() {
   );
 
   const eliminar = useCallback((item) => {
-    Alert.alert(
-      "Eliminar cliente",
-      `¿Seguro que deseas eliminar a ${item.nombre}?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: () =>
-            setItems((prev) => prev.filter((c) => c.id !== item.id)),
-        },
-      ]
-    );
+    Alert.alert("Eliminar cliente", `¿Seguro que deseas eliminar a ${item.nombre}?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: () => setItems((prev) => prev.filter((c) => c.id !== item.id)),
+      },
+    ]);
   }, []);
 
   useEffect(() => {
-    const subCreated = DeviceEventEmitter.addListener(
-      "cliente:created",
-      (nuevo) => {
-        setItems((prev) => [nuevo, ...prev]);
-      }
-    );
-    const subUpdated = DeviceEventEmitter.addListener(
-      "cliente:updated",
-      (upd) => {
-        setItems((prev) =>
-          prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c))
-        );
-      }
-    );
-    const subDeleted = DeviceEventEmitter.addListener(
-      "cliente:deleted",
-      (id) => {
-        setItems((prev) => prev.filter((c) => c.id !== id));
-      }
-    );
+    const subCreated = DeviceEventEmitter.addListener("cliente:created", (nuevo) => {
+      setItems((prev) => [nuevo, ...prev]);
+    });
+    const subUpdated = DeviceEventEmitter.addListener("cliente:updated", (upd) => {
+      setItems((prev) => prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c)));
+    });
+    const subDeleted = DeviceEventEmitter.addListener("cliente:deleted", (id) => {
+      setItems((prev) => prev.filter((c) => c.id !== id));
+    });
 
     return () => {
-      subCreated.remove();
-      subUpdated.remove();
-      subDeleted.remove();
+      try {
+        subCreated?.remove?.();
+      } catch {}
+      try {
+        subUpdated?.remove?.();
+      } catch {}
+      try {
+        subDeleted?.remove?.();
+      } catch {}
     };
   }, []);
 
@@ -215,24 +228,9 @@ export default function ClientesScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.fchipsContainer}
         >
-          <FilterChip
-            label="Todos"
-            active={estado === "todos"}
-            onPress={() => setEstado("todos")}
-            styles={styles}
-          />
-          <FilterChip
-            label="Activo"
-            active={estado === "activo"}
-            onPress={() => setEstado("activo")}
-            styles={styles}
-          />
-          <FilterChip
-            label="Inactivo"
-            active={estado === "inactivo"}
-            onPress={() => setEstado("inactivo")}
-            styles={styles}
-          />
+          <FilterChip label="Todos" active={estado === "todos"} onPress={() => setEstado("todos")} styles={styles} />
+          <FilterChip label="Activo" active={estado === "activo"} onPress={() => setEstado("activo")} styles={styles} />
+          <FilterChip label="Inactivo" active={estado === "inactivo"} onPress={() => setEstado("inactivo")} styles={styles} />
         </ScrollView>
 
         <View style={styles.searchWrap}>
@@ -244,49 +242,26 @@ export default function ClientesScreen() {
             placeholderTextColor={theme.colors.textMuted}
             style={styles.searchInput}
             returnKeyType="search"
+            accessibilityLabel="Buscar clientes"
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.cta}
-          onPress={nuevoCliente}
-          activeOpacity={theme.opacity?.pressed ?? 0.7}
-        >
-          <Ionicons
-            name="add-circle"
-            size={18}
-            color={theme.colors.onSecondary}
-          />
+        <TouchableOpacity style={styles.cta} onPress={nuevoCliente} activeOpacity={theme.opacity?.pressed ?? 0.7}>
+          <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
           <Text style={styles.ctaText}>Nuevo Cliente</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {list.length ? (
           list.map((c) => (
-            <ClienteCard
-              key={c.id}
-              item={c}
-              onEditar={editar}
-              onEliminar={eliminar}
-              styles={styles}
-              theme={theme}
-            />
+            <ClienteCard key={c.id} item={c} onEditar={editar} onEliminar={eliminar} styles={styles} theme={theme} />
           ))
         ) : (
           <Card style={[styles.card, styles.cardCentered]}>
-            <Ionicons
-              name="people-outline"
-              size={32}
-              color={theme.colors.textMuted}
-            />
+            <Ionicons name="people-outline" size={32} color={theme.colors.textMuted} />
             <Text style={styles.emptyTitle}>No hay clientes</Text>
-            <Text style={styles.emptyText}>
-              Crea tu primer cliente con el botón «Nuevo Cliente».
-            </Text>
+            <Text style={styles.emptyText}>Crea tu primer cliente con el botón «Nuevo Cliente».</Text>
           </Card>
         )}
       </ScrollView>
@@ -306,21 +281,18 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      // Reemplazamos gap por separadores en RN
     },
 
     fchipsContainer: {
       paddingHorizontal: theme.spacing.lg,
       alignItems: "center",
-      // usamos padding/margin en lugar de gap
     },
 
     fchip: {
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor:
-        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
       borderWidth: 1,
       borderColor: theme.colors.border,
       marginRight: 8,
