@@ -16,6 +16,7 @@ import {
   Pressable,
   Alert,
   DeviceEventEmitter,
+  Platform,
   Keyboard,
   RefreshControl,
 } from "react-native";
@@ -76,16 +77,21 @@ const FilterChip = React.memo(function FilterChip({
     </Pressable>
   );
 });
+FilterChip.displayName = "FilterChip";
 
-const EmptyList = React.memo(({ s, theme }) => (
-  <View style={[s.card, s.emptyCard]}>
-    <Ionicons name="document-outline" size={36} color={theme.colors.textMuted} />
-    <Text style={s.emptyTitle}>No hay trámites</Text>
-    <Text style={s.emptyText}>
-      Crea tu primer trámite con el botón “Nuevo Trámite”.
-    </Text>
-  </View>
-));
+/* --- Converted to named function to satisfy react/display-name --- */
+function EmptyList({ s, theme }) {
+  return (
+    <View style={[s.card, s.emptyCard]}>
+      <Ionicons name="document-outline" size={36} color={theme.colors.textMuted} />
+      <Text style={s.emptyTitle}>No hay trámites</Text>
+      <Text style={s.emptyText}>
+        Crea tu primer trámite con el botón “Nuevo Trámite”.
+      </Text>
+    </View>
+  );
+}
+EmptyList.displayName = "EmptyList";
 
 /* -------------------------
    Helper formatting
@@ -98,7 +104,7 @@ function formatDate(iso) {
       month: "2-digit",
       day: "2-digit",
     });
-  } catch (err) {
+  } catch {
     return String(iso || "");
   }
 }
@@ -131,12 +137,7 @@ export default function TramitesScreen() {
       () => setDebouncedQ(q.trim().toLowerCase()),
       300
     );
-    return () => {
-      if (searchTimeout.current) {
-        clearTimeout(searchTimeout.current);
-        searchTimeout.current = null;
-      }
-    };
+    return () => clearTimeout(searchTimeout.current);
   }, [q]);
 
   const filtered = useMemo(() => {
