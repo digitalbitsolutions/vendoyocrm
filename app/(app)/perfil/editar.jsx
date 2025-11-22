@@ -76,7 +76,7 @@ export default function EditarPerfilScreen() {
   const { theme } = useTheme();
   const s = mkStyles(theme);
 
-  const isMounted = useRef(true); // evita setState después de un unmount
+  const isMounted = useRef(false); // evita setState después de un unmount
   const [initial, setInitial] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -170,7 +170,7 @@ export default function EditarPerfilScreen() {
               onSubmit={async (values, { setSubmitting }) => {
                 try {
                   setSubmitting(true);
-                  const updated = await updateProfile({
+                  await updateProfile({
                     name: values.name.trim(),
                     email: values.email.trim(),
                     phone: values.phone.trim(),
