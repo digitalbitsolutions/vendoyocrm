@@ -16,6 +16,9 @@ import { sendPasswordReset } from "../../src/services/auth";
 // ✅ mismo logo que login/register
 const LOGO = require("../../assets/images/brand/logo-dark.webp");
 
+// color de marca fijo (usado en estilos)
+const BRAND_BG = "#36AAA7";
+
 const COOLDOWN_SECONDS = 30;
 
 // Validación del formulario
@@ -31,9 +34,6 @@ export default function Forget() {
 
   const s = useMemo(() => mkStyles(theme), [theme]);
 
-  // 🎨 fondo corporativo FIJO (no depende de dark/light)
-  const brandBg = "#36AAA7";
-
   const [sent, setSent] = useState(false);
   const [emailSentTo, setEmailSentTo] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -45,7 +45,7 @@ export default function Forget() {
   }, [cooldown]);
 
   return (
-    <View style={[s.bg, { backgroundColor: brandBg }]}>
+    <View style={s.bg}>
       <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
         <KeyboardAwareScrollView
           contentContainerStyle={s.scroll}
@@ -71,14 +71,11 @@ export default function Forget() {
 
             {/* Mensaje de éxito */}
             {sent && (
-              <InlineMessage
-                type="success"
-                style={{ marginBottom: theme.spacing.md }}
-              >
+              <InlineMessage type="success" style={s.inlineMsg}>
                 <Text>
                   Te enviamos un enlace a{" "}
-                  <Text style={{ fontWeight: "700" }}>{emailSentTo}</Text>.
-                  Revisa tu bandeja de entrada o spam.
+                  <Text style={s.bold}>{emailSentTo}</Text>. Revisa tu bandeja
+                  de entrada o spam.
                 </Text>
               </InlineMessage>
             )}
@@ -171,7 +168,7 @@ export default function Forget() {
 // ---------- Estilos: auth SIEMPRE claro ----------
 const mkStyles = (theme) =>
   StyleSheet.create({
-    bg: { flex: 1 },
+    bg: { flex: 1, backgroundColor: BRAND_BG },
 
     scroll: {
       flexGrow: 1,
@@ -233,5 +230,13 @@ const mkStyles = (theme) =>
       color: "#E53935",
       fontWeight: "700",
       fontSize: theme.font.small,
+    },
+
+    /* moved inline styles */
+    inlineMsg: {
+      marginBottom: theme.spacing.md,
+    },
+    bold: {
+      fontWeight: "700",
     },
   });
