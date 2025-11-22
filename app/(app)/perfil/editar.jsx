@@ -40,24 +40,32 @@ const Schema = Yup.object().shape({
 /* ---------- Small helper Field (presentational) ---------- */
 function Field({ label, error, children }) {
   const { theme } = useTheme();
+
+  const fs = React.useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          marginBottom: theme.spacing.md,
+        },
+        label: {
+          color: theme.colors.text,
+          fontWeight: "700",
+          marginBottom: 6,
+          fontSize: theme.font.body,
+        },
+        error: {
+          color: theme.colors.error,
+          marginTop: 6,
+        },
+      }),
+    [theme]
+  );
+
   return (
-    <View style={{ marginBottom: theme.spacing.md }}>
-      {!!label && (
-        <Text
-          style={{
-            color: theme.colors.text,
-            fontWeight: "700",
-            marginBottom: 6,
-            fontSize: theme.font.body,
-          }}
-        >
-          {label}
-        </Text>
-      )}
+    <View style={fs.container}>
+      {!!label && <Text style={fs.label}>{label}</Text>}
       {children}
-      {!!error && (
-        <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>
-      )}
+      {!!error && <Text style={fs.error}>{error}</Text>}
     </View>
   );
 }
@@ -127,13 +135,9 @@ export default function EditarPerfilScreen() {
           showBorder={false}
           onBackPress={goProfile}
         />
-        <View
-          style={[s.body, { alignItems: "center", justifyContent: "center" }]}
-        >
+        <View style={[s.body, s.loadingCenter]}>
           <ActivityIndicator size="small" color={theme.colors.secondary} />
-          <Text style={{ marginTop: 8, color: theme.colors.textMuted }}>
-            Cargando…
-          </Text>
+          <Text style={s.loadingText}>Cargando…</Text>
         </View>
       </SafeAreaView>
     );
@@ -151,7 +155,7 @@ export default function EditarPerfilScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
+        style={s.flex}
       >
         <ScrollView
           contentContainerStyle={s.scroll}
@@ -300,4 +304,16 @@ const mkStyles = (theme) =>
       color: theme.colors.text,
       paddingHorizontal: 12,
     },
+
+    /* styles moved from inline -> theme-aware */
+    loadingCenter: {
+      alignItems: "center",
+      justifyContent: "center",
+      flex: 1,
+    },
+    loadingText: {
+      marginTop: 8,
+      color: theme.colors.textMuted,
+    },
+    flex: { flex: 1 },
   });
