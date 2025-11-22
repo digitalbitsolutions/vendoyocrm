@@ -101,7 +101,7 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
       {/* Cabecera: avatar + nombre */}
       <View style={s.headerRow}>
         <View style={s.avatar} />
-        <View style={{ flex: 1 }}>
+        <View style={s.flex1}>
           <Text style={s.name}>{item.nombre}</Text>
 
           {!!item.documento && <Text style={s.line}>{item.documento}</Text>}
@@ -501,4 +501,7 @@ const mkStyles = (theme) =>
       color: theme.colors.text,
     },
     emptyText: { color: theme.colors.textMuted, marginTop: 4 },
+
+    // helper styles (reused to avoid inline styles)
+    flex1: { flex: 1 },
   });
