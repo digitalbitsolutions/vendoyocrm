@@ -41,7 +41,7 @@ export default function AppBar({
   const router = useRouter();
   const navigation = useNavigation();
   const { theme } = useTheme();
-  const s = mkStyles(theme, { transparent, showBorder });
+  const s = mkStyles(theme, { transparent, showBorder, logoWidth, logoAspect });
 
   const openDrawer = () => {
     if (navigation?.openDrawer) navigation.openDrawer();
@@ -86,11 +86,7 @@ export default function AppBar({
             </Text>
           </Pressable>
 
-          {right ? (
-            <View style={s.rightBtn}>{right}</View>
-          ) : (
-            <View style={{ width: 24 }} />
-          )}
+          {right ? <View style={s.rightBtn}>{right}</View> : <View style={s.placeholder} />}
         </View>
       </>
     );
@@ -107,11 +103,7 @@ export default function AppBar({
         <View style={s.left}>
           <Image
             source={logoSrc}
-            style={{
-              width: logoWidth,
-              height: undefined,
-              aspectRatio: logoAspect,
-            }}
+            style={s.logo}
             resizeMode="contain"
             accessibilityLabel="VendoYo"
           />
@@ -139,7 +131,7 @@ export default function AppBar({
   );
 }
 
-const mkStyles = (theme, { transparent, showBorder }) =>
+const mkStyles = (theme, { transparent, showBorder, logoWidth = 140, logoAspect = 5 }) =>
   StyleSheet.create({
     wrap: {
       height: 56,
@@ -167,6 +159,15 @@ const mkStyles = (theme, { transparent, showBorder }) =>
       alignItems: "center",
       justifyContent: "center",
       borderRadius: 20,
+    },
+    placeholder: {
+      width: 24,
+      height: 40,
+    },
+    logo: {
+      width: logoWidth,
+      height: undefined,
+      aspectRatio: logoAspect,
     },
     titleSection: {
       fontSize: theme.font.h3,
