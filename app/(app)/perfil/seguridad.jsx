@@ -1,5 +1,10 @@
 // app/(app)/perfil/seguridad.jsx
-import React, { useCallback, useState, useMemo } from "react";
+import React, {
+  useCallback,
+  useState,
+  useMemo,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -48,7 +53,11 @@ function Field({ label, error, children, theme }) {
     () =>
       StyleSheet.create({
         wrap: { marginBottom: theme.spacing.md },
-        label: { color: theme.colors.text, fontWeight: "700", marginBottom: 6 },
+        label: {
+          color: theme.colors.text,
+          fontWeight: "700",
+          marginBottom: 6,
+        },
         error: { color: theme.colors.error, marginTop: 6 },
       }),
     [theme]
@@ -89,15 +98,17 @@ export default function SeguridadScreen() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const strengthAnim = React.useRef(new Animated.Value(0)).current;
 
-  const animateStrength = (score) => {
-    Animated.timing(strengthAnim, {
+  // Animated.Value guardado en ref para evitar recrearlo
+  const strengthAnim = useRef(new Animated.Value(0));
+
+  const animateStrength = useCallback((score) => {
+    Animated.timing(strengthAnim.current, {
       toValue: score / 4, // normalizamos a 0..1 (4 = max score)
       duration: 220,
       useNativeDriver: false,
     }).start();
-  };
+  }, []);
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
@@ -154,14 +165,20 @@ export default function SeguridadScreen() {
             isSubmitting,
             setFieldValue,
           }) => {
-            // actualizamos el medidor de fuerza cada vez que cambia newPassword
-            React.useEffect(() => {
-              const { score } = passwordStrength(values.newPassword || "");
-              animateStrength(score);
-            }, [values.newPassword]);
+            // calculamos fuerza una vez por render
+            const strength = useMemo(
+              () => passwordStrength(values.newPassword || ""),
+              [values.newPassword]
+            );
 
-            const { label: strengthLabel } = passwordStrength(
-              values.newPassword || ""
+            // manejador que actualiza valor y anima inmediatamente (evita hooks en render)
+            const onNewPasswordChange = useCallback(
+              (v) => {
+                setFieldValue("newPassword", v);
+                const { score } = passwordStrength(v || "");
+                animateStrength(score);
+              },
+              [setFieldValue, animateStrength]
             );
 
             return (
@@ -215,9 +232,7 @@ export default function SeguridadScreen() {
                   <View style={s.inputRow}>
                     <TextInputNative
                       value={values.newPassword}
-                      onChangeText={(v) => {
-                        setFieldValue("newPassword", v);
-                      }}
+                      onChangeText={onNewPasswordChange}
                       onBlur={handleBlur("newPassword")}
                       placeholder="Mínimo 6 caracteres"
                       placeholderTextColor={theme.colors.textMuted}
@@ -250,30 +265,28 @@ export default function SeguridadScreen() {
                   {/* Medidor de fuerza */}
                   <View style={s.strengthRow}>
                     <View style={s.strengthLabelWrap}>
-                      <Text style={s.strengthLabelText}>{strengthLabel}</Text>
+                      <Text style={s.strengthLabelText}>{strength.label}</Text>
                     </View>
                     <View
                       style={s.strengthBarBg}
                       accessible
                       accessibilityRole="progressbar"
-                      accessibilityLabel={`Fuerza: ${strengthLabel}`}
+                      accessibilityLabel={`Fuerza: ${strength.label}`}
                     >
                       <Animated.View
                         style={[
                           s.strengthBarFill,
                           {
-                            width: strengthAnim.interpolate({
+                            width: strengthAnim.current.interpolate({
                               inputRange: [0, 1],
                               outputRange: ["0%", "100%"],
                             }),
                             backgroundColor:
-                              values.newPassword.length === 0
+                              (values.newPassword || "").length === 0
                                 ? theme.colors.border
-                                : passwordStrength(values.newPassword).score >=
-                                  3
+                                : strength.score >= 3
                                 ? theme.colors.success
-                                : passwordStrength(values.newPassword).score ===
-                                  2
+                                : strength.score === 2
                                 ? theme.colors.warning
                                 : theme.colors.danger,
                           },
