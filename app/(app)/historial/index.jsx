@@ -26,8 +26,6 @@ import { useTheme } from "../../../src/style/theme";
 
 /* ---------------- CONFIG ----------------
  * Cambia aquí si quieres mostrar/ocultar el pill:
- * - true  -> pill visible (con tamaño reducido)
- * - false -> pill oculto (solo AppBar queda)
  */
 const SHOW_PILL = false;
 
@@ -148,10 +146,7 @@ export default function HistorialScreen() {
     </View>
   );
 
-  /* Animaciones para el pill (si está activo):
-     - SHRINK más suave y menos agresivo
-     - fontWeight reducido para que no compita con AppBar
-  */
+  /* Animaciones para el pill (si está activo) */
   const SHRINK_AT = 48;
   const pillPadding = scrollY.interpolate({
     inputRange: [0, SHRINK_AT],
@@ -160,7 +155,7 @@ export default function HistorialScreen() {
   });
   const pillFontSize = scrollY.interpolate({
     inputRange: [0, SHRINK_AT],
-    outputRange: [theme.font.h3 + 6, theme.font.h3], // pequeño ajuste
+    outputRange: [theme.font.h3 + 6, theme.font.h3],
     extrapolate: "clamp",
   });
   const pillLineHeight = scrollY.interpolate({
@@ -191,14 +186,7 @@ export default function HistorialScreen() {
 
     if (!SHOW_PILL) {
       // pequeño spacer para separar el contenido del AppBar
-      return (
-        <View
-          style={{
-            height: theme.spacing.lg / 1.4,
-            backgroundColor: theme.colors.background,
-          }}
-        />
-      );
+      return <View style={s.headerSpacer} />;
     }
 
     return (
@@ -256,11 +244,7 @@ export default function HistorialScreen() {
           data={items}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={{
-            paddingHorizontal: theme.spacing.lg,
-            paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
-            paddingTop: 6,
-          }}
+          contentContainerStyle={s.listContent}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -298,10 +282,16 @@ const mkStyles = (theme) =>
       zIndex: 30,
     },
 
+    /* Spacer pequeño cuando no se muestra el pill */
+    headerSpacer: {
+      height: theme.spacing.lg / 1.4,
+      backgroundColor: theme.colors.background,
+    },
+
     /* Pill: reducido y menos pesado visualmente */
     pillContainer: {
       alignSelf: "center",
-      width: "74%", // menos ancho para que no domine la pantalla
+      width: "74%",
       borderRadius: theme.radius.xl,
       paddingHorizontal: theme.spacing.lg,
       backgroundColor: theme.colors.surface,
@@ -311,7 +301,7 @@ const mkStyles = (theme) =>
       ...(Platform.OS === "android" ? { elevation: 4 } : null),
     },
     pillTitle: {
-      fontWeight: "700", // menos pesado que 900
+      fontWeight: "700",
       color: theme.colors.text,
       textAlign: "center",
     },
@@ -323,6 +313,14 @@ const mkStyles = (theme) =>
 
     /* Loader / empty */
     loaderWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
+
+    /* moved contentContainerStyle into theme-aware style (no inline styles) */
+    listContent: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: theme.spacing.xl,
+      paddingTop: 6,
+    },
+
     empty: {
       flex: 1,
       alignItems: "center",

@@ -1,4 +1,11 @@
-import React, { useEffect, useCallback, useState, useRef } from "react";
+// app/(app)/ajustes/index.jsx
+import React, {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -21,29 +28,23 @@ import { getSettings, saveSettings } from "../../../src/services/settings";
 /* ---------- Helpers UI: fila con icono + título + subtítulo + chevron ---------- */
 function Row({ icon, title, subtitle, onPress }) {
   const { theme } = useTheme();
+  const styles = stylesRow(theme);
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        { opacity: pressed ? theme.opacity?.pressed ?? 0.6 : 1 },
-      ]}
+      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
       accessibilityRole="button"
     >
-      <View style={stylesRow(theme).wrap}>
-        <View style={stylesRow(theme).iconWrap}>
+      <View style={styles.wrap}>
+        <View style={styles.iconWrap}>
           <Ionicons name={icon} size={18} color={theme.colors.secondary} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={stylesRow(theme).title}>{title}</Text>
-          {!!subtitle && (
-            <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>
-          )}
+        <View style={styles.content}>
+          <Text style={styles.title}>{title}</Text>
+          {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
-        <Ionicons
-          name="chevron-forward"
-          size={18}
-          color={theme.colors.textMuted}
-        />
+        <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
       </View>
     </Pressable>
   );
@@ -52,18 +53,24 @@ function Row({ icon, title, subtitle, onPress }) {
 /* ---------- Helpers UI: fila con switch inmediato ---------- */
 function SwitchRow({ icon, title, subtitle, value, onValueChange, testID }) {
   const { theme } = useTheme();
+  const styles = stylesRow(theme);
+
   return (
-    <View style={stylesRow(theme).wrap}>
-      <View style={stylesRow(theme).iconWrap}>
+    <View style={styles.wrap}>
+      <View style={styles.iconWrap}>
         <Ionicons name={icon} size={18} color={theme.colors.secondary} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={stylesRow(theme).title}>{title}</Text>
-        {!!subtitle && (
-          <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>
-        )}
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      <Switch value={!!value} onValueChange={onValueChange} testID={testID} />
+      <Switch
+        value={!!value}
+        onValueChange={onValueChange}
+        testID={testID}
+        thumbColor={undefined}
+        trackColor={{ true: theme.colors.secondary, false: theme.colors.border }}
+      />
     </View>
   );
 }
@@ -71,10 +78,11 @@ function SwitchRow({ icon, title, subtitle, value, onValueChange, testID }) {
 /* ---------- Helpers UI: tarjeta/grupo ---------- */
 function Group({ title, children }) {
   const { theme } = useTheme();
+  const styles = stylesGroup(theme);
   return (
-    <View style={stylesGroup(theme).card}>
-      {!!title && <Text style={stylesGroup(theme).title}>{title}</Text>}
-      <View style={{ gap: 8 }}>{children}</View>
+    <View style={styles.card}>
+      {!!title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.childrenWrap}>{children}</View>
     </View>
   );
 }
@@ -90,7 +98,7 @@ export default function Ajustes() {
   // ⚡ Crossfade local de tema
   const fade = useRef(new Animated.Value(0)).current; // 0 = sin overlay, 1 = overlay visible
   const [overlayColor, setOverlayColor] = useState(theme.colors.background);
-  const DURATION = 180; // ajusta la suavidad aquí (ms)
+  const DURATION = 180; // ms
 
   const persist = useCallback(async (next) => {
     setCfg(next);
@@ -108,11 +116,8 @@ export default function Ajustes() {
   const setUiMode = useCallback(
     (mode) => {
       const next = { ...cfg, ui: { ...(cfg?.ui || {}), mode } };
-      // color de fondo ACTUAL (antes de cambiar)
       setOverlayColor(theme.colors.background);
-      // mostramos overlay con el color anterior
       fade.setValue(1);
-      // en el siguiente frame cambiamos tema y desvanecemos overlay
       requestAnimationFrame(() => {
         if (typeof setMode === "function") setMode(mode);
         Animated.timing(fade, {
@@ -123,7 +128,7 @@ export default function Ajustes() {
       });
       persist(next);
     },
-    [cfg, persist, setMode, theme.colors.background, fade, DURATION]
+    [cfg, persist, setMode, theme.colors.background, fade]
   );
 
   const goBackSafe = useCallback(() => {
@@ -137,12 +142,8 @@ export default function Ajustes() {
         const data = await getSettings();
         setCfg({
           ui: { mode: data?.ui?.mode || "light" },
-          notifications: {
-            push: data?.notifications?.push ?? true,
-          },
-          privacy: {
-            biometricLock: data?.privacy?.biometricLock ?? false,
-          },
+          notifications: { push: data?.notifications?.push ?? true },
+          privacy: { biometricLock: data?.privacy?.biometricLock ?? false },
         });
       } catch (e) {
         Alert.alert("Error", e?.message || "No se pudo cargar ajustes.");
@@ -153,31 +154,18 @@ export default function Ajustes() {
   const toggle = useCallback(
     (path) => (val) => {
       setCfg((prev) => {
-        // Crear una copia profunda del estado actual
-        const next = JSON.parse(JSON.stringify(prev));
-
-        // Dividir la ruta en segmentos
+        const next = JSON.parse(JSON.stringify(prev || {}));
         const segs = path.split(".");
-
-        // Navegar hasta el objeto padre del valor a modificar
         let current = next;
         for (let i = 0; i < segs.length - 1; i++) {
           const key = segs[i];
-          if (current[key] === undefined) {
-            current[key] = {};
-          } else if (typeof current[key] !== "object") {
-            // Si el valor actual no es un objeto, lo convertimos en uno
+          if (current[key] === undefined || typeof current[key] !== "object") {
             current[key] = {};
           }
           current = current[key];
         }
-
-        // Establecer el nuevo valor
         current[segs[segs.length - 1]] = val;
-
-        // Guardar los cambios
         persist(next);
-
         return next;
       });
     },
@@ -187,41 +175,28 @@ export default function Ajustes() {
   if (!cfg) {
     return (
       <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-        <AppBar
-          variant="section"
-          title="Ajustes"
-          showBorder={false}
-          onBackPress={goBackSafe}
-        />
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text style={{ color: theme.colors.textMuted }}>Cargando…</Text>
+        <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
+        <View style={s.loadingWrap}>
+          <Text style={s.loadingText}>Cargando…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
+  // overlayStyle memoizado para evitar object literals en JSX
+  const overlayStyle = useMemo(
+    () => ({ backgroundColor: overlayColor, opacity: fade }),
+    [overlayColor, fade]
+  );
+
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      <AppBar
-        variant="section"
-        title="Ajustes"
-        showBorder={false}
-        onBackPress={goBackSafe}
-      />
+      <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
 
       {/* Overlay para el crossfade (toma el color anterior y se desvanece) */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: overlayColor, opacity: fade },
-        ]}
-      />
+      <Animated.View pointerEvents="none" style={[s.overlayBase, overlayStyle]} />
 
       <ScrollView
-        style={{ flex: 1 }}
         contentContainerStyle={s.body}
         showsVerticalScrollIndicator={false}
         bounces={true}
@@ -257,35 +232,35 @@ export default function Ajustes() {
         </Group>
 
         <Group title="Sistema">
-          <Row
-            icon="language-outline"
-            title="Idioma"
-            subtitle="Español"
-            onPress={() => router.push("/(app)/ajustes/idioma")}
-          />
-          <Row
-            icon="information-circle-outline"
-            title="Acerca de"
-            subtitle="Versión, licencias"
-            onPress={() => router.push("/(app)/ajustes/acerca")}
-          />
-          <Row
-            icon="help-circle-outline"
-            title="Ayuda y soporte"
-            subtitle="Preguntas frecuentes y contacto"
-            onPress={() => router.push("/(app)/ajustes/soporte")}
-          />
+          <Row icon="language-outline" title="Idioma" subtitle="Español" onPress={() => router.push("/(app)/ajustes/idioma")} />
+          <Row icon="information-circle-outline" title="Acerca de" subtitle="Versión, licencias" onPress={() => router.push("/(app)/ajustes/acerca")} />
+          <Row icon="help-circle-outline" title="Ayuda y soporte" subtitle="Preguntas frecuentes y contacto" onPress={() => router.push("/(app)/ajustes/soporte")} />
         </Group>
 
-        <View style={{ height: 20 }} />
+        <View style={s.spacer20} />
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+/* ---------- Styles (sin inline styles / sin gap) ---------- */
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
-    body: { padding: theme.spacing.lg, gap: theme.spacing.lg },
+    loadingWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
+    loadingText: { color: theme.colors.textMuted },
+
+    overlayBase: {
+      ...StyleSheet.absoluteFillObject,
+      // backgroundColor & opacity se pasan desde overlayStyle (useMemo)
+    },
+
+    body: {
+      padding: theme.spacing.lg,
+      paddingBottom: theme.spacing.xl,
+    },
+
+    spacer20: { height: 20 },
   });
 
 const stylesGroup = (theme) =>
@@ -296,14 +271,17 @@ const stylesGroup = (theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
-      gap: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
       ...theme.shadow,
     },
     title: {
       color: theme.colors.text,
       fontSize: theme.font.h4,
       fontWeight: "800",
-      marginBottom: 2,
+      marginBottom: 8,
+    },
+    childrenWrap: {
+      // vertical stacking: usamos marginBottom en cada child en lugar de gap
     },
   });
 
@@ -313,7 +291,14 @@ const stylesRow = (theme) =>
       minHeight: 52,
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      // usamos paddings/margins en lugar de gap
+      paddingVertical: 6,
+    },
+    pressable: {
+      // base para Pressable (opacidad por pressed se aplica con styles.pressed)
+    },
+    pressed: {
+      opacity: 0.6,
     },
     iconWrap: {
       width: 28,
@@ -324,6 +309,10 @@ const stylesRow = (theme) =>
       backgroundColor: theme.colors.background,
       borderWidth: 1,
       borderColor: theme.colors.border,
+      marginRight: 12,
+    },
+    content: {
+      flex: 1,
     },
     title: { color: theme.colors.text, fontWeight: "700" },
     subtitle: {
