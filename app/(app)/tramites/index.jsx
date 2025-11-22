@@ -78,13 +78,9 @@ const FilterChip = React.memo(function FilterChip({
   );
 });
 
-const EmptyList = ({ s }) => (
-  <View style={[s.card, { alignItems: "center", paddingVertical: 32 }]}>
-    <Ionicons
-      name="document-outline"
-      size={36}
-      color={s.theme.colors.textMuted}
-    />
+const EmptyList = ({ s, theme }) => (
+  <View style={[s.card, s.emptyCard]}>
+    <Ionicons name="document-outline" size={36} color={theme.colors.textMuted} />
     <Text style={s.emptyTitle}>No hay trámites</Text>
     <Text style={s.emptyText}>
       Crea tu primer trámite con el botón “Nuevo Trámite”.
@@ -119,7 +115,6 @@ function badgeByState(s) {
 export default function TramitesScreen() {
   const { theme } = useTheme();
   const s = mkStyles(theme);
-  s.theme = theme;
 
   const router = useRouter();
 
@@ -230,9 +225,7 @@ export default function TramitesScreen() {
           <Text style={[s.badge, s[badgeByState(item.estado)]]}>
             {item.estado}
           </Text>
-          <Text style={[s.muted, { marginLeft: "auto" }]}>
-            {formatDate(item.creadoEl)}
-          </Text>
+          <Text style={s.dateText}>{formatDate(item.creadoEl)}</Text>
         </View>
 
         <View style={s.cardFooter}>
@@ -291,7 +284,7 @@ export default function TramitesScreen() {
             />
           )}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 8 }}
+          contentContainerStyle={s.chipsContainer}
         />
 
         <View style={s.searchWrap}>
@@ -327,8 +320,8 @@ export default function TramitesScreen() {
         keyExtractor={(i) => i.id}
         renderItem={renderItem}
         contentContainerStyle={s.listContent}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-        ListEmptyComponent={<EmptyList s={s} />}
+        ItemSeparatorComponent={() => <View style={s.separator} />}
+        ListEmptyComponent={<EmptyList s={s} theme={theme} />}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         refreshControl={
@@ -377,6 +370,10 @@ const mkStyles = (theme) =>
     },
     chipTextActive: { color: theme.colors.onSecondary },
 
+    chipsContainer: {
+      paddingRight: 8,
+    },
+
     searchWrap: {
       flexDirection: "row",
       alignItems: "center",
@@ -407,6 +404,11 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
       ...theme.shadow,
+    },
+
+    emptyCard: {
+      alignItems: "center",
+      paddingVertical: 32,
     },
 
     title: {
@@ -443,6 +445,11 @@ const mkStyles = (theme) =>
     badgeDone: {
       backgroundColor: "rgba(46,125,50,0.18)",
       color: theme.colors.success,
+    },
+
+    dateText: {
+      marginLeft: "auto",
+      color: theme.colors.textMuted,
     },
 
     cardFooter: {
@@ -484,6 +491,10 @@ const mkStyles = (theme) =>
     btnEdit: { backgroundColor: theme.colors.accent },
     btnDelete: { backgroundColor: theme.colors.danger },
     btnText: { fontWeight: "800" },
+
+    separator: {
+      height: 12,
+    },
 
     emptyTitle: {
       marginTop: 8,
