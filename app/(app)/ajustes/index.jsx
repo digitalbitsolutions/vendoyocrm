@@ -1,11 +1,5 @@
 // app/(app)/ajustes/index.jsx
-import React, {
-  useEffect,
-  useCallback,
-  useState,
-  useRef,
-  useMemo,
-} from "react";
+import React, { useEffect, useCallback, useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -15,6 +9,7 @@ import {
   Alert,
   Animated,
   ScrollView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -28,24 +23,22 @@ import { getSettings, saveSettings } from "../../../src/services/settings";
 /* ---------- Helpers UI: fila con icono + título + subtítulo + chevron ---------- */
 function Row({ icon, title, subtitle, onPress }) {
   const { theme } = useTheme();
-  const styles = stylesRow(theme);
+  const styles = useMemo(() => stylesRow(theme), [theme]);
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
       accessibilityRole="button"
     >
-      <View style={styles.wrap}>
-        <View style={styles.iconWrap}>
-          <Ionicons name={icon} size={18} color={theme.colors.secondary} />
-        </View>
-        <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+      <View style={styles.iconWrap}>
+        <Ionicons name={icon} size={18} color={theme.colors.secondary} />
       </View>
+      <View style={styles.textCol}>
+        <Text style={styles.title}>{title}</Text>
+        {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
     </Pressable>
   );
 }
@@ -53,24 +46,18 @@ function Row({ icon, title, subtitle, onPress }) {
 /* ---------- Helpers UI: fila con switch inmediato ---------- */
 function SwitchRow({ icon, title, subtitle, value, onValueChange, testID }) {
   const { theme } = useTheme();
-  const styles = stylesRow(theme);
+  const styles = useMemo(() => stylesRow(theme), [theme]);
 
   return (
     <View style={styles.wrap}>
       <View style={styles.iconWrap}>
         <Ionicons name={icon} size={18} color={theme.colors.secondary} />
       </View>
-      <View style={styles.content}>
+      <View style={styles.textCol}>
         <Text style={styles.title}>{title}</Text>
         {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      <Switch
-        value={!!value}
-        onValueChange={onValueChange}
-        testID={testID}
-        thumbColor={undefined}
-        trackColor={{ true: theme.colors.secondary, false: theme.colors.border }}
-      />
+      <Switch value={!!value} onValueChange={onValueChange} testID={testID} />
     </View>
   );
 }
@@ -78,11 +65,11 @@ function SwitchRow({ icon, title, subtitle, value, onValueChange, testID }) {
 /* ---------- Helpers UI: tarjeta/grupo ---------- */
 function Group({ title, children }) {
   const { theme } = useTheme();
-  const styles = stylesGroup(theme);
+  const styles = useMemo(() => stylesGroup(theme), [theme]);
   return (
     <View style={styles.card}>
       {!!title && <Text style={styles.title}>{title}</Text>}
-      <View style={styles.childrenWrap}>{children}</View>
+      <View style={styles.children}>{children}</View>
     </View>
   );
 }
@@ -90,7 +77,7 @@ function Group({ title, children }) {
 export default function Ajustes() {
   const router = useRouter();
   const { theme, setMode } = useTheme();
-  const s = mkStyles(theme);
+  const s = useMemo(() => mkStyles(theme), [theme]);
 
   const [cfg, setCfg] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -100,24 +87,30 @@ export default function Ajustes() {
   const [overlayColor, setOverlayColor] = useState(theme.colors.background);
   const DURATION = 180; // ms
 
-  const persist = useCallback(async (next) => {
-    setCfg(next);
-    try {
-      setSaving(true);
-      await saveSettings(next);
-    } catch (e) {
-      Alert.alert("Error", e?.message || "No se pudo guardar.");
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+  const persist = useCallback(
+    async (next) => {
+      setCfg(next);
+      try {
+        setSaving(true);
+        await saveSettings(next);
+      } catch (e) {
+        Alert.alert("Error", e?.message || "No se pudo guardar.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    []
+  );
 
   // Crossfade al cambiar tema
   const setUiMode = useCallback(
     (mode) => {
       const next = { ...cfg, ui: { ...(cfg?.ui || {}), mode } };
+      // color de fondo ACTUAL (antes de cambiar)
       setOverlayColor(theme.colors.background);
+      // mostramos overlay con el color anterior
       fade.setValue(1);
+      // en el siguiente frame cambiamos tema y desvanecemos overlay
       requestAnimationFrame(() => {
         if (typeof setMode === "function") setMode(mode);
         Animated.timing(fade, {
@@ -142,8 +135,12 @@ export default function Ajustes() {
         const data = await getSettings();
         setCfg({
           ui: { mode: data?.ui?.mode || "light" },
-          notifications: { push: data?.notifications?.push ?? true },
-          privacy: { biometricLock: data?.privacy?.biometricLock ?? false },
+          notifications: {
+            push: data?.notifications?.push ?? true,
+          },
+          privacy: {
+            biometricLock: data?.privacy?.biometricLock ?? false,
+          },
         });
       } catch (e) {
         Alert.alert("Error", e?.message || "No se pudo cargar ajustes.");
@@ -154,18 +151,30 @@ export default function Ajustes() {
   const toggle = useCallback(
     (path) => (val) => {
       setCfg((prev) => {
+        // Crear una copia profunda del estado actual
         const next = JSON.parse(JSON.stringify(prev || {}));
+
+        // Dividir la ruta en segmentos
         const segs = path.split(".");
+
+        // Navegar hasta el objeto padre del valor a modificar
         let current = next;
         for (let i = 0; i < segs.length - 1; i++) {
           const key = segs[i];
-          if (current[key] === undefined || typeof current[key] !== "object") {
+          if (current[key] === undefined) {
+            current[key] = {};
+          } else if (typeof current[key] !== "object") {
             current[key] = {};
           }
           current = current[key];
         }
+
+        // Establecer el nuevo valor
         current[segs[segs.length - 1]] = val;
+
+        // Guardar los cambios
         persist(next);
+
         return next;
       });
     },
@@ -175,28 +184,39 @@ export default function Ajustes() {
   if (!cfg) {
     return (
       <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-        <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
-        <View style={s.loadingWrap}>
+        <AppBar
+          variant="section"
+          title="Ajustes"
+          showBorder={false}
+          onBackPress={goBackSafe}
+        />
+        <View style={s.loadingCenter}>
           <Text style={s.loadingText}>Cargando…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // overlayStyle memoizado para evitar object literals en JSX
-  const overlayStyle = useMemo(
-    () => ({ backgroundColor: overlayColor, opacity: fade }),
+  // overlay animated style (not created inline inside JSX)
+  const overlayAnimatedStyle = useMemo(
+    () => [{ backgroundColor: overlayColor }, { opacity: fade }],
     [overlayColor, fade]
   );
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
+      <AppBar
+        variant="section"
+        title="Ajustes"
+        showBorder={false}
+        onBackPress={goBackSafe}
+      />
 
       {/* Overlay para el crossfade (toma el color anterior y se desvanece) */}
-      <Animated.View pointerEvents="none" style={[s.overlayBase, overlayStyle]} />
+      <Animated.View pointerEvents="none" style={[s.overlayBase, ...overlayAnimatedStyle]} />
 
       <ScrollView
+        style={s.flex}
         contentContainerStyle={s.body}
         showsVerticalScrollIndicator={false}
         bounces={true}
@@ -232,9 +252,24 @@ export default function Ajustes() {
         </Group>
 
         <Group title="Sistema">
-          <Row icon="language-outline" title="Idioma" subtitle="Español" onPress={() => router.push("/(app)/ajustes/idioma")} />
-          <Row icon="information-circle-outline" title="Acerca de" subtitle="Versión, licencias" onPress={() => router.push("/(app)/ajustes/acerca")} />
-          <Row icon="help-circle-outline" title="Ayuda y soporte" subtitle="Preguntas frecuentes y contacto" onPress={() => router.push("/(app)/ajustes/soporte")} />
+          <Row
+            icon="language-outline"
+            title="Idioma"
+            subtitle="Español"
+            onPress={() => router.push("/(app)/ajustes/idioma")}
+          />
+          <Row
+            icon="information-circle-outline"
+            title="Acerca de"
+            subtitle="Versión, licencias"
+            onPress={() => router.push("/(app)/ajustes/acerca")}
+          />
+          <Row
+            icon="help-circle-outline"
+            title="Ayuda y soporte"
+            subtitle="Preguntas frecuentes y contacto"
+            onPress={() => router.push("/(app)/ajustes/soporte")}
+          />
         </Group>
 
         <View style={s.spacer20} />
@@ -243,24 +278,30 @@ export default function Ajustes() {
   );
 }
 
-/* ---------- Styles (sin inline styles / sin gap) ---------- */
+/* ---------- Styles ---------- */
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
-    loadingWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
-    loadingText: { color: theme.colors.textMuted },
+    body: { padding: theme.spacing.lg, gap: theme.spacing.lg },
+    flex: { flex: 1 },
+
+    loadingCenter: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.colors.background,
+    },
+    loadingText: {
+      color: theme.colors.textMuted,
+    },
 
     overlayBase: {
       ...StyleSheet.absoluteFillObject,
-      // backgroundColor & opacity se pasan desde overlayStyle (useMemo)
     },
 
-    body: {
-      padding: theme.spacing.lg,
-      paddingBottom: theme.spacing.xl,
+    spacer20: {
+      height: 20,
     },
-
-    spacer20: { height: 20 },
   });
 
 const stylesGroup = (theme) =>
@@ -271,7 +312,7 @@ const stylesGroup = (theme) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
-      marginBottom: theme.spacing.lg,
+      gap: theme.spacing.md,
       ...theme.shadow,
     },
     title: {
@@ -280,8 +321,8 @@ const stylesGroup = (theme) =>
       fontWeight: "800",
       marginBottom: 8,
     },
-    childrenWrap: {
-      // vertical stacking: usamos marginBottom en cada child en lugar de gap
+    children: {
+      // usamos marginBottom en cada row para simular gap
     },
   });
 
@@ -291,14 +332,11 @@ const stylesRow = (theme) =>
       minHeight: 52,
       flexDirection: "row",
       alignItems: "center",
-      // usamos paddings/margins en lugar de gap
       paddingVertical: 6,
-    },
-    pressable: {
-      // base para Pressable (opacidad por pressed se aplica con styles.pressed)
+      marginBottom: 8, // spacing between rows (replaces gap usage)
     },
     pressed: {
-      opacity: 0.6,
+      opacity: theme.opacity?.pressed ?? 0.6,
     },
     iconWrap: {
       width: 28,
@@ -311,9 +349,7 @@ const stylesRow = (theme) =>
       borderColor: theme.colors.border,
       marginRight: 12,
     },
-    content: {
-      flex: 1,
-    },
+    textCol: { flex: 1 },
     title: { color: theme.colors.text, fontWeight: "700" },
     subtitle: {
       color: theme.colors.textMuted,
