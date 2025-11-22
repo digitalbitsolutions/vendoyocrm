@@ -1,5 +1,5 @@
 // app/(auth)/login.jsx
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,6 +9,7 @@ import {
   Switch,
   StyleSheet,
   Image,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -45,6 +46,14 @@ export default function Login() {
 
   const [remember, setRemember] = useState(false);
 
+  const goToRegister = useCallback(() => {
+    router.push("/(auth)/register");
+  }, [router]);
+
+  const goToForget = useCallback(() => {
+    router.push("/(auth)/forget");
+  }, [router]);
+
   if (isLoading) return null;
 
   return (
@@ -52,7 +61,7 @@ export default function Login() {
       <SafeAreaView style={s.bg} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
           behavior={Platform.select({ ios: "padding", android: undefined })}
-          style={{ flex: 1 }}
+          style={s.container}
         >
           <ScrollView
             contentContainerStyle={s.scroll}
@@ -161,18 +170,22 @@ export default function Login() {
 
                     {/* Enlaces */}
                     <View style={s.links}>
-                      <Text
-                        style={s.link}
-                        onPress={() => router.push("/(auth)/register")}
+                      <Pressable
+                        onPress={goToRegister}
+                        accessibilityRole="button"
+                        android_ripple={{ color: "rgba(0,0,0,0.08)" }}
                       >
-                        Registrarse
-                      </Text>
-                      <Text
-                        style={[s.link, { marginTop: theme.spacing.sm }]}
-                        onPress={() => router.push("/(auth)/forget")}
+                        <Text style={s.link}>Registrarse</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={goToForget}
+                        accessibilityRole="button"
+                        android_ripple={{ color: "rgba(0,0,0,0.08)" }}
+                        style={{ marginTop: theme.spacing.sm }}
                       >
-                        ¿Olvidaste tu contraseña?
-                      </Text>
+                        <Text style={s.link}>¿Olvidaste tu contraseña?</Text>
+                      </Pressable>
                     </View>
                   </>
                 )}
@@ -189,6 +202,10 @@ export default function Login() {
 function mkStyles(theme) {
   return StyleSheet.create({
     bg: {
+      flex: 1,
+    },
+
+    container: {
       flex: 1,
     },
 
