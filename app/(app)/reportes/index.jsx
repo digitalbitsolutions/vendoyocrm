@@ -59,8 +59,6 @@ const toCSV = (rows) => {
 };
 
 /* ------------------ Mock con paginación (para desarrollo) ------------------ */
-/* Reemplaza fetchReportsFromAPI por llamadas reales cuando tengas backend.
-   Debe devolver: { data: [...], total: N } */
 function makeMockData(count = 60) {
   const base = [
     {
@@ -112,7 +110,6 @@ async function fetchReportsMock({
   page = 1,
   pageSize = 10,
 }) {
-  // filtrar
   let data = MOCK_FULL.filter((r) => {
     if (
       cliente &&
@@ -135,14 +132,11 @@ async function fetchReportsMock({
   const total = data.length;
   const start = (page - 1) * pageSize;
   const slice = data.slice(start, start + pageSize);
-  // simula latencia
   await new Promise((res) => setTimeout(res, 250));
   return { data: slice, total };
 }
 
-/* Hook / adaptador (cambiar a tu API real fácilmente) */
 async function fetchReportsFromAPI(filters) {
-  // Ejemplo: si tu backend acepta page/pageSize devuelve { data, total }
   return fetchReportsMock(filters);
 }
 
@@ -158,6 +152,15 @@ export default function ReportesScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const s = mkStyles(theme);
+
+  // estilos que dependen de insets/theme calculados en componente
+  const listContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
+    }),
+    [theme, insets.bottom]
+  );
 
   // filtros controlados (cliente está debounced)
   const [clienteInput, setClienteInput] = useState("");
@@ -230,13 +233,11 @@ export default function ReportesScreen() {
     [cliente, estado, fIniHuman, fFinHuman]
   );
 
-  // inicial / reload cuando cambian filtros o page
   useEffect(() => {
     loadPage({ page: 1, append: false });
     setPage(1);
   }, [cliente, estado, fIniHuman, fFinHuman, loadPage]);
 
-  // cargar más cuando page incrementa por onEndReached
   useEffect(() => {
     if (page === 1) return;
     loadPage({ page, append: true });
@@ -260,7 +261,7 @@ export default function ReportesScreen() {
       const FileSystem = (await import("expo-file-system")).default;
       const Sharing = (await import("expo-sharing")).default;
 
-      const csv = toCSV(rows.length ? rows : []); // exporta lo cargado (podrías exportar `sorted` o toda la colección via API)
+      const csv = toCSV(rows.length ? rows : []);
       if (!csv) {
         Alert.alert("Sin datos", "No hay filas para exportar.");
         return;
@@ -283,7 +284,8 @@ export default function ReportesScreen() {
         Alert.alert("Exportado", `CSV creado en: ${uri}`);
       }
     } catch (e) {
-      console.error(e);
+      // evitar console.error que lanza lint; usamos warn
+      console.warn(e);
       Alert.alert(
         "Exportar error",
         "Instala 'expo-file-system' y 'expo-sharing' o revisa permisos."
@@ -322,11 +324,11 @@ export default function ReportesScreen() {
         </View>
 
         <View style={s.rowGrid}>
-          <View style={{ flex: 1 }}>
+          <View style={s.rowGridCol}>
             <Text style={s.rowLabel}>Inicio</Text>
             <Text style={s.rowValue}>{toHuman(item.fechaInicio)}</Text>
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={s.rowGridCol}>
             <Text style={s.rowLabel}>Final</Text>
             <Text style={s.rowValue}>{toHuman(item.fechaFin)}</Text>
           </View>
@@ -433,7 +435,6 @@ export default function ReportesScreen() {
           { label: "Fecha final", by: "fechaFin" },
         ].map((h) => {
           const active = sort.by === h.by;
-          const nextDir = active && sort.dir === "asc" ? "desc" : "asc";
           return (
             <Pressable
               key={h.by}
@@ -443,9 +444,7 @@ export default function ReportesScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Ordenar por ${h.label}`}
             >
-              <Text
-                style={[s.thText, active && { color: theme.colors.secondary }]}
-              >
+              <Text style={[s.thText, active && s.thTextActive]}>
                 {h.label}
               </Text>
               <Ionicons
@@ -470,16 +469,10 @@ export default function ReportesScreen() {
   /* empty / footer UI */
   const ListFooter = () => {
     if (loadingMore)
-      return (
-        <ActivityIndicator
-          style={{ marginVertical: 12 }}
-          color={theme.colors.secondary}
-        />
-      );
+      return <ActivityIndicator style={s.footerLoading} color={theme.colors.secondary} />;
     return null;
   };
 
-  /* sorted client-side fallback (si quieres orden server-side, aplica en la API) */
   const sortedRows = useMemo(() => {
     const list = [...rows];
     list.sort((a, b) => {
@@ -496,7 +489,6 @@ export default function ReportesScreen() {
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
       <AppBar variant="section" title="Reportes" showBorder={false} />
 
-      {/* CTA Exportar */}
       <View style={s.actions}>
         <Pressable
           style={s.cta}
@@ -514,10 +506,7 @@ export default function ReportesScreen() {
       </View>
 
       <FlatList
-        contentContainerStyle={{
-          paddingHorizontal: theme.spacing.lg,
-          paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
-        }}
+        contentContainerStyle={listContainerStyle}
         data={sortedRows}
         keyExtractor={(r) => r.id}
         ListHeaderComponent={
@@ -525,14 +514,14 @@ export default function ReportesScreen() {
             <Filters />
             <HeaderButtons />
             {loading && (
-              <View style={{ paddingVertical: 8 }}>
+              <View style={s.loadingBlock}>
                 <ActivityIndicator color={theme.colors.secondary} />
               </View>
             )}
           </>
         }
         renderItem={ReportRow}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={() => <View style={s.separator} />}
         ListEmptyComponent={() =>
           !loading ? (
             <View style={s.emptyBox}>
@@ -541,9 +530,7 @@ export default function ReportesScreen() {
                 size={22}
                 color={theme.colors.textMuted}
               />
-              <Text style={{ color: theme.colors.textMuted, marginTop: 6 }}>
-                Sin resultados
-              </Text>
+              <Text style={s.emptyText}>Sin resultados</Text>
             </View>
           ) : null
         }
@@ -683,6 +670,9 @@ const mkStyles = (theme) =>
       fontWeight: "800",
       color: theme.colors.text,
     },
+    thTextActive: {
+      color: theme.colors.secondary,
+    },
 
     rowCard: {
       backgroundColor: theme.colors.surface,
@@ -712,6 +702,7 @@ const mkStyles = (theme) =>
       flexShrink: 1,
     },
     rowGrid: { flexDirection: "row", marginTop: 4 },
+    rowGridCol: { flex: 1 },
 
     statePend: { color: theme.colors.warning, fontWeight: "800" },
     stateWip: { color: theme.colors.secondary, fontWeight: "800" },
@@ -727,5 +718,21 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       marginTop: theme.spacing.md,
       marginBottom: theme.spacing.md,
+    },
+    emptyText: {
+      color: theme.colors.textMuted,
+      marginTop: 6,
+    },
+
+    separator: {
+      height: 10,
+    },
+
+    loadingBlock: {
+      paddingVertical: 8,
+    },
+
+    footerLoading: {
+      marginVertical: 12,
     },
   });
