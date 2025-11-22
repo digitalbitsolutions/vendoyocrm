@@ -1,5 +1,5 @@
 // app/(app)/perfil/index.jsx
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -41,7 +41,7 @@ import { uploadImage } from "../../../src/services/uploads";
 export default function PerfilScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const s = mkStyles(theme);
+  const s = useMemo(() => mkStyles(theme), [theme]);
 
   // Estado
   const [profile, setProfile] = useState(null);
@@ -50,152 +50,168 @@ export default function PerfilScreen() {
   const [uploading, setUploading] = useState(false);
 
   // Guard para evitar setState si el componente se desmonta mientras hay async
+  const isMountedRef = useRef(true);
   useEffect(() => {
-    let mounted = true;
+    isMountedRef.current = true;
     (async () => {
       try {
         const p = await getProfile();
-        if (mounted) setProfile(p);
+        if (isMountedRef.current) setProfile(p);
       } catch (e) {
-        if (mounted)
+        if (isMountedRef.current)
           Alert.alert("Error", e?.message || "No se pudo cargar el perfil.");
       } finally {
-        if (mounted) setLoading(false);
+        if (isMountedRef.current) setLoading(false);
       }
     })();
     return () => {
-      mounted = false;
+      isMountedRef.current = false;
     };
-  }, []);
+  }, [getProfile]);
 
   // Refresh manual (pull-to-refresh)
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
       const p = await getProfile();
-      setProfile(p);
+      if (isMountedRef.current) setProfile(p);
     } catch (e) {
       Alert.alert("Error", e?.message || "No se pudo actualizar.");
     } finally {
-      setRefreshing(false);
+      if (isMountedRef.current) setRefreshing(false);
     }
-  }, []);
+  }, [getProfile]);
 
   /* ---------------- Avatar handling ---------------- */
-  const handlePicked = useCallback(async (asset) => {
-    if (!asset?.uri) return;
-    setUploading(true);
-    try {
-      // uploadImage debe recibir { uri, name, type } — el mock puede devolver la misma url
-      const up = await uploadImage(
-        {
-          uri: asset.uri,
-          name: asset.fileName || "avatar.jpg",
-          type: asset.type || "image/jpeg",
-        },
-        { folder: "avatars" }
-      );
-      // actualizamos en backend (updateProfile debe devolver el perfil actualizado)
-      const updated = await updateProfile({ avatarUrl: up.url });
-      setProfile(updated);
-    } catch (e) {
-      Alert.alert("Error", e?.message || "No se pudo actualizar el avatar.");
-    } finally {
-      setUploading(false);
-    }
-  }, []);
-
-  const openLibrary = useCallback(async () => {
-    const perm = await requestMediaLibraryPermissionsAsync();
-    if (perm.status !== "granted") {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería.");
-      return;
-    }
-    const result = await launchImageLibraryAsync({
-      mediaTypes: MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.9,
-    });
-    if (result.canceled) return;
-    await handlePicked(result.assets?.[0]);
-  }, [handlePicked]);
-
-  const openCamera = useCallback(async () => {
-    const perm = await requestCameraPermissionsAsync();
-    if (perm.status !== "granted") {
-      Alert.alert(
-        "Permiso requerido",
-        "Activa el permiso de cámara para continuar."
-      );
-      return;
-    }
-    const result = await launchCameraAsync({
-      mediaTypes: MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.9,
-    });
-    if (result.canceled) return;
-    await handlePicked(result.assets?.[0]);
-  }, [handlePicked]);
-
-  const removeAvatar = useCallback(async () => {
-    try {
+  const handlePicked = useCallback(
+    async (asset) => {
+      if (!asset?.uri) return;
       setUploading(true);
-      const updated = await updateProfile({ avatarUrl: null });
-      setProfile(updated);
-    } catch (e) {
-      Alert.alert("Error", e?.message || "No se pudo quitar la foto.");
-    } finally {
-      setUploading(false);
-    }
-  }, []);
+      try {
+        // uploadImage debe recibir { uri, name, type } — el mock puede devolver la misma url
+        const up = await uploadImage(
+          {
+            uri: asset.uri,
+            name: asset.fileName || "avatar.jpg",
+            type: asset.type || "image/jpeg",
+          },
+          { folder: "avatars" }
+        );
+        // actualizamos en backend (updateProfile debe devolver el perfil actualizado)
+        const updated = await updateProfile({ avatarUrl: up.url });
+        if (isMountedRef.current) setProfile(updated);
+      } catch (e) {
+        Alert.alert("Error", e?.message || "No se pudo actualizar el avatar.");
+      } finally {
+        if (isMountedRef.current) setUploading(false);
+      }
+    },
+    [uploadImage, updateProfile]
+  );
+
+  const openLibrary = useCallback(
+    async () => {
+      const perm = await requestMediaLibraryPermissionsAsync();
+      if (perm.status !== "granted") {
+        Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería.");
+        return;
+      }
+      const result = await launchImageLibraryAsync({
+        mediaTypes: MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+      if (result.canceled) return;
+      await handlePicked(result.assets?.[0]);
+    },
+    [handlePicked]
+  );
+
+  const openCamera = useCallback(
+    async () => {
+      const perm = await requestCameraPermissionsAsync();
+      if (perm.status !== "granted") {
+        Alert.alert(
+          "Permiso requerido",
+          "Activa el permiso de cámara para continuar."
+        );
+        return;
+      }
+      const result = await launchCameraAsync({
+        mediaTypes: MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.9,
+      });
+      if (result.canceled) return;
+      await handlePicked(result.assets?.[0]);
+    },
+    [handlePicked]
+  );
+
+  const removeAvatar = useCallback(
+    async () => {
+      try {
+        setUploading(true);
+        const updated = await updateProfile({ avatarUrl: null });
+        if (isMountedRef.current) setProfile(updated);
+      } catch (e) {
+        Alert.alert("Error", e?.message || "No se pudo quitar la foto.");
+      } finally {
+        if (isMountedRef.current) setUploading(false);
+      }
+    },
+    [updateProfile]
+  );
 
   // Muestra opciones para cambiar avatar (ActionSheet iOS / Alert Android)
-  const chooseAvatar = useCallback(() => {
-    const hasPhoto = !!profile?.avatarUrl;
-    const run = async (key) => {
-      if (key === "camera") return openCamera();
-      if (key === "library") return openLibrary();
-      if (key === "remove" && hasPhoto) return removeAvatar();
-    };
+  const chooseAvatar = useCallback(
+    () => {
+      const hasPhoto = !!profile?.avatarUrl;
+      const run = async (key) => {
+        if (key === "camera") return openCamera();
+        if (key === "library") return openLibrary();
+        if (key === "remove" && hasPhoto) return removeAvatar();
+      };
 
-    if (Platform.OS === "ios") {
-      // import dinámico para evitar la warning de `split-platform-components`
-      const { ActionSheetIOS } = require("react-native");
-      const options = [
-        "Cancelar",
-        "Tomar foto",
-        "Elegir de galería",
-        ...(hasPhoto ? ["Quitar foto"] : []),
-      ];
-      const cancelButtonIndex = 0;
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options, cancelButtonIndex, userInterfaceStyle: "automatic" },
-        (i) => {
-          if (i === 1) run("camera");
-          if (i === 2) run("library");
-          if (hasPhoto && i === 3) run("remove");
-        }
-      );
-    } else {
-      Alert.alert("Foto de perfil", "Selecciona una opción", [
-        { text: "Tomar foto", onPress: () => run("camera") },
-        { text: "Elegir de galería", onPress: () => run("library") },
-        ...(hasPhoto
-          ? [
-              {
-                text: "Quitar foto",
-                style: "destructive",
-                onPress: () => run("remove"),
-              },
-            ]
-          : []),
-        { text: "Cancelar", style: "cancel" },
-      ]);
-    }
-  }, [profile?.avatarUrl, openCamera, openLibrary, removeAvatar]);
+      if (Platform.OS === "ios") {
+        // import dinámico para evitar la warning de `split-platform-components`
+        const { ActionSheetIOS } = require("react-native");
+        const options = [
+          "Cancelar",
+          "Tomar foto",
+          "Elegir de galería",
+          ...(hasPhoto ? ["Quitar foto"] : []),
+        ];
+        const cancelButtonIndex = 0;
+        ActionSheetIOS.showActionSheetWithOptions(
+          { options, cancelButtonIndex, userInterfaceStyle: "automatic" },
+          (i) => {
+            if (i === 1) run("camera");
+            if (i === 2) run("library");
+            if (hasPhoto && i === 3) run("remove");
+          }
+        );
+      } else {
+        Alert.alert("Foto de perfil", "Selecciona una opción", [
+          { text: "Tomar foto", onPress: () => run("camera") },
+          { text: "Elegir de galería", onPress: () => run("library") },
+          ...(hasPhoto
+            ? [
+                {
+                  text: "Quitar foto",
+                  style: "destructive",
+                  onPress: () => run("remove"),
+                },
+              ]
+            : []),
+          { text: "Cancelar", style: "cancel" },
+        ]);
+      }
+    },
+    [profile?.avatarUrl, openCamera, openLibrary, removeAvatar]
+  );
 
   /* ---------------- UI derivada ---------------- */
   const initials = useMemo(() => {
