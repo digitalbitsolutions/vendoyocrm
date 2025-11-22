@@ -12,8 +12,10 @@ function AppContent() {
   const { theme } = useTheme();
   const { isLoading } = useAuth();
 
-  // Debug (usar warn para cumplir eslint no-console)
-  console.warn("AppContent - isLoading:", isLoading);
+  // sólo en desarrollo — evita logs en producción y elimina la warning de ESLint
+  if (__DEV__) {
+    console.warn("AppContent - isLoading:", isLoading);
+  }
 
   const s = useMemo(() => mkStyles(theme), [theme]);
 
