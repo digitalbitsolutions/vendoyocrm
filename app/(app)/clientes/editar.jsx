@@ -1,5 +1,5 @@
 // app/(app)/clientes/editar.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -47,6 +47,21 @@ export default function EditarClienteScreen() {
   const [direccion, setDireccion] = useState("");
   const [password, setPassword] = useState("");
 
+  // dynamic styles that depend on insets/theme (avoid inline objects)
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        keyboardAvoid: { flex: 1 }, // moved from inline style
+        scrollPadding: {
+          paddingBottom: theme.spacing.xxl + 180 + insets.bottom,
+        },
+        saveBarInset: {
+          paddingBottom: insets.bottom + theme.spacing.xl + 10,
+        },
+      }),
+    [insets.bottom, theme]
+  );
+
   // Prefill
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener("cliente:prefill", (c) => {
@@ -85,9 +100,9 @@ export default function EditarClienteScreen() {
     [tipoDoc, numDoc, nombre, apellido, email]
   );
 
-  const onClose = () => router.back();
+  const onClose = useCallback(() => router.back(), [router]);
 
-  const onSave = () => {
+  const onSave = useCallback(() => {
     if (!canSave) return;
 
     const payload = {
@@ -104,22 +119,27 @@ export default function EditarClienteScreen() {
       updatedAt: new Date().toISOString(),
     };
 
-    payload.documento = `${payload.tipoDoc || ""}: ${
-      payload.numDoc || ""
-    }`.trim();
-    payload.nombreCompleto = `${payload.nombre}${
-      payload.apellido ? ", " + payload.apellido : ""
-    }`;
+    payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
+    payload.nombreCompleto = `${payload.nombre}${payload.apellido ? ", " + payload.apellido : ""}`;
 
     DeviceEventEmitter.emit("cliente:updated", payload);
     router.back();
-  };
+  }, [canSave, id, tipoDoc, numDoc, nombre, apellido, email, telefono, whatsapp, direccion, password, router]);
+
+  const onCopyId = useCallback(async () => {
+    if (!id) return;
+    try {
+      await Clipboard.setStringAsync(String(id));
+    } catch {
+      // silent
+    }
+  }, [id]);
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
+        style={dynamicStyles.keyboardAvoid} // replaced inline flex style
       >
         <View style={s.card}>
           {/* Header */}
@@ -139,11 +159,7 @@ export default function EditarClienteScreen() {
 
             {!!id && (
               <Pressable
-                onPress={async () => {
-                  try {
-                    await Clipboard.setStringAsync(String(id));
-                  } catch {}
-                }}
+                onPress={onCopyId}
                 style={s.idRow}
                 accessibilityLabel="Copiar ID"
               >
@@ -161,18 +177,13 @@ export default function EditarClienteScreen() {
 
           {/* Contenido */}
           <ScrollView
-            contentContainerStyle={[
-              s.content,
-              {
-                // más aire encima de la barra de guardar
-                paddingBottom: theme.spacing.xxl + 180 + insets.bottom,
-              },
-            ]}
+            contentContainerStyle={[s.content, dynamicStyles.scrollPadding]} // no inline objects here
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            <Label>Tipo de documento: *</Label>
+            <Label s={s}>Tipo de documento: *</Label>
             <Input
+              s={s}
               placeholder="Ej: DNI, NIE, Pasaporte..."
               value={tipoDoc}
               onChangeText={setTipoDoc}
@@ -180,8 +191,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Número de documento: *</Label>
+            <Label s={s}>Número de documento: *</Label>
             <Input
+              s={s}
               placeholder="Ej: 12345678X"
               value={numDoc}
               onChangeText={setNumDoc}
@@ -189,8 +201,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Nombre: *</Label>
+            <Label s={s}>Nombre: *</Label>
             <Input
+              s={s}
               placeholder="Ej: Miguel"
               value={nombre}
               onChangeText={setNombre}
@@ -198,8 +211,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Apellido: *</Label>
+            <Label s={s}>Apellido: *</Label>
             <Input
+              s={s}
               placeholder="Ej: Yesan"
               value={apellido}
               onChangeText={setApellido}
@@ -207,8 +221,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Email: *</Label>
+            <Label s={s}>Email: *</Label>
             <Input
+              s={s}
               placeholder="Ej: cliente@correo.com"
               value={email}
               onChangeText={setEmail}
@@ -218,8 +233,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Teléfono:</Label>
+            <Label s={s}>Teléfono:</Label>
             <Input
+              s={s}
               placeholder="Ej: +34 600 000 000"
               value={telefono}
               onChangeText={setTelefono}
@@ -229,8 +245,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>WhatsApp:</Label>
+            <Label s={s}>WhatsApp:</Label>
             <Input
+              s={s}
               placeholder="Ej: +34 600 000 000"
               value={whatsapp}
               onChangeText={setWhatsapp}
@@ -240,8 +257,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Dirección:</Label>
+            <Label s={s}>Dirección:</Label>
             <Input
+              s={s}
               placeholder="Ej: Calle Mayor, 123, Barcelona"
               value={direccion}
               onChangeText={setDireccion}
@@ -249,8 +267,9 @@ export default function EditarClienteScreen() {
               returnKeyType="next"
             />
 
-            <Label>Contraseña (dejar en blanco para no cambiar):</Label>
+            <Label s={s}>Contraseña (dejar en blanco para no cambiar):</Label>
             <Input
+              s={s}
               placeholder="Mínimo 6 caracteres"
               value={password}
               onChangeText={setPassword}
@@ -259,13 +278,7 @@ export default function EditarClienteScreen() {
           </ScrollView>
 
           {/* Save bar con más padding inferior */}
-          <View
-            style={[
-              s.saveBar,
-              s.saveBarShadow,
-              { paddingBottom: insets.bottom + theme.spacing.xl + 10 },
-            ]}
-          >
+          <View style={[s.saveBar, s.saveBarShadow, dynamicStyles.saveBarInset]}>
             <Button
               title="Guardar cambios"
               onPress={onSave}
@@ -288,18 +301,14 @@ export default function EditarClienteScreen() {
 }
 
 /* ---------- Helpers ---------- */
-function Label({ children }) {
-  const { theme } = useTheme();
-  const s = mkStyles(theme);
+function Label({ children, s }) {
   return <Text style={s.label}>{children}</Text>;
 }
 
-function Input(props) {
-  const { theme } = useTheme();
-  const s = mkStyles(theme);
+function Input({ s, ...props }) {
   return (
     <TextInput
-      placeholderTextColor={theme.colors.textMuted}
+      placeholderTextColor={s.placeholderColor}
       {...props}
       style={[s.input, props.style]}
     />
@@ -392,6 +401,7 @@ const mkStyles = (theme) =>
       color: theme.colors.text,
       fontSize: theme.font.body,
     },
+    placeholderColor: theme.colors.textMuted,
     saveBarShadow: {
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,

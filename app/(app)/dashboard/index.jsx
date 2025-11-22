@@ -41,11 +41,7 @@ export default function DashboardScreen() {
 
   function MetricCard({ title, value, subtitle, onPress, testID }) {
     return (
-      <Card
-        style={[s.metric, { marginBottom: theme.spacing.md }]}
-        onPress={onPress}
-        testID={testID}
-      >
+      <Card style={s.metric} onPress={onPress} testID={testID}>
         <Text style={s.metricTitle}>{title}</Text>
         <Text style={s.metricValue}>{value}</Text>
         {subtitle ? <Text style={s.metricSubtitle}>{subtitle}</Text> : null}
@@ -77,9 +73,7 @@ export default function DashboardScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         {/* Bienvenida + usuario */}
-        <Card
-          style={{ padding: theme.spacing.lg, marginBottom: theme.spacing.lg }}
-        >
+        <Card style={s.welcomeCard}>
           <Text style={s.h1}>Dashboard de VendoYo.es</Text>
           <Text style={s.subtitle}>
             {greeting}, {user?.name || "Usuario"}.
@@ -87,11 +81,9 @@ export default function DashboardScreen() {
 
           <View style={s.userRow}>
             <View style={s.avatar}>
-              <Text style={s.avatarText}>
-                {getInitials(user?.name || "VY")}
-              </Text>
+              <Text style={s.avatarText}>{getInitials(user?.name || "VY")}</Text>
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={s.userMain}>
               <Text style={s.userName}>{user?.name || "Invitado"}</Text>
               <Text style={s.userEmail}>
                 {user?.email || "sin-email@vendoyo.es"}
@@ -132,28 +124,26 @@ export default function DashboardScreen() {
         </View>
 
         {/* Bloques grandes */}
-        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
+        <Card style={s.blockSpacing}>
           <Text style={s.blockTitle}>Trámites por Estado</Text>
           <Text style={s.blockHint}>
             Aquí insertaremos un gráfico de barras o donut.
           </Text>
         </Card>
 
-        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
+        <Card style={s.blockSpacing}>
           <Text style={s.blockTitle}>Trámites por Conexión</Text>
           <Text style={s.blockHint}>
             Placeholder para un gráfico por plataforma (iOS/Android/Web).
           </Text>
         </Card>
 
-        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
+        <Card style={s.blockSpacing}>
           <Text style={s.blockTitle}>Trámites Recibidos Mensuales</Text>
-          <Text style={s.blockHint}>
-            Aquí irá un gráfico de líneas por meses.
-          </Text>
+          <Text style={s.blockHint}>Aquí irá un gráfico de líneas por meses.</Text>
         </Card>
 
-        <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
+        <Card style={s.blockSpacing}>
           <Text style={s.blockTitle}>Asistente Inteligente de trámites</Text>
           <Text style={s.blockHint}>
             En la próxima iteración conectamos un textarea + botón para generar
@@ -163,16 +153,10 @@ export default function DashboardScreen() {
 
         {/* Enlaces rápidos */}
         <View style={s.quickLinks}>
-          <TouchableOpacity
-            onPress={goTramites}
-            style={{ marginBottom: theme.spacing.sm }}
-          >
+          <TouchableOpacity onPress={goTramites} style={s.quickLinkItem}>
             <Text style={s.link}>Ir a trámites</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={goSoporte}
-            style={{ marginBottom: theme.spacing.sm }}
-          >
+          <TouchableOpacity onPress={goSoporte} style={s.quickLinkItem}>
             <Text style={s.link}>Contactar Soporte</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={goAjustes}>
@@ -212,6 +196,12 @@ const mkStyles = (theme) =>
       ...theme.shadow,
     },
 
+    // Welcome card (sobreescribe padding / margin específico)
+    welcomeCard: {
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.lg,
+    },
+
     // Usuario
     userRow: {
       marginTop: theme.spacing.md,
@@ -228,6 +218,7 @@ const mkStyles = (theme) =>
       marginRight: theme.spacing.md,
     },
     avatarText: { fontSize: 18, fontWeight: "800", color: theme.colors.text },
+    userMain: { flex: 1 },
     userName: {
       fontSize: theme.font.body,
       fontWeight: "700",
@@ -260,6 +251,7 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
+      marginBottom: theme.spacing.md,
       ...theme.shadow,
     },
     metricTitle: {
@@ -288,6 +280,15 @@ const mkStyles = (theme) =>
       borderRadius: theme.radius.xl,
       ...theme.shadow,
     },
+    blockSpacing: {
+      padding: theme.spacing.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      marginBottom: theme.spacing.lg,
+      ...theme.shadow,
+    },
     blockTitle: {
       fontSize: theme.font.h3,
       fontWeight: "800",
@@ -298,6 +299,7 @@ const mkStyles = (theme) =>
 
     // Links rápidos
     quickLinks: { alignItems: "center", paddingBottom: theme.spacing.xl },
+    quickLinkItem: { marginBottom: theme.spacing.sm },
     link: {
       color: theme.colors.primary,
       fontWeight: "700",
