@@ -35,7 +35,7 @@ export default function EditarTramiteScreen() {
   const id = params?.id ? String(params.id) : null;
 
   const { theme } = useTheme();
-  const s = mkStyles(theme, insets);
+  const s = mkStyles(theme);
 
   // Form
   const [titulo, setTitulo] = useState("");
@@ -139,9 +139,18 @@ export default function EditarTramiteScreen() {
     router.back();
   };
 
+  // memoiza contentContainerStyle dinámico
+  const contentContainerStyle = useMemo(
+    () => [s.content, { paddingBottom: insets.bottom + 140 }],
+    [s.content, insets.bottom]
+  );
+
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={s.container}
+      >
         <View style={s.card}>
           <View style={s.header}>
             <View style={s.headerTop}>
@@ -176,7 +185,7 @@ export default function EditarTramiteScreen() {
           </View>
 
           <ScrollView
-            contentContainerStyle={s.contentWithPadding}
+            contentContainerStyle={contentContainerStyle}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
@@ -276,7 +285,7 @@ export default function EditarTramiteScreen() {
               </Pressable>
             </View>
 
-            <Text style={s.labelWithTop}>Descripción</Text>
+            <Text style={[s.label, s.mt12]}>Descripción</Text>
             <TextInput
               value={descripcion}
               onChangeText={setDescripcion}
@@ -288,7 +297,7 @@ export default function EditarTramiteScreen() {
             />
           </ScrollView>
 
-          <View style={s.saveBarWithPadding}>
+          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + 16 }]}>
             <Pressable
               onPress={onSubmit}
               disabled={!canSave}
@@ -315,8 +324,8 @@ export default function EditarTramiteScreen() {
   );
 }
 
-/* ---------- estilos reactivos ---------- */
-const mkStyles = (theme, insets) =>
+/* ---------- estilos reactivos (cambios mínimos respecto a tu versión) ---------- */
+const mkStyles = (theme) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,
@@ -324,11 +333,7 @@ const mkStyles = (theme, insets) =>
       justifyContent: "flex-end",
       backgroundColor: theme.colors.overlay ?? "rgba(0,0,0,0.35)",
     },
-
-    container: {
-      flex: 1,
-    },
-
+    container: { flex: 1 }, // evitamos inline flex
     card: {
       width: "92%",
       maxWidth: 720,
@@ -341,7 +346,6 @@ const mkStyles = (theme, insets) =>
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
-
     header: {
       paddingTop: theme.spacing.md,
       paddingHorizontal: theme.spacing.lg,
@@ -391,21 +395,10 @@ const mkStyles = (theme, insets) =>
     },
 
     content: { padding: theme.spacing.lg, gap: theme.spacing.sm },
-    contentWithPadding: {
-      padding: theme.spacing.lg,
-      gap: theme.spacing.sm,
-      paddingBottom: (insets?.bottom || 0) + 140,
-    },
+    mt12: { marginTop: 12 },
 
     label: {
       marginTop: theme.spacing.sm,
-      marginBottom: 6,
-      fontSize: theme.font.small,
-      fontWeight: "800",
-      color: theme.colors.text,
-    },
-    labelWithTop: {
-      marginTop: 12,
       marginBottom: 6,
       fontSize: theme.font.small,
       fontWeight: "800",
@@ -423,10 +416,7 @@ const mkStyles = (theme, insets) =>
       fontSize: theme.font.body,
     },
 
-    textarea: {
-      height: 120,
-      textAlignVertical: "top",
-    },
+    textarea: { height: 120, textAlignVertical: "top" },
 
     chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     chip: {
@@ -461,23 +451,6 @@ const mkStyles = (theme, insets) =>
       backgroundColor: theme.colors.surface,
       paddingTop: 10,
       paddingHorizontal: theme.spacing.lg,
-    },
-    saveBarWithPadding: {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: theme.colors.surface,
-      paddingTop: 10,
-      paddingHorizontal: theme.spacing.lg,
-      paddingBottom: (insets?.bottom || 0) + 16,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
-      shadowColor: "#000",
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      shadowOffset: { width: 0, height: -2 },
-      elevation: 3,
     },
 
     saveCta: {

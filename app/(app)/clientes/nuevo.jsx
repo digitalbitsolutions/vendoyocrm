@@ -88,7 +88,7 @@ export default function NuevoClienteScreen() {
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
+        style={s.container}     // <- reemplazado (antes: { flex: 1 })
       >
         <View style={s.card}>
           <View style={s.header}>
@@ -249,6 +249,7 @@ const mkStyles = (theme) =>
       justifyContent: "flex-end",
       backgroundColor: theme.colors.overlay,
     },
+    container: { flex: 1 }, // <- agregado: evita inline style { flex: 1 }
     card: {
       width: "95%",
       maxWidth: 720,
