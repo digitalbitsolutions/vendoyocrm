@@ -11,7 +11,10 @@ import {
   Platform,
   DeviceEventEmitter,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -69,18 +72,24 @@ export default function NuevoClienteScreen() {
       password: password.trim(),
       createdAt: new Date().toISOString(),
     };
-    payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
+    payload.documento = `${payload.tipoDoc || ""}: ${
+      payload.numDoc || ""
+    }`.trim();
 
     DeviceEventEmitter.emit("cliente:created", payload);
     router.back();
   };
 
-  const SAVE_BTN_HEIGHT = (theme.button && theme.button.height) ? theme.button.height : 56;
+  const SAVE_BTN_HEIGHT =
+    theme.button && theme.button.height ? theme.button.height : 56;
   const SAVE_BAR_PADDING_ESTIMATE = SAVE_BTN_HEIGHT + (theme.spacing?.lg ?? 24);
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={s.card}>
           <View style={s.header}>
             <View style={s.headerTop}>
@@ -101,7 +110,10 @@ export default function NuevoClienteScreen() {
             contentContainerStyle={[
               s.content,
               {
-                paddingBottom: (theme.spacing?.xxl ?? 20) + SAVE_BAR_PADDING_ESTIMATE + insets.bottom,
+                paddingBottom:
+                  (theme.spacing?.xxl ?? 20) +
+                  SAVE_BAR_PADDING_ESTIMATE +
+                  insets.bottom,
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -128,10 +140,22 @@ export default function NuevoClienteScreen() {
             />
 
             <Label s={s}>Nombre: *</Label>
-            <Input s={s} placeholder="Ej: Miguel" value={nombre} onChangeText={setNombre} returnKeyType="next" />
+            <Input
+              s={s}
+              placeholder="Ej: Miguel"
+              value={nombre}
+              onChangeText={setNombre}
+              returnKeyType="next"
+            />
 
             <Label s={s}>Apellido: *</Label>
-            <Input s={s} placeholder="Ej: Yesan" value={apellido} onChangeText={setApellido} returnKeyType="next" />
+            <Input
+              s={s}
+              placeholder="Ej: Yesan"
+              value={apellido}
+              onChangeText={setApellido}
+              returnKeyType="next"
+            />
 
             <Label s={s}>Email: *</Label>
             <Input
@@ -151,25 +175,50 @@ export default function NuevoClienteScreen() {
               placeholder="Ej: +34 600 000 000"
               value={telefono}
               onChangeText={setTelefono}
-              keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"}
+              keyboardType={
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"
+              }
               returnKeyType="next"
             />
 
             <Label s={s}>Dirección:</Label>
-            <Input s={s} placeholder="Ej: Calle Mayor, 123, Barcelona" value={direccion} onChangeText={setDireccion} />
+            <Input
+              s={s}
+              placeholder="Ej: Calle Mayor, 123, Barcelona"
+              value={direccion}
+              onChangeText={setDireccion}
+            />
 
             <Label s={s}>Contraseña: *</Label>
-            <Input s={s} placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword} secureTextEntry />
+            <Input
+              s={s}
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
           </ScrollView>
 
-          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) }]}>
+          <View
+            style={[
+              s.saveBar,
+              s.saveBarShadow,
+              { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) },
+            ]}
+          >
             <Button
               title="Guardar Cliente"
               onPress={onSubmit}
               disabled={!canSave}
               fullWidth
               variant="secondary"
-              leftIcon={<Ionicons name="checkmark-circle" size={18} color={theme.colors.onSecondary} />}
+              leftIcon={
+                <Ionicons
+                  name="checkmark-circle"
+                  size={18}
+                  color={theme.colors.onSecondary}
+                />
+              }
             />
           </View>
         </View>
@@ -183,7 +232,13 @@ function Label({ children, s }) {
   return <Text style={s.label}>{children}</Text>;
 }
 function Input({ s, ...props }) {
-  return <TextInput placeholderTextColor={s.placeholderColor} {...props} style={[s.input, props.style]} />;
+  return (
+    <TextInput
+      placeholderTextColor={s.placeholderColor}
+      {...props}
+      style={[s.input, props.style]}
+    />
+  );
 }
 
 /* mkStyles - CORREGIDO */

@@ -11,7 +11,10 @@ import {
   Platform,
   DeviceEventEmitter,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
@@ -101,7 +104,9 @@ export default function EditarClienteScreen() {
       updatedAt: new Date().toISOString(),
     };
 
-    payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
+    payload.documento = `${payload.tipoDoc || ""}: ${
+      payload.numDoc || ""
+    }`.trim();
     payload.nombreCompleto = `${payload.nombre}${
       payload.apellido ? ", " + payload.apellido : ""
     }`;
@@ -219,9 +224,7 @@ export default function EditarClienteScreen() {
               value={telefono}
               onChangeText={setTelefono}
               keyboardType={
-                Platform.OS === "ios"
-                  ? "numbers-and-punctuation"
-                  : "phone-pad"
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"
               }
               returnKeyType="next"
             />
@@ -232,9 +235,7 @@ export default function EditarClienteScreen() {
               value={whatsapp}
               onChangeText={setWhatsapp}
               keyboardType={
-                Platform.OS === "ios"
-                  ? "numbers-and-punctuation"
-                  : "phone-pad"
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"
               }
               returnKeyType="next"
             />
@@ -262,7 +263,7 @@ export default function EditarClienteScreen() {
             style={[
               s.saveBar,
               s.saveBarShadow,
-              { paddingBottom: insets.bottom + theme.spacing.xl + 10, },
+              { paddingBottom: insets.bottom + theme.spacing.xl + 10 },
             ]}
           >
             <Button

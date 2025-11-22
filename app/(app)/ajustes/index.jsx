@@ -24,7 +24,9 @@ function Row({ icon, title, subtitle, onPress }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [{ opacity: pressed ? theme.opacity?.pressed ?? 0.6 : 1 }]}
+      style={({ pressed }) => [
+        { opacity: pressed ? theme.opacity?.pressed ?? 0.6 : 1 },
+      ]}
       accessibilityRole="button"
     >
       <View style={stylesRow(theme).wrap}>
@@ -33,9 +35,15 @@ function Row({ icon, title, subtitle, onPress }) {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={stylesRow(theme).title}>{title}</Text>
-          {!!subtitle && <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>}
+          {!!subtitle && (
+            <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>
+          )}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+        <Ionicons
+          name="chevron-forward"
+          size={18}
+          color={theme.colors.textMuted}
+        />
       </View>
     </Pressable>
   );
@@ -51,7 +59,9 @@ function SwitchRow({ icon, title, subtitle, value, onValueChange, testID }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={stylesRow(theme).title}>{title}</Text>
-        {!!subtitle && <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>}
+        {!!subtitle && (
+          <Text style={stylesRow(theme).subtitle}>{subtitle}</Text>
+        )}
       </View>
       <Switch value={!!value} onValueChange={onValueChange} testID={testID} />
     </View>
@@ -78,24 +88,21 @@ export default function Ajustes() {
   const [saving, setSaving] = useState(false);
 
   // ⚡ Crossfade local de tema
-  const fade = useRef(new Animated.Value(0)).current;      // 0 = sin overlay, 1 = overlay visible
+  const fade = useRef(new Animated.Value(0)).current; // 0 = sin overlay, 1 = overlay visible
   const [overlayColor, setOverlayColor] = useState(theme.colors.background);
-  const DURATION = 180;                                     // ajusta la suavidad aquí (ms)
+  const DURATION = 180; // ajusta la suavidad aquí (ms)
 
-  const persist = useCallback(
-    async (next) => {
-      setCfg(next);
-      try {
-        setSaving(true);
-        await saveSettings(next);
-      } catch (e) {
-        Alert.alert("Error", e?.message || "No se pudo guardar.");
-      } finally {
-        setSaving(false);
-      }
-    },
-    []
-  );
+  const persist = useCallback(async (next) => {
+    setCfg(next);
+    try {
+      setSaving(true);
+      await saveSettings(next);
+    } catch (e) {
+      Alert.alert("Error", e?.message || "No se pudo guardar.");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   // Crossfade al cambiar tema
   const setUiMode = useCallback(
@@ -108,7 +115,11 @@ export default function Ajustes() {
       // en el siguiente frame cambiamos tema y desvanecemos overlay
       requestAnimationFrame(() => {
         if (typeof setMode === "function") setMode(mode);
-        Animated.timing(fade, { toValue: 0, duration: DURATION, useNativeDriver: true }).start();
+        Animated.timing(fade, {
+          toValue: 0,
+          duration: DURATION,
+          useNativeDriver: true,
+        }).start();
       });
       persist(next);
     },
@@ -127,11 +138,11 @@ export default function Ajustes() {
         setCfg({
           ui: { mode: data?.ui?.mode || "light" },
           notifications: {
-            push: data?.notifications?.push ?? true
+            push: data?.notifications?.push ?? true,
           },
           privacy: {
-            biometricLock: data?.privacy?.biometricLock ?? false
-          }
+            biometricLock: data?.privacy?.biometricLock ?? false,
+          },
         });
       } catch (e) {
         Alert.alert("Error", e?.message || "No se pudo cargar ajustes.");
@@ -141,32 +152,32 @@ export default function Ajustes() {
 
   const toggle = useCallback(
     (path) => (val) => {
-      setCfg(prev => {
+      setCfg((prev) => {
         // Crear una copia profunda del estado actual
         const next = JSON.parse(JSON.stringify(prev));
-        
+
         // Dividir la ruta en segmentos
-        const segs = path.split('.');
-        
+        const segs = path.split(".");
+
         // Navegar hasta el objeto padre del valor a modificar
         let current = next;
         for (let i = 0; i < segs.length - 1; i++) {
           const key = segs[i];
           if (current[key] === undefined) {
             current[key] = {};
-          } else if (typeof current[key] !== 'object') {
+          } else if (typeof current[key] !== "object") {
             // Si el valor actual no es un objeto, lo convertimos en uno
             current[key] = {};
           }
           current = current[key];
         }
-        
+
         // Establecer el nuevo valor
         current[segs[segs.length - 1]] = val;
-        
+
         // Guardar los cambios
         persist(next);
-        
+
         return next;
       });
     },
@@ -176,78 +187,105 @@ export default function Ajustes() {
   if (!cfg) {
     return (
       <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-        <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <AppBar
+          variant="section"
+          title="Ajustes"
+          showBorder={false}
+          onBackPress={goBackSafe}
+        />
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <Text style={{ color: theme.colors.textMuted }}>Cargando…</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-    return (
-      <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-        <AppBar variant="section" title="Ajustes" showBorder={false} onBackPress={goBackSafe} />
+  return (
+    <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
+      <AppBar
+        variant="section"
+        title="Ajustes"
+        showBorder={false}
+        onBackPress={goBackSafe}
+      />
 
-        {/* Overlay para el crossfade (toma el color anterior y se desvanece) */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: overlayColor, opacity: fade },
-          ]}
-        />
+      {/* Overlay para el crossfade (toma el color anterior y se desvanece) */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: overlayColor, opacity: fade },
+        ]}
+      />
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={s.body}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-        >
-          <Group title="Apariencia">
-            <SwitchRow
-              icon="moon-outline"
-              title="Modo oscuro"
-              subtitle="Afecta colores de toda la app"
-              value={(cfg.ui?.mode || "light") === "dark"}
-              onValueChange={(v) => setUiMode(v ? "dark" : "light")}
-              testID="switch-dark-mode"
-            />
-          </Group>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={s.body}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        <Group title="Apariencia">
+          <SwitchRow
+            icon="moon-outline"
+            title="Modo oscuro"
+            subtitle="Afecta colores de toda la app"
+            value={(cfg.ui?.mode || "light") === "dark"}
+            onValueChange={(v) => setUiMode(v ? "dark" : "light")}
+            testID="switch-dark-mode"
+          />
+        </Group>
 
-          <Group title="Notificaciones">
-            <SwitchRow
-              icon="notifications-outline"
-              title="Notificaciones push"
-              subtitle="Alertas en tu dispositivo"
-              value={cfg.notifications?.push}
-              onValueChange={toggle("notifications.push")}
-            />
-          </Group>
+        <Group title="Notificaciones">
+          <SwitchRow
+            icon="notifications-outline"
+            title="Notificaciones push"
+            subtitle="Alertas en tu dispositivo"
+            value={cfg.notifications?.push}
+            onValueChange={toggle("notifications.push")}
+          />
+        </Group>
 
-          <Group title="Seguridad">
-            <Row
-              icon="key-outline"
-              title="Gestión de sesiones"
-              subtitle="Cerrar sesión en otros dispositivos"
-              onPress={() => router.push("/(app)/ajustes/sesiones")}
-            />
-          </Group>
+        <Group title="Seguridad">
+          <Row
+            icon="key-outline"
+            title="Gestión de sesiones"
+            subtitle="Cerrar sesión en otros dispositivos"
+            onPress={() => router.push("/(app)/ajustes/sesiones")}
+          />
+        </Group>
 
-<Group title="Sistema">
-            <Row icon="language-outline" title="Idioma" subtitle="Español" onPress={() => router.push("/(app)/ajustes/idioma")} />
-            <Row icon="information-circle-outline" title="Acerca de" subtitle="Versión, licencias" onPress={() => router.push("/(app)/ajustes/acerca")} />
-            <Row icon="help-circle-outline" title="Ayuda y soporte" subtitle="Preguntas frecuentes y contacto" onPress={() => router.push("/(app)/ajustes/soporte")} />
-          </Group>
-          
-          <View style={{ height: 20 }} />
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
+        <Group title="Sistema">
+          <Row
+            icon="language-outline"
+            title="Idioma"
+            subtitle="Español"
+            onPress={() => router.push("/(app)/ajustes/idioma")}
+          />
+          <Row
+            icon="information-circle-outline"
+            title="Acerca de"
+            subtitle="Versión, licencias"
+            onPress={() => router.push("/(app)/ajustes/acerca")}
+          />
+          <Row
+            icon="help-circle-outline"
+            title="Ayuda y soporte"
+            subtitle="Preguntas frecuentes y contacto"
+            onPress={() => router.push("/(app)/ajustes/soporte")}
+          />
+        </Group>
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
-    body: { padding: theme.spacing.lg, gap: theme.spacing.lg }
+    body: { padding: theme.spacing.lg, gap: theme.spacing.lg },
   });
 
 const stylesGroup = (theme) =>
@@ -261,18 +299,36 @@ const stylesGroup = (theme) =>
       gap: theme.spacing.md,
       ...theme.shadow,
     },
-    title: { color: theme.colors.text, fontSize: theme.font.h4, fontWeight: "800", marginBottom: 2 },
+    title: {
+      color: theme.colors.text,
+      fontSize: theme.font.h4,
+      fontWeight: "800",
+      marginBottom: 2,
+    },
   });
 
 const stylesRow = (theme) =>
   StyleSheet.create({
-    wrap: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12 },
+    wrap: {
+      minHeight: 52,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
     iconWrap: {
-      width: 28, height: 28, borderRadius: 14,
-      alignItems: "center", justifyContent: "center",
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: theme.colors.background,
-      borderWidth: 1, borderColor: theme.colors.border,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
     },
     title: { color: theme.colors.text, fontWeight: "700" },
-    subtitle: { color: theme.colors.textMuted, marginTop: 2, fontSize: theme.font.small },
+    subtitle: {
+      color: theme.colors.textMuted,
+      marginTop: 2,
+      fontSize: theme.font.small,
+    },
   });

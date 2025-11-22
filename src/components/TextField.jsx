@@ -12,7 +12,7 @@ export function TextField({
   leftIcon = null,
   rightIcon = null,
   helperText,
-  forceLight = false,   // ⬅️ nuevo: modo auth siempre claro
+  forceLight = false, // ⬅️ nuevo: modo auth siempre claro
   ...inputProps
 }) {
   const { theme } = useTheme();
@@ -90,12 +90,12 @@ export function TextField({
             <Ionicons
               name={isSecure ? "eye" : "eye-off"}
               size={20}
-              color={focused ? colors.secondary : (colors.textMuted || "#6B7280")}
+              color={focused ? colors.secondary : colors.textMuted || "#6B7280"}
             />
           </Pressable>
-        ) : (
-          rightIcon ? <View style={s.rightIcon}>{rightIcon}</View> : null
-        )}
+        ) : rightIcon ? (
+          <View style={s.rightIcon}>{rightIcon}</View>
+        ) : null}
       </View>
 
       {/* helperText (si no hay error) o error */}

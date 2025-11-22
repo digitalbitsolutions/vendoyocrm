@@ -15,28 +15,28 @@ const DEFAULT_ACCESS = SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY;
  * En web cae a AsyncStorage (usa HTTPS + HTTPSOnly cookies en backend para tokens reales).
  */
 export async function saveSecure(key, value, options = {}) {
-    const data = typeof value === "string" ? value : JSON.stringify(value);
-    if (isWeb) return AsyncStorage.setItem(key, data);
-    return SecureStore.setItemAsync(key, data, {
-        keychainAccessible: DEFAULT_ACCESS,
-        ...options, // te permite sobreescribir la política en llamadas puntuales
-    });
+  const data = typeof value === "string" ? value : JSON.stringify(value);
+  if (isWeb) return AsyncStorage.setItem(key, data);
+  return SecureStore.setItemAsync(key, data, {
+    keychainAccessible: DEFAULT_ACCESS,
+    ...options, // te permite sobreescribir la política en llamadas puntuales
+  });
 }
 
 /**
  * Lee un valor seguro. Si fue guardado como objeto, lo parsea.
  */
 export async function readSecure(key) {
-    const raw = isWeb
-        ? await AsyncStorage.getItem(key)
-        : await SecureStore.getItemAsync(key);
+  const raw = isWeb
+    ? await AsyncStorage.getItem(key)
+    : await SecureStore.getItemAsync(key);
 
-    if (!raw) return null;
-    try {
-        return JSON.parse(raw);
-    } catch {
-        return raw;   // era string plano
-    }
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return raw; // era string plano
+  }
 }
 
 /**
@@ -44,6 +44,6 @@ export async function readSecure(key) {
  */
 
 export async function deleteSecure(key) {
-    if (isWeb) return AsyncStorage.removeItem(key);
-    return SecureStore.deleteItemAsync(key);
+  if (isWeb) return AsyncStorage.removeItem(key);
+  return SecureStore.deleteItemAsync(key);
 }

@@ -1,9 +1,9 @@
 {
-    "extends": "expo/tsconfig.base",
-    "compilerOptions": {
-        "noEmit": true,
-        "skipLibCheck": true
-    },
-    "include": ["app", "src"],
-    "exclude": ["node_modules"]
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["app", "src"],
+  "exclude": ["node_modules"]
 }

@@ -1,7 +1,17 @@
 // src/components/Drawer/CustomDrawerContent.jsx
 import React, { useMemo, useCallback } from "react";
-import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Platform,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import { useTheme } from "../../style/theme";
@@ -14,7 +24,12 @@ function isActive(pathname, href) {
 }
 
 /* Drawer item memoizado */
-const DrawerItem = React.memo(function DrawerItem({ icon, label, onPress, active }) {
+const DrawerItem = React.memo(function DrawerItem({
+  icon,
+  label,
+  onPress,
+  active,
+}) {
   const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
 
@@ -98,7 +113,10 @@ export default function CustomDrawerContent(props) {
       </View>
 
       <ScrollView
-        contentContainerStyle={[s.menu, { paddingBottom: insets.bottom + theme.spacing.lg }]}
+        contentContainerStyle={[
+          s.menu,
+          { paddingBottom: insets.bottom + theme.spacing.lg },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {MENU.map((it) => (
@@ -115,7 +133,10 @@ export default function CustomDrawerContent(props) {
 
         <Pressable
           onPress={onSignOut}
-          style={({ pressed }) => [s.logoutBtn, pressed && { opacity: theme.opacity.pressed }]}
+          style={({ pressed }) => [
+            s.logoutBtn,
+            pressed && { opacity: theme.opacity.pressed },
+          ]}
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"

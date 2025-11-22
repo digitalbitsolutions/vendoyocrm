@@ -97,9 +97,9 @@ function FilterChip({ label, active, onPress }) {
 
 function ClienteCard({ item, onEditar, onEliminar, theme }) {
   return (
-    <Card style={[s.card, { padding: theme.spacing.lg }]}>
+    <Card style={[s.card, s.cardPadded]}>
       {/* Cabecera: avatar + nombre */}
-      <View style={{ flexDirection: "row", gap: theme.spacing.lg }}>
+      <View style={s.headerRow}>
         <View style={s.avatar} />
         <View style={{ flex: 1 }}>
           <Text style={s.name}>{item.nombre}</Text>
@@ -131,10 +131,12 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Editar cliente ${item.nombre}`}
         >
-          <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
-          <Text style={[s.btnText, { color: theme.colors.onAccent }]}>
-            Editar
-          </Text>
+          <Ionicons
+            name="create-outline"
+            size={16}
+            color={theme.colors.onAccent}
+          />
+          <Text style={[s.btnText, s.btnTextAccent]}>Editar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -143,10 +145,12 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Eliminar cliente ${item.nombre}`}
         >
-          <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
-          <Text style={[s.btnText, { color: theme.colors.onDanger }]}>
-            Eliminar
-          </Text>
+          <Ionicons
+            name="trash-outline"
+            size={16}
+            color={theme.colors.onDanger}
+          />
+          <Text style={[s.btnText, s.btnTextDanger]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -156,8 +160,8 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
 /* ----------------- Pantalla ----------------- */
 export default function ClientesScreen() {
   const router = useRouter();
-  const { theme } = useTheme();          // ✅ tema reactivo
-  s = mkStyles(theme);                   // ✅ estilos dependientes del tema
+  const { theme } = useTheme(); // ✅ tema reactivo
+  s = mkStyles(theme); // ✅ estilos dependientes del tema
 
   const [items, setItems] = useState(MOCK_CLIENTES);
   const [estado, setEstado] = useState("todos"); // "todos" | "activo" | "inactivo"
@@ -188,7 +192,7 @@ export default function ClientesScreen() {
   const nuevoCliente = useCallback(() => {
     router.push({
       pathname: "/clientes/nuevo",
-      params: { modal: true }
+      params: { modal: true },
     });
   }, [router]);
 
@@ -201,28 +205,43 @@ export default function ClientesScreen() {
   );
 
   const eliminar = useCallback((item) => {
-    Alert.alert("Eliminar cliente", `¿Seguro que deseas eliminar a ${item.nombre}?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () =>
-          setItems((prev) => prev.filter((c) => c.id !== item.id)),
-      },
-    ]);
+    Alert.alert(
+      "Eliminar cliente",
+      `¿Seguro que deseas eliminar a ${item.nombre}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () =>
+            setItems((prev) => prev.filter((c) => c.id !== item.id)),
+        },
+      ]
+    );
   }, []);
 
   // Eventos create/update/delete
   useEffect(() => {
-    const subCreated = DeviceEventEmitter.addListener("cliente:created", (nuevo) => {
-      setItems((prev) => [nuevo, ...prev]);
-    });
-    const subUpdated = DeviceEventEmitter.addListener("cliente:updated", (upd) => {
-      setItems((prev) => prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c)));
-    });
-    const subDeleted = DeviceEventEmitter.addListener("cliente:deleted", (id) => {
-      setItems((prev) => prev.filter((c) => c.id !== id));
-    });
+    const subCreated = DeviceEventEmitter.addListener(
+      "cliente:created",
+      (nuevo) => {
+        setItems((prev) => [nuevo, ...prev]);
+      }
+    );
+    const subUpdated = DeviceEventEmitter.addListener(
+      "cliente:updated",
+      (upd) => {
+        setItems((prev) =>
+          prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c))
+        );
+      }
+    );
+    const subDeleted = DeviceEventEmitter.addListener(
+      "cliente:deleted",
+      (id) => {
+        setItems((prev) => prev.filter((c) => c.id !== id));
+      }
+    );
 
     return () => {
       subCreated.remove();
@@ -241,7 +260,7 @@ export default function ClientesScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8 }}
+          contentContainerStyle={s.fchipsContainer}
         >
           <FilterChip
             label="Todos"
@@ -279,13 +298,20 @@ export default function ClientesScreen() {
           onPress={nuevoCliente}
           activeOpacity={theme.opacity?.pressed ?? 0.7}
         >
-          <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
+          <Ionicons
+            name="add-circle"
+            size={18}
+            color={theme.colors.onSecondary}
+          />
           <Text style={s.ctaText}>Nuevo Cliente</Text>
         </TouchableOpacity>
       </View>
 
       {/* Lista */}
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {list.length ? (
           list.map((c) => (
             <ClienteCard
@@ -297,7 +323,7 @@ export default function ClientesScreen() {
             />
           ))
         ) : (
-          <Card style={[s.card, { alignItems: "center", padding: theme.spacing.xl }]}>
+          <Card style={[s.card, s.cardCentered]}>
             <Ionicons
               name="people-outline"
               size={32}
@@ -305,7 +331,7 @@ export default function ClientesScreen() {
             />
             <Text style={s.emptyTitle}>No hay clientes</Text>
             <Text style={s.emptyText}>
-              Crea tu primer cliente con el botón "Nuevo Cliente".
+              Crea tu primer cliente con el botón «Nuevo Cliente».
             </Text>
           </Card>
         )}
@@ -331,15 +357,20 @@ const mkStyles = (theme) =>
       borderBottomColor: theme.colors.border,
     },
 
+    // Horizontal scroll content (chips)
+    fchipsContainer: {
+      paddingHorizontal: theme.spacing.lg,
+      alignItems: "center",
+      gap: 8,
+    },
+
     // Filtro chip
     fchip: {
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
       backgroundColor:
-        theme.mode === "dark"
-          ? "rgba(255,255,255,0.06)"
-          : "rgba(0,0,0,0.04)",
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
@@ -387,6 +418,19 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.border,
       ...theme.shadow,
     },
+    cardPadded: {
+      padding: theme.spacing.lg,
+    },
+    cardCentered: {
+      alignItems: "center",
+      padding: theme.spacing.xl,
+    },
+
+    headerRow: {
+      flexDirection: "row",
+      gap: theme.spacing.lg,
+      alignItems: "flex-start",
+    },
 
     avatar: {
       width: 48,
@@ -430,6 +474,8 @@ const mkStyles = (theme) =>
     btnEdit: { backgroundColor: theme.colors.accent },
     btnDelete: { backgroundColor: theme.colors.danger },
     btnText: { fontWeight: "800" },
+    btnTextAccent: { color: theme.colors.onAccent, marginLeft: 6 },
+    btnTextDanger: { color: theme.colors.onDanger, marginLeft: 6 },
 
     // CTA
     cta: {

@@ -1,5 +1,11 @@
 // app/(app)/reportes/index.jsx
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +17,10 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AppBar from "../../../src/components/AppBar";
 import { useTheme } from "../../../src/style/theme";
@@ -35,9 +44,16 @@ const toHuman = (iso) => {
 const toCSV = (rows) => {
   if (!rows.length) return "";
   const headers = ["cliente", "tramite", "estado", "fecha_inicio", "fecha_fin"];
-  const esc = (v) => `"${String(v ?? "").replaceAll(`"`, `""`).replaceAll("\n", " ")}"`;
+  const esc = (v) =>
+    `"${String(v ?? "")
+      .replaceAll(`"`, `""`)
+      .replaceAll("\n", " ")}"`;
   const body = rows
-    .map((r) => [r.cliente, r.tramite, r.estado, r.fechaInicio, r.fechaFin].map(esc).join(","))
+    .map((r) =>
+      [r.cliente, r.tramite, r.estado, r.fechaInicio, r.fechaFin]
+        .map(esc)
+        .join(",")
+    )
     .join("\n");
   return `${headers.join(",")}\n${body}`;
 };
@@ -88,10 +104,21 @@ function makeMockData(count = 60) {
 }
 const MOCK_FULL = makeMockData(60);
 
-async function fetchReportsMock({ cliente, estado, fIni, fFin, page = 1, pageSize = 10 }) {
+async function fetchReportsMock({
+  cliente,
+  estado,
+  fIni,
+  fFin,
+  page = 1,
+  pageSize = 10,
+}) {
   // filtrar
   let data = MOCK_FULL.filter((r) => {
-    if (cliente && cliente !== "Todos" && !r.cliente.toLowerCase().includes(String(cliente).toLowerCase()))
+    if (
+      cliente &&
+      cliente !== "Todos" &&
+      !r.cliente.toLowerCase().includes(String(cliente).toLowerCase())
+    )
       return false;
     if (estado && estado !== "Todos" && r.estado !== estado) return false;
     if (fIni) {
@@ -190,7 +217,10 @@ export default function ReportesScreen() {
         setRows((prev) => (append ? [...prev, ...data] : data));
       } catch (e) {
         setError(e?.message || "Error al obtener datos");
-        Alert.alert("Error", e?.message || "No se pudieron obtener los reportes.");
+        Alert.alert(
+          "Error",
+          e?.message || "No se pudieron obtener los reportes."
+        );
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -240,17 +270,24 @@ export default function ReportesScreen() {
       const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
       const uri = `${dir}${filename}`;
 
-      await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
+      await FileSystem.writeAsStringAsync(uri, csv, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
 
       const can = await Sharing.isAvailableAsync();
       if (can) {
-        await Sharing.shareAsync(uri, { UTI: "public.comma-separated-values-text" });
+        await Sharing.shareAsync(uri, {
+          UTI: "public.comma-separated-values-text",
+        });
       } else {
         Alert.alert("Exportado", `CSV creado en: ${uri}`);
       }
     } catch (e) {
       console.error(e);
-      Alert.alert("Exportar error", "Instala 'expo-file-system' y 'expo-sharing' o revisa permisos.");
+      Alert.alert(
+        "Exportar error",
+        "Instala 'expo-file-system' y 'expo-sharing' o revisa permisos."
+      );
     }
   }, [rows]);
 
@@ -279,7 +316,9 @@ export default function ReportesScreen() {
 
         <View style={s.rowLine}>
           <Text style={s.rowLabel}>Estado:</Text>
-          <Text style={[s.rowValue, s[stateToStyle(item.estado)]]}>{item.estado}</Text>
+          <Text style={[s.rowValue, s[stateToStyle(item.estado)]]}>
+            {item.estado}
+          </Text>
         </View>
 
         <View style={s.rowGrid}>
@@ -329,7 +368,9 @@ export default function ReportesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
               >
-                <Text style={[s.chipText, active && s.chipTextActive]}>{st}</Text>
+                <Text style={[s.chipText, active && s.chipTextActive]}>
+                  {st}
+                </Text>
               </Pressable>
             );
           })}
@@ -340,7 +381,9 @@ export default function ReportesScreen() {
           style={s.input}
           placeholder="dd/mm/aaaa"
           placeholderTextColor={theme.colors.textMuted}
-          keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+          keyboardType={
+            Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"
+          }
           value={fIniHuman}
           onChangeText={setFIniHuman}
         />
@@ -350,7 +393,9 @@ export default function ReportesScreen() {
           style={s.input}
           placeholder="dd/mm/aaaa"
           placeholderTextColor={theme.colors.textMuted}
-          keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+          keyboardType={
+            Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"
+          }
           value={fFinHuman}
           onChangeText={setFFinHuman}
         />
@@ -364,7 +409,11 @@ export default function ReportesScreen() {
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
         >
-          <Ionicons name="bar-chart-outline" size={18} color={theme.colors.onSecondary} />
+          <Ionicons
+            name="bar-chart-outline"
+            size={18}
+            color={theme.colors.onSecondary}
+          />
           <Text style={s.genTxt}>Generar Reporte</Text>
         </Pressable>
       </View>
@@ -394,9 +443,19 @@ export default function ReportesScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Ordenar por ${h.label}`}
             >
-              <Text style={[s.thText, active && { color: theme.colors.secondary }]}>{h.label}</Text>
+              <Text
+                style={[s.thText, active && { color: theme.colors.secondary }]}
+              >
+                {h.label}
+              </Text>
               <Ionicons
-                name={!active ? "swap-vertical-outline" : sort.dir === "asc" ? "caret-up-outline" : "caret-down-outline"}
+                name={
+                  !active
+                    ? "swap-vertical-outline"
+                    : sort.dir === "asc"
+                    ? "caret-up-outline"
+                    : "caret-down-outline"
+                }
                 size={16}
                 color={active ? theme.colors.secondary : theme.colors.textMuted}
               />
@@ -410,7 +469,13 @@ export default function ReportesScreen() {
 
   /* empty / footer UI */
   const ListFooter = () => {
-    if (loadingMore) return <ActivityIndicator style={{ marginVertical: 12 }} color={theme.colors.secondary} />;
+    if (loadingMore)
+      return (
+        <ActivityIndicator
+          style={{ marginVertical: 12 }}
+          color={theme.colors.secondary}
+        />
+      );
     return null;
   };
 
@@ -439,13 +504,20 @@ export default function ReportesScreen() {
           accessibilityRole="button"
           accessibilityLabel="Exportar CSV"
         >
-          <Ionicons name="download-outline" size={18} color={theme.colors.onSecondary} />
+          <Ionicons
+            name="download-outline"
+            size={18}
+            color={theme.colors.onSecondary}
+          />
           <Text style={s.ctaText}>Exportar CSV</Text>
         </Pressable>
       </View>
 
       <FlatList
-        contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingBottom: Math.max(insets.bottom, theme.spacing.xl) }}
+        contentContainerStyle={{
+          paddingHorizontal: theme.spacing.lg,
+          paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
+        }}
         data={sortedRows}
         keyExtractor={(r) => r.id}
         ListHeaderComponent={
@@ -464,8 +536,14 @@ export default function ReportesScreen() {
         ListEmptyComponent={() =>
           !loading ? (
             <View style={s.emptyBox}>
-              <Ionicons name="cloud-offline-outline" size={22} color={theme.colors.textMuted} />
-              <Text style={{ color: theme.colors.textMuted, marginTop: 6 }}>Sin resultados</Text>
+              <Ionicons
+                name="cloud-offline-outline"
+                size={22}
+                color={theme.colors.textMuted}
+              />
+              <Text style={{ color: theme.colors.textMuted, marginTop: 6 }}>
+                Sin resultados
+              </Text>
             </View>
           ) : null
         }
@@ -505,7 +583,11 @@ const mkStyles = (theme) =>
       flexDirection: "row",
       paddingHorizontal: 14,
     },
-    ctaText: { color: theme.colors.onSecondary, fontWeight: "800", fontSize: theme.font.body },
+    ctaText: {
+      color: theme.colors.onSecondary,
+      fontWeight: "800",
+      fontSize: theme.font.body,
+    },
 
     filtersCard: {
       backgroundColor: theme.colors.surface,
@@ -517,9 +599,20 @@ const mkStyles = (theme) =>
       marginBottom: theme.spacing.md,
       ...theme.shadow,
     },
-    filterTitle: { fontWeight: "900", fontSize: theme.font.h3, color: theme.colors.text, marginBottom: 8 },
+    filterTitle: {
+      fontWeight: "900",
+      fontSize: theme.font.h3,
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
 
-    label: { marginTop: 8, marginBottom: 6, fontSize: theme.font.small, fontWeight: "800", color: theme.colors.text },
+    label: {
+      marginTop: 8,
+      marginBottom: 6,
+      fontSize: theme.font.small,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
     input: {
       height: 44,
       paddingHorizontal: 12,
@@ -532,28 +625,107 @@ const mkStyles = (theme) =>
     },
 
     chipsRow: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
-    chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: theme.radius.pill, backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", marginRight: 8, marginBottom: 8 },
+    chip: {
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: theme.radius.pill,
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      marginRight: 8,
+      marginBottom: 8,
+    },
     chipActive: { backgroundColor: theme.colors.secondary },
-    chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
+    chipText: {
+      fontWeight: "700",
+      color: theme.colors.text,
+      fontSize: theme.font.small,
+    },
     chipTextActive: { color: theme.colors.onSecondary },
 
-    genBtn: { marginTop: 12, height: 48, borderRadius: theme.radius.pill, backgroundColor: theme.colors.secondary, alignItems: "center", justifyContent: "center", flexDirection: "row", paddingHorizontal: 14 },
-    genTxt: { color: theme.colors.onSecondary, fontWeight: "900", fontSize: theme.font.body },
+    genBtn: {
+      marginTop: 12,
+      height: 48,
+      borderRadius: theme.radius.pill,
+      backgroundColor: theme.colors.secondary,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
+      paddingHorizontal: 14,
+    },
+    genTxt: {
+      color: theme.colors.onSecondary,
+      fontWeight: "900",
+      fontSize: theme.font.body,
+    },
 
-    tableHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", paddingHorizontal: 0, marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
-    thBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 10, paddingHorizontal: 12, borderRadius: theme.radius.pill, backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)", marginRight: 8, marginBottom: 8 },
-    thText: { fontSize: theme.font.small, fontWeight: "800", color: theme.colors.text },
+    tableHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap",
+      paddingHorizontal: 0,
+      marginTop: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
+    thBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.pill,
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      marginRight: 8,
+      marginBottom: 8,
+    },
+    thText: {
+      fontSize: theme.font.small,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
 
-    rowCard: { backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, borderWidth: 1, borderColor: theme.colors.border, padding: theme.spacing.lg, marginBottom: theme.spacing.md, ...theme.shadow },
-    rowTitle: { fontSize: theme.font.h3, fontWeight: "900", color: theme.colors.text, marginBottom: 8 },
+    rowCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+      ...theme.shadow,
+    },
+    rowTitle: {
+      fontSize: theme.font.h3,
+      fontWeight: "900",
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
     rowLine: { flexDirection: "row", alignItems: "baseline", marginBottom: 6 },
-    rowLabel: { color: theme.colors.textMuted, fontSize: theme.font.small, fontWeight: "700", marginRight: 8 },
-    rowValue: { color: theme.colors.text, fontSize: theme.font.body, flexShrink: 1 },
+    rowLabel: {
+      color: theme.colors.textMuted,
+      fontSize: theme.font.small,
+      fontWeight: "700",
+      marginRight: 8,
+    },
+    rowValue: {
+      color: theme.colors.text,
+      fontSize: theme.font.body,
+      flexShrink: 1,
+    },
     rowGrid: { flexDirection: "row", marginTop: 4 },
 
     statePend: { color: theme.colors.warning, fontWeight: "800" },
     stateWip: { color: theme.colors.secondary, fontWeight: "800" },
     stateDone: { color: theme.colors.success, fontWeight: "800" },
 
-    emptyBox: { alignItems: "center", justifyContent: "center", padding: theme.spacing.lg, backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, borderWidth: 1, borderColor: theme.colors.border, marginTop: theme.spacing.md, marginBottom: theme.spacing.md },
+    emptyBox: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: theme.spacing.lg,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginTop: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+    },
   });

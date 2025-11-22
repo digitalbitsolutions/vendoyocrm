@@ -1,5 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import { View, Image, StyleSheet, Animated, useWindowDimensions, Platform } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  Animated,
+  useWindowDimensions,
+  Platform,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useTheme } from "../style/theme";
 
@@ -22,8 +29,17 @@ export function Hero({ size = "full" }) {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, friction: 6, tension: 50, useNativeDriver: true }),
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        friction: 6,
+        tension: 50,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
@@ -49,10 +65,7 @@ export function Hero({ size = "full" }) {
       <StatusBar style="light" backgroundColor={bgColor} />
 
       <Animated.View
-        style={[
-          s.center,
-          { opacity: fade, transform: [{ scale }] },
-        ]}
+        style={[s.center, { opacity: fade, transform: [{ scale }] }]}
       >
         <Image
           source={LOGO_WHITE}

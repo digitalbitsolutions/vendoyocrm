@@ -18,16 +18,26 @@ function AppContent() {
   // Si aún estamos cargando, mostramos pantalla de carga simple
   if (booting || isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={{ marginTop: 10, color: theme.colors.text }}>Cargando aplicación...</Text>
+        <Text style={{ marginTop: 10, color: theme.colors.text }}>
+          Cargando aplicación...
+        </Text>
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <StatusBar style={theme.statusBarStyle} backgroundColor={theme.statusBarBg} />
+      <StatusBar
+        style={theme.statusBarStyle}
+        backgroundColor={theme.statusBarBg}
+      />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -58,7 +68,7 @@ export default function App() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

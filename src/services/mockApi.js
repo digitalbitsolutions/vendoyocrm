@@ -1,8 +1,10 @@
-// src/services/mockApi.js
+// file: src/services/mockApi.js
 // Mocks ligeros para desarrollo: properties + login
+// Versión corregida y robusta — reemplaza el actual src/services/mockApi.js
 
-const properties = require('../../mocks/properties.json');
+const properties = require("../../mocks/properties.json");
 
+// pequeño helper para simular latencia de red
 const wait = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -43,21 +45,21 @@ export const login = async (emailOrPayload, maybePassword) => {
   }
 
   // Validaciones claras
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
-    throw new Error('E-mail no válido (mock)');
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    throw new Error("E-mail no válido (mock)");
   }
-  if (!password || typeof password !== 'string' || password.length < 6) {
-    throw new Error('La contraseña debe tener al menos 6 caracteres (mock)');
+  if (!password || typeof password !== "string" || password.length < 6) {
+    throw new Error("La contraseña debe tener al menos 6 caracteres (mock)");
   }
 
   // Usuario demo válido
-  if (email.toLowerCase() === 'demo@vendoyo.es') {
+  if (email.toLowerCase() === "demo@vendoyo.es") {
     return {
-      token: 'demo-token',
-      user: { id: 'u_demo', email: 'demo@vendoyo.es', name: 'demo' },
+      token: "demo-token",
+      user: { id: "u_demo", email: "demo@vendoyo.es", name: "demo" },
     };
   }
 
   // Si no coincide el demo
-  throw new Error('Invalid credentials (mock)');
+  throw new Error("Invalid credentials (mock)");
 };

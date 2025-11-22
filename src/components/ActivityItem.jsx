@@ -37,12 +37,21 @@ export default memo(function ActivityItem({ item, isLast = false }) {
   return (
     <View style={s.root} accessible accessibilityRole="article">
       <View style={s.leftCol}>
-        <View style={[s.iconBox, { borderColor: tint, backgroundColor: `#${tintBg}` }]}>
+        <View
+          style={[
+            s.iconBox,
+            { borderColor: tint, backgroundColor: `#${tintBg}` },
+          ]}
+        >
           <Ionicons name={iconName} size={16} color={tint} />
         </View>
 
         {/* timeline vertical — si es último lo ocultamos */}
-        {!isLast && <View style={[s.timeline, { backgroundColor: theme.colors.border }]} />}
+        {!isLast && (
+          <View
+            style={[s.timeline, { backgroundColor: theme.colors.border }]}
+          />
+        )}
       </View>
 
       <View style={s.content}>
@@ -66,7 +75,11 @@ export default memo(function ActivityItem({ item, isLast = false }) {
 
         {/* fecha */}
         <View style={s.metaRow}>
-          <Ionicons name="calendar-outline" size={14} color={theme.colors.textMuted} />
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color={theme.colors.textMuted}
+          />
           <Text style={s.metaText}>{metaText}</Text>
         </View>
       </View>
@@ -129,7 +142,10 @@ const mkStyles = (theme) =>
     },
 
     diffWrap: {
-      backgroundColor: theme.mode === "light" ? (theme.colors.primary + "10") : (theme.colors.primary + "12"),
+      backgroundColor:
+        theme.mode === "light"
+          ? theme.colors.primary + "10"
+          : theme.colors.primary + "12",
       borderRadius: theme.radius.md || 12,
       paddingVertical: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,

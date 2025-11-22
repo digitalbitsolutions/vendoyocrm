@@ -70,12 +70,7 @@ export default function ModalCard({
       : { alignSelf: "center" };
 
   return (
-    <Animated.View
-      style={[
-        s.backdrop,
-        { opacity },
-      ]}
-    >
+    <Animated.View style={[s.backdrop, { opacity }]}>
       <Pressable
         onPress={onDismiss}
         style={StyleSheet.absoluteFill}
@@ -89,11 +84,7 @@ export default function ModalCard({
         style={{ flex: 1, width: "100%", justifyContent: "flex-end" }}
       >
         <Animated.View
-          style={[
-            s.card,
-            heightStyle,
-            { transform: [{ translateY }] },
-          ]}
+          style={[s.card, heightStyle, { transform: [{ translateY }] }]}
         >
           <SafeAreaView edges={["bottom"]}>{children}</SafeAreaView>
         </Animated.View>

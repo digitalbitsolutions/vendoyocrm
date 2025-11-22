@@ -1,6 +1,12 @@
 // app/(app)/dashboard/index.jsx
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
@@ -11,8 +17,8 @@ import { useTheme } from "../../../src/style/theme"; // ✅ tema dinámico
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { theme } = useTheme();       // lee el tema activo (light/dark)
-  const s = mkStyles(theme);          // genera estilos reactivos
+  const { theme } = useTheme(); // lee el tema activo (light/dark)
+  const s = mkStyles(theme); // genera estilos reactivos
 
   function getInitials(name = "") {
     const parts = name.trim().split(/\s+/);
@@ -35,7 +41,11 @@ export default function DashboardScreen() {
 
   function MetricCard({ title, value, subtitle, onPress, testID }) {
     return (
-      <Card style={[s.metric, { marginBottom: theme.spacing.md }]} onPress={onPress} testID={testID}>
+      <Card
+        style={[s.metric, { marginBottom: theme.spacing.md }]}
+        onPress={onPress}
+        testID={testID}
+      >
         <Text style={s.metricTitle}>{title}</Text>
         <Text style={s.metricValue}>{value}</Text>
         {subtitle ? <Text style={s.metricSubtitle}>{subtitle}</Text> : null}
@@ -53,9 +63,9 @@ export default function DashboardScreen() {
   const data = { visitasWeb: 3457, recibidos: 3, enProceso: 0, completados: 0 };
 
   const goTramites = () => router.push("/(app)/tramites");
-  const goPerfil   = () => router.push("/(app)/perfil");
-  const goSoporte  = () => router.push("/(app)/soporte");
-  const goAjustes  = () => router.push("/(app)/ajustes");
+  const goPerfil = () => router.push("/(app)/perfil");
+  const goSoporte = () => router.push("/(app)/soporte");
+  const goAjustes = () => router.push("/(app)/ajustes");
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
@@ -67,17 +77,25 @@ export default function DashboardScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         {/* Bienvenida + usuario */}
-        <Card style={{ padding: theme.spacing.lg, marginBottom: theme.spacing.lg }}>
+        <Card
+          style={{ padding: theme.spacing.lg, marginBottom: theme.spacing.lg }}
+        >
           <Text style={s.h1}>Dashboard de VendoYo.es</Text>
-          <Text style={s.subtitle}>{greeting}, {user?.name || "Usuario"}.</Text>
+          <Text style={s.subtitle}>
+            {greeting}, {user?.name || "Usuario"}.
+          </Text>
 
           <View style={s.userRow}>
             <View style={s.avatar}>
-              <Text style={s.avatarText}>{getInitials(user?.name || "VY")}</Text>
+              <Text style={s.avatarText}>
+                {getInitials(user?.name || "VY")}
+              </Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.userName}>{user?.name || "Invitado"}</Text>
-              <Text style={s.userEmail}>{user?.email || "sin-email@vendoyo.es"}</Text>
+              <Text style={s.userEmail}>
+                {user?.email || "sin-email@vendoyo.es"}
+              </Text>
             </View>
             <TouchableOpacity style={s.userAction} onPress={goPerfil}>
               <Text style={s.userActionText}>Ver perfil</Text>
@@ -116,29 +134,50 @@ export default function DashboardScreen() {
         {/* Bloques grandes */}
         <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites por Estado</Text>
-          <Text style={s.blockHint}>Aquí insertaremos un gráfico de barras o donut.</Text>
+          <Text style={s.blockHint}>
+            Aquí insertaremos un gráfico de barras o donut.
+          </Text>
         </Card>
 
         <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites por Conexión</Text>
-          <Text style={s.blockHint}>Placeholder para un gráfico por plataforma (iOS/Android/Web).</Text>
+          <Text style={s.blockHint}>
+            Placeholder para un gráfico por plataforma (iOS/Android/Web).
+          </Text>
         </Card>
 
         <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Trámites Recibidos Mensuales</Text>
-          <Text style={s.blockHint}>Aquí irá un gráfico de líneas por meses.</Text>
+          <Text style={s.blockHint}>
+            Aquí irá un gráfico de líneas por meses.
+          </Text>
         </Card>
 
         <Card style={[s.block, { marginBottom: theme.spacing.lg }]}>
           <Text style={s.blockTitle}>Asistente Inteligente de trámites</Text>
-          <Text style={s.blockHint}>En la próxima iteración conectamos un textarea + botón para generar sugerencias.</Text>
+          <Text style={s.blockHint}>
+            En la próxima iteración conectamos un textarea + botón para generar
+            sugerencias.
+          </Text>
         </Card>
 
         {/* Enlaces rápidos */}
         <View style={s.quickLinks}>
-          <TouchableOpacity onPress={goTramites} style={{ marginBottom: theme.spacing.sm }}><Text style={s.link}>Ir a trámites</Text></TouchableOpacity>
-          <TouchableOpacity onPress={goSoporte} style={{ marginBottom: theme.spacing.sm }}><Text style={s.link}>Contactar Soporte</Text></TouchableOpacity>
-          <TouchableOpacity onPress={goAjustes}><Text style={s.link}>Ajustes</Text></TouchableOpacity>
+          <TouchableOpacity
+            onPress={goTramites}
+            style={{ marginBottom: theme.spacing.sm }}
+          >
+            <Text style={s.link}>Ir a trámites</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={goSoporte}
+            style={{ marginBottom: theme.spacing.sm }}
+          >
+            <Text style={s.link}>Contactar Soporte</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={goAjustes}>
+            <Text style={s.link}>Ajustes</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -152,8 +191,16 @@ const mkStyles = (theme) =>
     scroll: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl },
 
     // Tipografía
-    h1: { fontSize: theme.font.h2, fontWeight: "600", color: theme.colors.text },
-    subtitle: { marginTop: 4, color: theme.colors.textMuted, fontSize: theme.font.small },
+    h1: {
+      fontSize: theme.font.h2,
+      fontWeight: "600",
+      color: theme.colors.text,
+    },
+    subtitle: {
+      marginTop: 4,
+      color: theme.colors.textMuted,
+      fontSize: theme.font.small,
+    },
 
     // Card base
     card: {
@@ -166,40 +213,94 @@ const mkStyles = (theme) =>
     },
 
     // Usuario
-    userRow: { marginTop: theme.spacing.md, flexDirection: "row", alignItems: "center" },
+    userRow: {
+      marginTop: theme.spacing.md,
+      flexDirection: "row",
+      alignItems: "center",
+    },
     avatar: {
-      width: 56, height: 56, borderRadius: 28,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
       backgroundColor: theme.colors.border,
-      alignItems: "center", justifyContent: "center",
-      marginRight: theme.spacing.md
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: theme.spacing.md,
     },
     avatarText: { fontSize: 18, fontWeight: "800", color: theme.colors.text },
-    userName: { fontSize: theme.font.body, fontWeight: "700", color: theme.colors.text },
+    userName: {
+      fontSize: theme.font.body,
+      fontWeight: "700",
+      color: theme.colors.text,
+    },
     userEmail: { fontSize: theme.font.small, color: theme.colors.textMuted },
-    userAction: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: theme.radius.lg, backgroundColor: theme.colors.primary },
-    userActionText: { color: theme.colors.onAccent, fontWeight: "700", fontSize: theme.font.small },
+    userAction: {
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: theme.radius.lg,
+      backgroundColor: theme.colors.primary,
+    },
+    userActionText: {
+      color: theme.colors.onAccent,
+      fontWeight: "700",
+      fontSize: theme.font.small,
+    },
 
     // Métricas: usamos percent width + marginBottom para spacing
-    grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      justifyContent: "space-between",
+    },
     metric: {
       width: "47.5%",
       paddingVertical: theme.spacing.lg,
       paddingHorizontal: theme.spacing.md,
-      borderWidth: 1, borderColor: theme.colors.border,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       ...theme.shadow,
     },
-    metricTitle: { color: theme.colors.textMuted, fontSize: theme.font.small, marginBottom: 4 },
-    metricValue: { color: theme.colors.text, fontWeight: "800", fontSize: 32, lineHeight: 36 },
-    metricSubtitle: { color: theme.colors.textMuted, fontSize: theme.font.small, marginTop: 4 },
+    metricTitle: {
+      color: theme.colors.textMuted,
+      fontSize: theme.font.small,
+      marginBottom: 4,
+    },
+    metricValue: {
+      color: theme.colors.text,
+      fontWeight: "800",
+      fontSize: 32,
+      lineHeight: 36,
+    },
+    metricSubtitle: {
+      color: theme.colors.textMuted,
+      fontSize: theme.font.small,
+      marginTop: 4,
+    },
 
     // Bloques grandes
-    block: { padding: theme.spacing.lg, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, ...theme.shadow },
-    blockTitle: { fontSize: theme.font.h3, fontWeight: "800", color: theme.colors.text, marginTop: 4 },
+    block: {
+      padding: theme.spacing.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radius.xl,
+      ...theme.shadow,
+    },
+    blockTitle: {
+      fontSize: theme.font.h3,
+      fontWeight: "800",
+      color: theme.colors.text,
+      marginTop: 4,
+    },
     blockHint: { color: theme.colors.textMuted, fontSize: theme.font.small },
 
     // Links rápidos
     quickLinks: { alignItems: "center", paddingBottom: theme.spacing.xl },
-    link: { color: theme.colors.primary, fontWeight: "700", fontSize: theme.font.small },
+    link: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+      fontSize: theme.font.small,
+    },
   });

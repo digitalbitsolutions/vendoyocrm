@@ -25,14 +25,16 @@ const RAW_BASE_URL = process.env.EXPO_PUBLIC_API_URL || null;
 const BASE_URL = RAW_BASE_URL ? RAW_BASE_URL.replace(/\/$/, "") : null;
 
 // Email considerado "admin" en modo MOCK (configurable por ENV)
-const ADMIN_EMAILS = (process.env.EXPO_PUBLIC_ADMIN_EMAILS || "admin@vendoyo.es")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+const ADMIN_EMAILS = (
+  process.env.EXPO_PUBLIC_ADMIN_EMAILS || "admin@vendoyo.es"
+)
+  .split(",")
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
 
 // helper para saber si un email debe ser admin en el mock
 function isAdminEmail(email = "") {
-    return ADMIN_EMAILS.includes(email.toLowerCase());
+  return ADMIN_EMAILS.includes(email.toLowerCase());
 }
 
 // ----- Utilidades internas -----------------------------------------------------------
@@ -42,10 +44,10 @@ const delay = (ms = 600) => new Promise((r) => setTimeout(r, ms));
 
 /** Crea un Error consistente para UI/logging */
 function raise(message, status, payload) {
-    const err = new Error(message || "Network error");
-    if (status != null) err.status = status;
-    if (payload != null) err.payload = payload;
-    throw err;
+  const err = new Error(message || "Network error");
+  if (status != null) err.status = status;
+  if (payload != null) err.payload = payload;
+  throw err;
 }
 
 /**
@@ -55,25 +57,27 @@ function raise(message, status, payload) {
  */
 
 async function postJSON(path, body) {
-    if (!BASE_URL) raise("No hay BASE_URL configurada (EXPO_PUBLIC_API_URL)",0);
+  if (!BASE_URL) raise("No hay BASE_URL configurada (EXPO_PUBLIC_API_URL)", 0);
 
-    const res = await fetch(`${BASE_URL}${path}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body || {}),
-    });
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
 
-    // Intentamos parsear JSON; si no hay, leemos texto
-    const ct = res.headers.get("content-type") || "";
-    const isJson = ct.includes("application/json");
-    const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+  // Intentamos parsear JSON; si no hay, leemos texto
+  const ct = res.headers.get("content-type") || "";
+  const isJson = ct.includes("application/json");
+  const data = isJson
+    ? await res.json().catch(() => null)
+    : await res.text().catch(() => null);
 
-    if (!res.ok) {
-        const msg = (data && (data.message || data.error)) || `HTTP ${res.status}`;
-        raise(msg, res.status, data);
-    }
+  if (!res.ok) {
+    const msg = (data && (data.message || data.error)) || `HTTP ${res.status}`;
+    raise(msg, res.status, data);
+  }
 
-    return data;
+  return data;
 }
 
 /**
@@ -81,78 +85,73 @@ async function postJSON(path, body) {
  *  Acepta varios nombres de campos para compatibilidad (token/user, access_token/profile, etc.)
  */
 function toSessionFrom(response) {
-    if (!response) raise("Respuesta vacía del servidor");
-    const token =
-        response.token ??
-        response.access_token ??
-        null;
+  if (!response) raise("Respuesta vacía del servidor");
+  const token = response.token ?? response.access_token ?? null;
 
-    const user =
-        response.user ??
-        response.profile ??
-        response.data ??
-        null;
-    
-        if (!token) raise("Respuesta sin token del servidor");
-        if (!user) raise("Respuesta sin usuario del servidor");
+  const user = response.user ?? response.profile ?? response.data ?? null;
 
-        // si el usuario es admin, le damos un rol especial
-        if (user && !user.role) {
-            user.role = isAdminEmail(user.email) ? "admin" : "user";
-        }
+  if (!token) raise("Respuesta sin token del servidor");
+  if (!user) raise("Respuesta sin usuario del servidor");
 
-        return { token, user };
+  // si el usuario es admin, le damos un rol especial
+  if (user && !user.role) {
+    user.role = isAdminEmail(user.email) ? "admin" : "user";
+  }
+
+  return { token, user };
 }
 
 /** Persiste la sesión completa de forma segura */
 async function persistSession(session) {
-    await saveSecure(SESSION_KEY, session);   // storage.js ya serializa si hace falta
+  await saveSecure(SESSION_KEY, session); // storage.js ya serializa si hace falta
 }
 
 // ----- Mocks (solo si no hay BACKEND) ------------------------------------------------
 
 async function mockLogin({ email, password }) {
-    await delay(700);
-    if (!email || !email.includes("@")) raise("E-mail no válido");
-    if (!password || password.length < 6) raise("La contraseña debe tener al menos 6 caracteres");
+  await delay(700);
+  if (!email || !email.includes("@")) raise("E-mail no válido");
+  if (!password || password.length < 6)
+    raise("La contraseña debe tener al menos 6 caracteres");
 
-    // Asignamos rol en función del email (mock admin)
-    const role = isAdminEmail(email) ? "admin" : "user";
+  // Asignamos rol en función del email (mock admin)
+  const role = isAdminEmail(email) ? "admin" : "user";
 
-    return {
-        token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
-        user: {
-            id: "u_" + Math.random().toString(36).slice(2, 8),
-            email,
-            name: email.split("@")[0],
-            role,
-        },
-    };
+  return {
+    token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
+    user: {
+      id: "u_" + Math.random().toString(36).slice(2, 8),
+      email,
+      name: email.split("@")[0],
+      role,
+    },
+  };
 }
 
 async function mockRegister({ name, email, password }) {
-    await delay(900);
-    if (!name || name.trim().length < 2) raise("Escribe tu nombre completo");
-    if (!email || !email.includes("@")) raise("E-mail no válido");
-    if (!password || password.length < 6) raise("La contraseña debe tener al menos 6 caracteres");
+  await delay(900);
+  if (!name || name.trim().length < 2) raise("Escribe tu nombre completo");
+  if (!email || !email.includes("@")) raise("E-mail no válido");
+  if (!password || password.length < 6)
+    raise("La contraseña debe tener al menos 6 caracteres");
 
-    // Devolvemos sesión iniciada respetando el nombre y el rol mock
-    const role = isAdminEmail(email) ? "admin" : "user";
-    return {
-        token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
-        user: {
-            id: "u_" + Math.random().toString(36).slice(2, 8),
-            email,
-            name: name.trim(),
-            role,
-        },
-    };
+  // Devolvemos sesión iniciada respetando el nombre y el rol mock
+  const role = isAdminEmail(email) ? "admin" : "user";
+  return {
+    token: `mock_${Math.random().toString(36).slice(2)}_${Date.now()}`,
+    user: {
+      id: "u_" + Math.random().toString(36).slice(2, 8),
+      email,
+      name: name.trim(),
+      role,
+    },
+  };
 }
 
 async function mockForgot(email) {
-    await delay(800);
-    if (!email || !email.includes("@")) raise("E-mail no válido");
-    return { ok: true };
+  await delay(800);
+  if (!email || !email.includes("@")) raise("E-mail no válido");
+  return { ok: true };
 }
 
 // ----- API pública del servicio ------------------------------------------------------
@@ -164,13 +163,13 @@ async function mockForgot(email) {
  *  - Persiste { token, user } y la devuelve
  */
 export async function login({ email, password }) {
-    const res = BASE_URL
-        ? await postJSON("/auth/login", { email, password })
-        : await mockLogin({ email, password });
+  const res = BASE_URL
+    ? await postJSON("/auth/login", { email, password })
+    : await mockLogin({ email, password });
 
-    const session = toSessionFrom(res);
-    await persistSession(session);
-    return session;   // { token, user }
+  const session = toSessionFrom(res);
+  await persistSession(session);
+  return session; // { token, user }
 }
 
 /**
@@ -179,26 +178,26 @@ export async function login({ email, password }) {
  *  - Sin backend: mock local (y quedas logueado)
  */
 export async function register({ name, email, password }) {
-    const res = BASE_URL
-        ? await postJSON("/auth/register", { name, email, password })
-        : await mockRegister({ name, email, password });
+  const res = BASE_URL
+    ? await postJSON("/auth/register", { name, email, password })
+    : await mockRegister({ name, email, password });
 
-    const session = toSessionFrom(res);
-    await persistSession(session);
-    return session;   // { token, user }
+  const session = toSessionFrom(res);
+  await persistSession(session);
+  return session; // { token, user }
 }
 
 /** Cierra la sesión actual (borra storage seguro) */
 export async function logout() {
-    await deleteSecure(SESSION_KEY);
-    return { ok: true };
+  await deleteSecure(SESSION_KEY);
+  return { ok: true };
 }
 
 /** Devuelve la sesión persistida (o null) */
 export async function getSession() {
-    const maybe = await readSecure(SESSION_KEY);
-    if (!maybe) return null;
-    return typeof maybe === "string" ? JSON.parse(maybe) : maybe;
+  const maybe = await readSecure(SESSION_KEY);
+  if (!maybe) return null;
+  return typeof maybe === "string" ? JSON.parse(maybe) : maybe;
 }
 
 /**
@@ -207,9 +206,9 @@ export async function getSession() {
  *  - Sin backend: mock local
  */
 export async function sendPasswordReset(email) {
-    const res = BASE_URL
-        ? await postJSON("/auth/forgot", { email })
-        : await mockForgot(email);
+  const res = BASE_URL
+    ? await postJSON("/auth/forgot", { email })
+    : await mockForgot(email);
 
-    return res;   // { ok: true }
+  return res; // { ok: true }
 }

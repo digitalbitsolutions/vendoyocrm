@@ -20,10 +20,7 @@
         "android.permission.READ_MEDIA_IMAGES"
       ]
     },
-    "plugins": [
-      "expo-secure-store",
-      "expo-router"
-    ],
+    "plugins": ["expo-secure-store", "expo-router"],
     "extra": {
       "eas": {
         "projectId": "a1fc4693-9560-48a9-ab58-4146c2ef6b3a"

@@ -4,7 +4,7 @@ import * as mock from "./mockApi";
 import { http, isMockMode } from "./http";
 import * as auth from "./auth";
 
-const useMocks = (process.env.EXPO_USE_MOCKS === "true") || isMockMode();
+const useMocks = process.env.EXPO_USE_MOCKS === "true" || isMockMode();
 
 /** Listar propiedades */
 export const getProperties = (opts = {}) => {

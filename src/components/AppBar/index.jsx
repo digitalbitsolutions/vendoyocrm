@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, Image, Pressable, StyleSheet, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  StyleSheet,
+  Platform,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useRouter, useNavigation } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,11 +14,11 @@ import { useTheme } from "../../style/theme";
 
 // Variantes de logo (texto blanco y texto turquesa)
 const LOGO_LIGHT = require("../../../assets/images/brand/logo-dark.webp"); // turquesa sobre fondo claro
-const LOGO_DARK  = require("../../../assets/images/brand/logo-light.webp"); // blanco sobre fondo oscuro
+const LOGO_DARK = require("../../../assets/images/brand/logo-light.webp"); // blanco sobre fondo oscuro
 
 export default function AppBar({
   // variantes
-  variant = "dashboard",            // "dashboard" | "section"
+  variant = "dashboard", // "dashboard" | "section"
   title = "",
 
   // navegación
@@ -24,12 +31,12 @@ export default function AppBar({
   right = null,
 
   // marca
-  forceLogoVariant,                 // "light" | "dark" | undefined
+  forceLogoVariant, // "light" | "dark" | undefined
 
   // escalabilidad
-  logoWidth = 140,                  // ancho del logo (alto se calcula por ratio)
-  logoAspect = 5,                   // ratio W/H del logo (evita deformaciones)
-  transparent = false,              // header transparente (p.ej. sobre imágenes)
+  logoWidth = 140, // ancho del logo (alto se calcula por ratio)
+  logoAspect = 5, // ratio W/H del logo (evita deformaciones)
+  transparent = false, // header transparente (p.ej. sobre imágenes)
 }) {
   const router = useRouter();
   const navigation = useNavigation();
@@ -48,15 +55,22 @@ export default function AppBar({
 
   // elegir logo según tema/override
   const logoSrc =
-    forceLogoVariant === "dark" ? LOGO_DARK :
-    forceLogoVariant === "light" ? LOGO_LIGHT :
-    theme.mode === "dark" ? LOGO_DARK : LOGO_LIGHT;
+    forceLogoVariant === "dark"
+      ? LOGO_DARK
+      : forceLogoVariant === "light"
+      ? LOGO_LIGHT
+      : theme.mode === "dark"
+      ? LOGO_DARK
+      : LOGO_LIGHT;
 
   // header tipo sección (flecha + título)
   if (variant === "section") {
     return (
       <>
-        <StatusBar style={theme.statusBarStyle} backgroundColor={theme.statusBarBg} />
+        <StatusBar
+          style={theme.statusBarStyle}
+          backgroundColor={theme.statusBarBg}
+        />
         <View style={[s.wrap, style]}>
           <Pressable
             onPress={handleBack}
@@ -67,10 +81,16 @@ export default function AppBar({
             style={s.left}
           >
             <Ionicons name="arrow-back" size={22} color={theme.colors.text} />
-            <Text numberOfLines={1} style={s.titleSection}>{title}</Text>
+            <Text numberOfLines={1} style={s.titleSection}>
+              {title}
+            </Text>
           </Pressable>
 
-          {right ? <View style={s.rightBtn}>{right}</View> : <View style={{ width: 24 }} />}
+          {right ? (
+            <View style={s.rightBtn}>{right}</View>
+          ) : (
+            <View style={{ width: 24 }} />
+          )}
         </View>
       </>
     );
@@ -79,12 +99,19 @@ export default function AppBar({
   // header tipo dashboard (logo + hamburguesa o slot derecho)
   return (
     <>
-      <StatusBar style={theme.statusBarStyle} backgroundColor={theme.statusBarBg} />
+      <StatusBar
+        style={theme.statusBarStyle}
+        backgroundColor={theme.statusBarBg}
+      />
       <View style={[s.wrap, style]}>
         <View style={s.left}>
           <Image
             source={logoSrc}
-            style={{ width: logoWidth, height: undefined, aspectRatio: logoAspect }}
+            style={{
+              width: logoWidth,
+              height: undefined,
+              aspectRatio: logoAspect,
+            }}
             resizeMode="contain"
             accessibilityLabel="VendoYo"
           />
@@ -98,7 +125,10 @@ export default function AppBar({
             hitSlop={theme.hitSlop}
             accessibilityRole="button"
             accessibilityLabel="Abrir menú"
-            android_ripple={{ color: theme.colors.primary400, borderless: true }}
+            android_ripple={{
+              color: theme.colors.primary400,
+              borderless: true,
+            }}
             style={s.rightBtn}
           >
             <Ionicons name="menu" size={24} color={theme.colors.text} />
@@ -119,7 +149,9 @@ const mkStyles = (theme, { transparent, showBorder }) =>
       alignItems: "center",
       justifyContent: "space-between",
       ...(!transparent ? theme.shadow : { shadowOpacity: 0 }),
-      ...(Platform.OS === "android" ? { elevation: transparent ? 0 : 4, overflow: "hidden" } : null),
+      ...(Platform.OS === "android"
+        ? { elevation: transparent ? 0 : 4, overflow: "hidden" }
+        : null),
       borderBottomWidth: showBorder ? (theme.mode === "dark" ? 0.5 : 1) : 0,
       borderBottomColor: transparent ? "transparent" : theme.colors.border,
     },

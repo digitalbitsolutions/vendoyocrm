@@ -11,7 +11,10 @@ import {
   DeviceEventEmitter,
   Alert,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
@@ -83,10 +86,15 @@ export default function EditarTramiteScreen() {
     if (params?.titulo) setTitulo(String(params.titulo));
     if (params?.ref) setRef(String(params.ref).toUpperCase());
     if (params?.cliente) setCliente(String(params.cliente));
-    if (params?.fechaFinEstimada) setFechaFin(toHuman(String(params.fechaFinEstimada)));
+    if (params?.fechaFinEstimada)
+      setFechaFin(toHuman(String(params.fechaFinEstimada)));
     if (params?.estado) {
       const e = String(params.estado);
-      const map = { pendiente: "Pendiente", proceso: "En Proceso", completado: "Completado" };
+      const map = {
+        pendiente: "Pendiente",
+        proceso: "En Proceso",
+        completado: "Completado",
+      };
       setEstado(map[e] || e);
     }
     if (params?.descripcion) setDescripcion(String(params.descripcion));
@@ -108,7 +116,10 @@ export default function EditarTramiteScreen() {
 
   const onSubmit = () => {
     if (!canSave) {
-      Alert.alert("Faltan datos", "Completa título, referencia y cliente para guardar.");
+      Alert.alert(
+        "Faltan datos",
+        "Completa título, referencia y cliente para guardar."
+      );
       return;
     }
 
@@ -129,19 +140,36 @@ export default function EditarTramiteScreen() {
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={s.card}>
           <View style={s.header}>
             <View style={s.headerTop}>
               <Text style={s.title}>Editar Trámite</Text>
-              <Pressable onPress={onClose} style={s.closeBtn} accessibilityRole="button" accessibilityLabel="Cerrar">
+              <Pressable
+                onPress={onClose}
+                style={s.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
                 <Ionicons name="close" size={22} color={theme.colors.text} />
               </Pressable>
             </View>
 
             {!!id && (
-              <Pressable onPress={copyId} style={s.idRow} accessibilityRole="button" accessibilityLabel="Copiar ID">
-                <Ionicons name="copy-outline" size={14} color={theme.colors.textMuted} />
+              <Pressable
+                onPress={copyId}
+                style={s.idRow}
+                accessibilityRole="button"
+                accessibilityLabel="Copiar ID"
+              >
+                <Ionicons
+                  name="copy-outline"
+                  size={14}
+                  color={theme.colors.textMuted}
+                />
                 <Text style={s.idText} numberOfLines={1}>
                   {id}
                 </Text>
@@ -197,7 +225,9 @@ export default function EditarTramiteScreen() {
               placeholder="dd/mm/aaaa"
               placeholderTextColor={theme.colors.textMuted}
               style={s.input}
-              keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+              keyboardType={
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"
+              }
               returnKeyType="next"
             />
 
@@ -209,7 +239,14 @@ export default function EditarTramiteScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: estado === "Pendiente" }}
               >
-                <Text style={[s.chipText, estado === "Pendiente" && s.chipTextActive]}>Pendiente</Text>
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "Pendiente" && s.chipTextActive,
+                  ]}
+                >
+                  Pendiente
+                </Text>
               </Pressable>
 
               <Pressable
@@ -218,7 +255,14 @@ export default function EditarTramiteScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: estado === "En Proceso" }}
               >
-                <Text style={[s.chipText, estado === "En Proceso" && s.chipTextActive]}>En Proceso</Text>
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "En Proceso" && s.chipTextActive,
+                  ]}
+                >
+                  En Proceso
+                </Text>
               </Pressable>
 
               <Pressable
@@ -227,7 +271,14 @@ export default function EditarTramiteScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: estado === "Completado" }}
               >
-                <Text style={[s.chipText, estado === "Completado" && s.chipTextActive]}>Completado</Text>
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "Completado" && s.chipTextActive,
+                  ]}
+                >
+                  Completado
+                </Text>
               </Pressable>
             </View>
 
@@ -244,7 +295,13 @@ export default function EditarTramiteScreen() {
           </ScrollView>
 
           {/* AJUSTE MINIMO: mantengo estilos, solo dejo más espacio inferior para el botón */}
-          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + 16 }]}>
+          <View
+            style={[
+              s.saveBar,
+              s.saveBarShadow,
+              { paddingBottom: insets.bottom + 16 },
+            ]}
+          >
             <Pressable
               onPress={onSubmit}
               disabled={!canSave}
@@ -257,7 +314,11 @@ export default function EditarTramiteScreen() {
               accessibilityLabel="Guardar cambios"
               accessibilityState={{ disabled: !canSave }}
             >
-              <Ionicons name="save-outline" size={18} color={theme.colors.onSecondary} />
+              <Ionicons
+                name="save-outline"
+                size={18}
+                color={theme.colors.onSecondary}
+              />
               <Text style={s.saveCtaText}>Guardar cambios</Text>
             </Pressable>
           </View>
@@ -297,9 +358,25 @@ const mkStyles = (theme) =>
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
-    headerTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
-    title: { fontSize: theme.font.h2, fontWeight: "800", color: theme.colors.text, lineHeight: theme.font.h2 + 4 },
-    closeBtn: { height: 36, width: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+    headerTop: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 6,
+    },
+    title: {
+      fontSize: theme.font.h2,
+      fontWeight: "800",
+      color: theme.colors.text,
+      lineHeight: theme.font.h2 + 4,
+    },
+    closeBtn: {
+      height: 36,
+      width: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
     idRow: {
       alignSelf: "flex-start",
@@ -311,7 +388,8 @@ const mkStyles = (theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.03)" : "#F1F5F9",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.03)" : "#F1F5F9",
       marginTop: 2,
     },
     idText: {
@@ -323,7 +401,13 @@ const mkStyles = (theme) =>
 
     content: { padding: theme.spacing.lg, gap: theme.spacing.sm },
 
-    label: { marginTop: theme.spacing.sm, marginBottom: 6, fontSize: theme.font.small, fontWeight: "800", color: theme.colors.text },
+    label: {
+      marginTop: theme.spacing.sm,
+      marginBottom: 6,
+      fontSize: theme.font.small,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
 
     input: {
       height: 44,
@@ -341,10 +425,15 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
     },
     chipActive: { backgroundColor: theme.colors.secondary },
-    chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
+    chipText: {
+      fontWeight: "700",
+      color: theme.colors.text,
+      fontSize: theme.font.small,
+    },
     chipTextActive: { color: theme.colors.onSecondary },
 
     saveBarShadow: {
@@ -356,7 +445,15 @@ const mkStyles = (theme) =>
       shadowOffset: { width: 0, height: -2 },
       elevation: 3,
     },
-    saveBar: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: theme.colors.surface, paddingTop: 10, paddingHorizontal: theme.spacing.lg },
+    saveBar: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: theme.colors.surface,
+      paddingTop: 10,
+      paddingHorizontal: theme.spacing.lg,
+    },
 
     // AJUSTE MIN: dejamos margenBottom mayor para que el botón no se vea cortado
     saveCta: {
@@ -371,5 +468,9 @@ const mkStyles = (theme) =>
       // nota: marginBottom lo dejamos suficientemente alto para que no corte en pantallas con notch
       marginBottom: 18,
     },
-    saveCtaText: { color: theme.colors.onSecondary, fontWeight: "900", fontSize: theme.font.h3 },
+    saveCtaText: {
+      color: theme.colors.onSecondary,
+      fontWeight: "900",
+      fontSize: theme.font.h3,
+    },
   });

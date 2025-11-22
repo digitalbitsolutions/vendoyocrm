@@ -1,12 +1,6 @@
 // app/(auth)/register.jsx
 import { useMemo } from "react";
-import {
-  View,
-  Text,
-  Switch,
-  StyleSheet,
-  Image,
-} from "react-native";
+import { View, Text, Switch, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -71,7 +65,6 @@ export default function Register() {
               <Text style={s.tagline}>Inmobiliaria con tarifa plana</Text>
 
               <Text style={s.title}>Crear cuenta</Text>
-              
             </View>
 
             <Formik
@@ -171,7 +164,7 @@ export default function Register() {
                       onValueChange={(v) => setFieldValue("acceptTerms", v)}
                       trackColor={{
                         false: "#E5E7EB", // gris fijo
-                        true: "#0F4C4A",  // verde petróleo fijo
+                        true: "#0F4C4A", // verde petróleo fijo
                       }}
                       thumbColor="#FFFFFF"
                     />

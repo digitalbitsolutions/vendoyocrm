@@ -58,7 +58,8 @@ export default function PerfilScreen() {
         const p = await getProfile();
         if (mounted) setProfile(p);
       } catch (e) {
-        if (mounted) Alert.alert("Error", e?.message || "No se pudo cargar el perfil.");
+        if (mounted)
+          Alert.alert("Error", e?.message || "No se pudo cargar el perfil.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -88,7 +89,11 @@ export default function PerfilScreen() {
     try {
       // uploadImage debe recibir { uri, name, type } — el mock puede devolver la misma url
       const up = await uploadImage(
-        { uri: asset.uri, name: asset.fileName || "avatar.jpg", type: asset.type || "image/jpeg" },
+        {
+          uri: asset.uri,
+          name: asset.fileName || "avatar.jpg",
+          type: asset.type || "image/jpeg",
+        },
         { folder: "avatars" }
       );
       // actualizamos en backend (updateProfile debe devolver el perfil actualizado)
@@ -120,7 +125,10 @@ export default function PerfilScreen() {
   const openCamera = useCallback(async () => {
     const perm = await requestCameraPermissionsAsync();
     if (perm.status !== "granted") {
-      Alert.alert("Permiso requerido", "Activa el permiso de cámara para continuar.");
+      Alert.alert(
+        "Permiso requerido",
+        "Activa el permiso de cámara para continuar."
+      );
       return;
     }
     const result = await launchCameraAsync({
@@ -155,7 +163,12 @@ export default function PerfilScreen() {
     };
 
     if (Platform.OS === "ios") {
-      const options = ["Cancelar", "Tomar foto", "Elegir de galería", ...(hasPhoto ? ["Quitar foto"] : [])];
+      const options = [
+        "Cancelar",
+        "Tomar foto",
+        "Elegir de galería",
+        ...(hasPhoto ? ["Quitar foto"] : []),
+      ];
       const cancelButtonIndex = 0;
       ActionSheetIOS.showActionSheetWithOptions(
         { options, cancelButtonIndex, userInterfaceStyle: "automatic" },
@@ -169,7 +182,15 @@ export default function PerfilScreen() {
       Alert.alert("Foto de perfil", "Selecciona una opción", [
         { text: "Tomar foto", onPress: () => run("camera") },
         { text: "Elegir de galería", onPress: () => run("library") },
-        ...(hasPhoto ? [{ text: "Quitar foto", style: "destructive", onPress: () => run("remove") }] : []),
+        ...(hasPhoto
+          ? [
+              {
+                text: "Quitar foto",
+                style: "destructive",
+                onPress: () => run("remove"),
+              },
+            ]
+          : []),
         { text: "Cancelar", style: "cancel" },
       ]);
     }
@@ -189,7 +210,12 @@ export default function PerfilScreen() {
       <ScrollView
         contentContainerStyle={s.scroll}
         refreshControl={
-          <RefreshControl tintColor={theme.colors.textMuted} colors={[theme.colors.secondary]} refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            tintColor={theme.colors.textMuted}
+            colors={[theme.colors.secondary]}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -199,13 +225,20 @@ export default function PerfilScreen() {
           <View style={s.headerRow}>
             <Pressable
               onPress={chooseAvatar}
-              style={({ pressed }) => [s.avatarWrap, pressed && { opacity: theme.opacity.pressed }]}
+              style={({ pressed }) => [
+                s.avatarWrap,
+                pressed && { opacity: theme.opacity.pressed },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Cambiar foto de perfil"
               accessibilityHint="Abre opciones para tomar foto, elegir de galería o quitar"
             >
               {profile?.avatarUrl ? (
-                <Image source={{ uri: profile.avatarUrl }} style={s.avatar} accessibilityLabel="Avatar del usuario" />
+                <Image
+                  source={{ uri: profile.avatarUrl }}
+                  style={s.avatar}
+                  accessibilityLabel="Avatar del usuario"
+                />
               ) : (
                 <View style={[s.avatar, s.avatarFallback]}>
                   <Text style={s.avatarInitials}>{initials}</Text>
@@ -213,8 +246,23 @@ export default function PerfilScreen() {
               )}
 
               {/* Overlay "editar" */}
-              <View style={s.camBadge} pointerEvents="none" accessibilityElementsHidden>
-                {uploading ? <ActivityIndicator size="small" color={theme.colors.onSecondary} /> : <Ionicons name="camera" size={16} color={theme.colors.onSecondary} />}
+              <View
+                style={s.camBadge}
+                pointerEvents="none"
+                accessibilityElementsHidden
+              >
+                {uploading ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.onSecondary}
+                  />
+                ) : (
+                  <Ionicons
+                    name="camera"
+                    size={16}
+                    color={theme.colors.onSecondary}
+                  />
+                )}
               </View>
             </Pressable>
 
@@ -227,37 +275,85 @@ export default function PerfilScreen() {
               </Text>
 
               <View style={s.badgeRow}>
-                <Text style={[s.roleBadge, roleTone(profile?.role, s)]}>{profile?.role ? String(profile.role || "").toUpperCase() : "USER"}</Text>
-                {!!profile?.phone && <Text style={s.phone}>• {profile.phone}</Text>}
+                <Text style={[s.roleBadge, roleTone(profile?.role, s)]}>
+                  {profile?.role
+                    ? String(profile.role || "").toUpperCase()
+                    : "USER"}
+                </Text>
+                {!!profile?.phone && (
+                  <Text style={s.phone}>• {profile.phone}</Text>
+                )}
               </View>
             </View>
           </View>
 
           {/* Meta sencilla */}
           <View style={s.metaRow}>
-            <Ionicons name="calendar-outline" size={16} color={theme.colors.textMuted} />
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={theme.colors.textMuted}
+            />
             <Text style={s.metaText}>
               Miembro desde{" "}
               {profile?.createdAt
-                ? new Date(profile.createdAt).toLocaleDateString("es-ES", { year: "numeric", month: "short", day: "2-digit" })
+                ? new Date(profile.createdAt).toLocaleDateString("es-ES", {
+                    year: "numeric",
+                    month: "short",
+                    day: "2-digit",
+                  })
                 : "-"}
             </Text>
           </View>
 
           <View style={s.metaRow}>
-            <Ionicons name="refresh-outline" size={16} color={theme.colors.textMuted} />
+            <Ionicons
+              name="refresh-outline"
+              size={16}
+              color={theme.colors.textMuted}
+            />
             <Text style={s.metaText}>
               Última actualización{" "}
               {profile?.updatedAt
-                ? new Date(profile.updatedAt).toLocaleString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
+                ? new Date(profile.updatedAt).toLocaleString("es-ES", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                 : "-"}
             </Text>
           </View>
 
           {/* Acciones principales */}
           <View style={s.actionsRow}>
-            <Button title="Editar perfil" onPress={() => router.push("/(app)/perfil/editar")} leftIcon={<Ionicons name="create-outline" size={18} color={theme.colors.onAccent} />} variant="primary" fullWidth />
-            <Button title="Cambiar contraseña" onPress={() => router.push("/(app)/perfil/seguridad")} leftIcon={<Ionicons name="key-outline" size={18} color={theme.colors.text} />} variant="outline" fullWidth />
+            <Button
+              title="Editar perfil"
+              onPress={() => router.push("/(app)/perfil/editar")}
+              leftIcon={
+                <Ionicons
+                  name="create-outline"
+                  size={18}
+                  color={theme.colors.onAccent}
+                />
+              }
+              variant="primary"
+              fullWidth
+            />
+            <Button
+              title="Cambiar contraseña"
+              onPress={() => router.push("/(app)/perfil/seguridad")}
+              leftIcon={
+                <Ionicons
+                  name="key-outline"
+                  size={18}
+                  color={theme.colors.text}
+                />
+              }
+              variant="outline"
+              fullWidth
+            />
           </View>
         </View>
 
@@ -297,12 +393,25 @@ const mkStyles = (theme) =>
       ...theme.shadow,
     },
 
-    headerRow: { flexDirection: "row", gap: theme.spacing.lg, alignItems: "center" },
+    headerRow: {
+      flexDirection: "row",
+      gap: theme.spacing.lg,
+      alignItems: "center",
+    },
 
     avatarWrap: { width: 84, height: 84 },
-    avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: theme.colors.border },
+    avatar: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: theme.colors.border,
+    },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
-    avatarInitials: { fontSize: 24, fontWeight: "800", color: theme.colors.textMuted },
+    avatarInitials: {
+      fontSize: 24,
+      fontWeight: "800",
+      color: theme.colors.textMuted,
+    },
 
     camBadge: {
       position: "absolute",
@@ -318,10 +427,19 @@ const mkStyles = (theme) =>
       borderColor: theme.colors.surface,
     },
 
-    name: { fontSize: theme.font.h2, fontWeight: "800", color: theme.colors.text },
+    name: {
+      fontSize: theme.font.h2,
+      fontWeight: "800",
+      color: theme.colors.text,
+    },
     email: { color: theme.colors.textMuted, marginTop: 2 },
 
-    badgeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+    badgeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 8,
+    },
     roleBadge: {
       paddingHorizontal: 10,
       paddingVertical: 6,
@@ -331,11 +449,22 @@ const mkStyles = (theme) =>
       overflow: "hidden",
     },
     roleAdmin: { backgroundColor: "rgba(255, 99, 132, .16)", color: "#ff5480" },
-    roleManager: { backgroundColor: "rgba(76, 163, 255, .16)", color: theme.colors.secondary },
-    roleUser: { backgroundColor: "rgba(0,0,0,.06)", color: theme.colors.textMuted },
+    roleManager: {
+      backgroundColor: "rgba(76, 163, 255, .16)",
+      color: theme.colors.secondary,
+    },
+    roleUser: {
+      backgroundColor: "rgba(0,0,0,.06)",
+      color: theme.colors.textMuted,
+    },
     phone: { color: theme.colors.textMuted },
 
-    metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 10,
+    },
     metaText: { color: theme.colors.textMuted },
 
     actionsRow: { marginTop: theme.spacing.lg, gap: 10 },

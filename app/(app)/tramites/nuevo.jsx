@@ -12,7 +12,10 @@ import {
   DeviceEventEmitter,
   Alert,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -32,7 +35,9 @@ const Schema = Yup.object().shape({
   titulo: Yup.string().trim().required("Requerido"),
   ref: Yup.string().trim().required("Requerido"),
   cliente: Yup.string().trim().required("Requerido"),
-  fechaFin: Yup.string().trim().matches(/^$|^\d{2}\/\d{2}\/\d{4}$/, "Formato dd/mm/aaaa"),
+  fechaFin: Yup.string()
+    .trim()
+    .matches(/^$|^\d{2}\/\d{2}\/\d{4}$/, "Formato dd/mm/aaaa"),
   descripcion: Yup.string().trim().notRequired(),
 });
 
@@ -70,7 +75,11 @@ export default function NuevoTramiteScreen() {
         "Tienes cambios sin guardar. ¿Cerrar y perder los cambios?",
         [
           { text: "Cancelar", style: "cancel" },
-          { text: "Cerrar", style: "destructive", onPress: () => router.back() },
+          {
+            text: "Cerrar",
+            style: "destructive",
+            onPress: () => router.back(),
+          },
         ]
       );
     } else {
@@ -84,7 +93,10 @@ export default function NuevoTramiteScreen() {
 
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
         <View style={s.card}>
           <View style={s.header}>
             <View style={s.headerTop}>
@@ -111,7 +123,9 @@ export default function NuevoTramiteScreen() {
                 const payload = {
                   id: `t-${Date.now()}`,
                   titulo: String(values.titulo || "").trim(),
-                  ref: String(values.ref || "").trim().toUpperCase(),
+                  ref: String(values.ref || "")
+                    .trim()
+                    .toUpperCase(),
                   cliente: String(values.cliente || "").trim(),
                   fechaInicio: null,
                   fechaFinEstimada: toISO(values.fechaFin) || null,
@@ -126,13 +140,25 @@ export default function NuevoTramiteScreen() {
                 router.back();
               } catch (e) {
                 console.error(e);
-                Alert.alert("Error", e?.message || "No se pudo crear el trámite.");
+                Alert.alert(
+                  "Error",
+                  e?.message || "No se pudo crear el trámite."
+                );
               } finally {
                 setSubmitting(false);
               }
             }}
           >
-            {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, setFieldValue }) => {
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              touched,
+              isSubmitting,
+              setFieldValue,
+            }) => {
               const canSave =
                 !!String(values.titulo || "").trim() &&
                 !!String(values.ref || "").trim() &&
@@ -145,7 +171,9 @@ export default function NuevoTramiteScreen() {
                       s.content,
                       {
                         paddingBottom:
-                          (theme.spacing?.xxl ?? 20) + SAVE_BAR_PADDING_ESTIMATE + insets.bottom,
+                          (theme.spacing?.xxl ?? 20) +
+                          SAVE_BAR_PADDING_ESTIMATE +
+                          insets.bottom,
                       },
                     ]}
                     showsVerticalScrollIndicator={false}
@@ -159,18 +187,24 @@ export default function NuevoTramiteScreen() {
                       onChangeText={handleChange("titulo")}
                       onBlur={handleBlur("titulo")}
                     />
-                    {!!errors.titulo && touched.titulo && <Text style={s.fieldError}>{errors.titulo}</Text>}
+                    {!!errors.titulo && touched.titulo && (
+                      <Text style={s.fieldError}>{errors.titulo}</Text>
+                    )}
 
                     <Label s={s}>Referencia: *</Label>
                     <Input
                       s={s}
                       placeholder="Ej: CV-2025-0037"
                       value={values.ref}
-                      onChangeText={(v) => setFieldValue("ref", String(v).toUpperCase())}
+                      onChangeText={(v) =>
+                        setFieldValue("ref", String(v).toUpperCase())
+                      }
                       onBlur={handleBlur("ref")}
                       autoCapitalize="characters"
                     />
-                    {!!errors.ref && touched.ref && <Text style={s.fieldError}>{errors.ref}</Text>}
+                    {!!errors.ref && touched.ref && (
+                      <Text style={s.fieldError}>{errors.ref}</Text>
+                    )}
 
                     <Label s={s}>Cliente: *</Label>
                     <Input
@@ -180,7 +214,9 @@ export default function NuevoTramiteScreen() {
                       onChangeText={handleChange("cliente")}
                       onBlur={handleBlur("cliente")}
                     />
-                    {!!errors.cliente && touched.cliente && <Text style={s.fieldError}>{errors.cliente}</Text>}
+                    {!!errors.cliente && touched.cliente && (
+                      <Text style={s.fieldError}>{errors.cliente}</Text>
+                    )}
 
                     <Label s={s}>Fecha Fin Estimada</Label>
                     <Input
@@ -189,9 +225,15 @@ export default function NuevoTramiteScreen() {
                       value={values.fechaFin}
                       onChangeText={handleChange("fechaFin")}
                       onBlur={handleBlur("fechaFin")}
-                      keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+                      keyboardType={
+                        Platform.OS === "ios"
+                          ? "numbers-and-punctuation"
+                          : "numeric"
+                      }
                     />
-                    {!!errors.fechaFin && touched.fechaFin && <Text style={s.fieldError}>{errors.fechaFin}</Text>}
+                    {!!errors.fechaFin && touched.fechaFin && (
+                      <Text style={s.fieldError}>{errors.fechaFin}</Text>
+                    )}
 
                     <Label s={s}>Estado</Label>
                     <View style={s.chipsRow}>
@@ -202,25 +244,53 @@ export default function NuevoTramiteScreen() {
                           style={({ pressed }) => [
                             s.chip,
                             values.estado === st && s.chipActive,
-                            pressed && !(values.estado === st) && { opacity: theme.opacity.pressed },
+                            pressed &&
+                              !(values.estado === st) && {
+                                opacity: theme.opacity.pressed,
+                              },
                           ]}
                           accessibilityRole="button"
-                          accessibilityState={{ selected: values.estado === st }}
+                          accessibilityState={{
+                            selected: values.estado === st,
+                          }}
                           hitSlop={theme.hitSlop}
                         >
-                          <Text style={[s.chipText, values.estado === st && s.chipTextActive]}>{st}</Text>
+                          <Text
+                            style={[
+                              s.chipText,
+                              values.estado === st && s.chipTextActive,
+                            ]}
+                          >
+                            {st}
+                          </Text>
                         </Pressable>
                       ))}
                     </View>
 
                     <Label s={s}>Documentos</Label>
                     <Pressable
-                      onPress={() => Alert.alert("Pendiente", "Integrar selector de archivos")}
-                      style={({ pressed }) => [s.attachBtn, pressed && { opacity: theme.opacity.pressed }]}
+                      onPress={() =>
+                        Alert.alert(
+                          "Pendiente",
+                          "Integrar selector de archivos"
+                        )
+                      }
+                      style={({ pressed }) => [
+                        s.attachBtn,
+                        pressed && { opacity: theme.opacity.pressed },
+                      ]}
                       hitSlop={theme.hitSlop}
                     >
-                      <Ionicons name="attach" size={18} color={theme.colors.secondary} />
-                      <Text style={s.attachText}>{filesCount ? `${filesCount} archivo(s)` : "Adjuntar archivos"}</Text>
+                      <Ionicons
+                        name="attach"
+                        size={18}
+                        color={theme.colors.secondary}
+                      />
+                      <Text style={s.attachText}>
+                        {filesCount
+                          ? `${filesCount} archivo(s)`
+                          : "Adjuntar archivos"}
+                      </Text>
                     </Pressable>
 
                     <Label s={s}>Descripción</Label>
@@ -232,18 +302,35 @@ export default function NuevoTramiteScreen() {
                       onBlur={handleBlur("descripcion")}
                       multiline
                       numberOfLines={4}
-                      style={[s.input, { height: 120, textAlignVertical: "top" }]}
+                      style={[
+                        s.input,
+                        { height: 120, textAlignVertical: "top" },
+                      ]}
                     />
                   </ScrollView>
 
-                  <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) }]}>
+                  <View
+                    style={[
+                      s.saveBar,
+                      s.saveBarShadow,
+                      {
+                        paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8),
+                      },
+                    ]}
+                  >
                     <Button
                       title={isSubmitting ? "Creando..." : "Crear Trámite"}
                       onPress={handleSubmit}
                       disabled={!canSave || isSubmitting}
                       fullWidth
                       variant="secondary"
-                      leftIcon={<Ionicons name="checkmark-circle" size={18} color={theme.colors.onSecondary} />}
+                      leftIcon={
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color={theme.colors.onSecondary}
+                        />
+                      }
                     />
                   </View>
                 </>
@@ -261,7 +348,13 @@ function Label({ children, s }) {
   return <Text style={s.label}>{children}</Text>;
 }
 function Input({ s, ...props }) {
-  return <TextInput placeholderTextColor={s.placeholderColor} {...props} style={[s.input, props.style]} />;
+  return (
+    <TextInput
+      placeholderTextColor={s.placeholderColor}
+      {...props}
+      style={[s.input, props.style]}
+    />
+  );
 }
 
 /* styles: same design language que NuevoCliente */
@@ -340,10 +433,15 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
     },
     chipActive: { backgroundColor: theme.colors.secondary },
-    chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
+    chipText: {
+      fontWeight: "700",
+      color: theme.colors.text,
+      fontSize: theme.font.small,
+    },
     chipTextActive: { color: theme.colors.onSecondary },
     attachBtn: {
       height: 44,
@@ -379,5 +477,9 @@ const mkStyles = (theme) =>
       paddingTop: 12,
       paddingHorizontal: theme.spacing.lg,
     },
-    fieldError: { color: theme.colors.error, marginTop: 6, fontSize: theme.font.small },
+    fieldError: {
+      color: theme.colors.error,
+      marginTop: 6,
+      fontSize: theme.font.small,
+    },
   });

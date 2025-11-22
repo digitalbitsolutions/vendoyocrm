@@ -9,16 +9,23 @@ const withAlpha = (color, a = 0.1) => {
   if (color.startsWith("rgba")) {
     const m = color.match(/rgba?\(([^)]+)\)/);
     if (!m) return color;
-    const [r, g, b] = m[1].split(",").slice(0, 3).map(s => parseFloat(s));
+    const [r, g, b] = m[1]
+      .split(",")
+      .slice(0, 3)
+      .map((s) => parseFloat(s));
     return `rgba(${r},${g},${b},${a})`;
   }
   if (color.startsWith("rgb(")) {
     const nums = color.match(/\d+/g) || [0, 0, 0];
-    const [r, g, b] = nums.map(n => parseInt(n, 10));
+    const [r, g, b] = nums.map((n) => parseInt(n, 10));
     return `rgba(${r},${g},${b},${a})`;
   }
   let c = color.replace("#", "");
-  if (c.length === 3) c = c.split("").map(x => x + x).join("");
+  if (c.length === 3)
+    c = c
+      .split("")
+      .map((x) => x + x)
+      .join("");
   const r = parseInt(c.slice(0, 2), 16);
   const g = parseInt(c.slice(2, 4), 16);
   const b = parseInt(c.slice(4, 6), 16);
@@ -53,32 +60,44 @@ export function InlineMessage({
   const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
 
-  const palette = useMemo(() => ({
-    success: { color: theme.colors.success,   icon: "checkmark-circle" },
-    error:   { color: theme.colors.error,     icon: "close-circle" },
-    warning: { color: theme.colors.warning,   icon: "alert-circle" },
-    info:    { color: theme.colors.primary,   icon: "information-circle" },
-  }), [theme]);
+  const palette = useMemo(
+    () => ({
+      success: { color: theme.colors.success, icon: "checkmark-circle" },
+      error: { color: theme.colors.error, icon: "close-circle" },
+      warning: { color: theme.colors.warning, icon: "alert-circle" },
+      info: { color: theme.colors.primary, icon: "information-circle" },
+    }),
+    [theme]
+  );
 
   const tone = palette[type] ?? palette.info;
 
   // backgrounds/borders según variante
   const bg =
-    variant === "solid"   ? tone.color
-  : variant === "outline" ? "transparent"
-  : /* soft */             withAlpha(tone.color, theme.mode === "dark" ? 0.18 : 0.12);
+    variant === "solid"
+      ? tone.color
+      : variant === "outline"
+      ? "transparent"
+      : /* soft */ withAlpha(tone.color, theme.mode === "dark" ? 0.18 : 0.12);
 
   const borderColor =
-    variant === "outline" ? withAlpha(tone.color, 0.45)
-                           : withAlpha(tone.color, 0.25);
+    variant === "outline"
+      ? withAlpha(tone.color, 0.45)
+      : withAlpha(tone.color, 0.25);
 
   const textColor =
-    variant === "solid" ? (theme.mode === "dark" ? theme.colors.onDanger : theme.colors.onAccent)
-                        : theme.colors.text;
+    variant === "solid"
+      ? theme.mode === "dark"
+        ? theme.colors.onDanger
+        : theme.colors.onAccent
+      : theme.colors.text;
 
   const iconColor =
-    variant === "solid" ? (theme.mode === "dark" ? theme.colors.onDanger : theme.colors.onAccent)
-                        : tone.color;
+    variant === "solid"
+      ? theme.mode === "dark"
+        ? theme.colors.onDanger
+        : theme.colors.onAccent
+      : tone.color;
 
   const padY = compact ? 8 : 12;
   const padX = compact ? 10 : 14;
@@ -111,10 +130,7 @@ export function InlineMessage({
       <View style={{ flex: 1 }}>
         {!!title && (
           <Text
-            style={[
-              s.title,
-              { color: textColor, fontSize: compact ? 13 : 14 },
-            ]}
+            style={[s.title, { color: textColor, fontSize: compact ? 13 : 14 }]}
             numberOfLines={2}
           >
             {title}
@@ -124,7 +140,11 @@ export function InlineMessage({
           <Text
             style={[
               s.text,
-              { color: textColor, marginTop: title ? 2 : 0, fontSize: compact ? 13 : 14 },
+              {
+                color: textColor,
+                marginTop: title ? 2 : 0,
+                fontSize: compact ? 13 : 14,
+              },
             ]}
           >
             {children}
@@ -145,7 +165,9 @@ export function InlineMessage({
                   pressed && { opacity: theme.opacity.pressed },
                 ]}
               >
-                <Text style={[s.actionText, { color: tone.color }]}>{a.label}</Text>
+                <Text style={[s.actionText, { color: tone.color }]}>
+                  {a.label}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -159,14 +181,13 @@ export function InlineMessage({
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
           accessibilityLabel="Cerrar mensaje"
-          android_ripple={{ color: withAlpha(tone.color, 0.25), borderless: true }}
+          android_ripple={{
+            color: withAlpha(tone.color, 0.25),
+            borderless: true,
+          }}
           style={s.closeBtn}
         >
-          <Ionicons
-            name="close"
-            size={compact ? 16 : 18}
-            color={iconColor}
-          />
+          <Ionicons name="close" size={compact ? 16 : 18} color={iconColor} />
         </Pressable>
       )}
     </View>

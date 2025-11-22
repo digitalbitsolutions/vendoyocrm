@@ -25,7 +25,9 @@ const LOGO = require("../../assets/images/brand/logo-dark.webp");
 
 // Validación
 const schema = Yup.object({
-  email: Yup.string().email("E-mail no válido").required("El e-mail es obligatorio"),
+  email: Yup.string()
+    .email("E-mail no válido")
+    .required("El e-mail es obligatorio"),
   password: Yup.string()
     .min(6, "Mínimo 6 caracteres")
     .required("La contraseña es obligatoria"),
@@ -135,7 +137,7 @@ export default function Login() {
                         onValueChange={setRemember}
                         trackColor={{
                           false: "#E5E7EB", // gris fijo
-                          true: "#0F4C4A",  // verde petróleo fijo
+                          true: "#0F4C4A", // verde petróleo fijo
                         }}
                         thumbColor="#FFFFFF"
                       />
@@ -226,8 +228,8 @@ function mkStyles(theme) {
       fontSize: theme.font.tiny,
       fontWeight: "600",
       textAlign: "center",
-      marginTop: 0,                     // pegado al logo
-      marginBottom: theme.spacing.xxl,   // espacio ANTES de "Iniciar sesión"
+      marginTop: 0, // pegado al logo
+      marginBottom: theme.spacing.xxl, // espacio ANTES de "Iniciar sesión"
     },
 
     title: {

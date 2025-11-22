@@ -1,6 +1,9 @@
 // app/(app)/dashboard/_layout.jsx
 import React, { useMemo, useCallback } from "react";
-import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
+import {
+  useSafeAreaInsets,
+  SafeAreaView,
+} from "react-native-safe-area-context";
 import { Drawer } from "expo-router/drawer";
 import { useRouter, usePathname } from "expo-router";
 import {
@@ -23,7 +26,12 @@ function isActive(pathname, href) {
 }
 
 /* Item memoizado para evitar re-renders innecesarios */
-const DrawerItem = React.memo(function DrawerItem({ icon, label, onPress, active }) {
+const DrawerItem = React.memo(function DrawerItem({
+  icon,
+  label,
+  onPress,
+  active,
+}) {
   const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
 
@@ -110,7 +118,10 @@ function CustomDrawerContent(props) {
 
       {/* Lista */}
       <ScrollView
-        contentContainerStyle={[s.menu, { paddingBottom: insets.bottom + theme.spacing.lg }]}
+        contentContainerStyle={[
+          s.menu,
+          { paddingBottom: insets.bottom + theme.spacing.lg },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {MENU.map((it) => (
@@ -129,7 +140,10 @@ function CustomDrawerContent(props) {
         <View style={s.logoutWrap}>
           <Pressable
             onPress={onSignOut}
-            style={({ pressed }) => [s.logoutBtn, pressed && { opacity: theme.opacity.pressed }]}
+            style={({ pressed }) => [
+              s.logoutBtn,
+              pressed && { opacity: theme.opacity.pressed },
+            ]}
             hitSlop={theme.hitSlop}
             accessibilityRole="button"
             accessibilityLabel="Cerrar sesión"
@@ -162,7 +176,10 @@ export default function DashboardLayout() {
           width: drawerWidth,
           backgroundColor: theme.colors.surface,
           borderLeftWidth: 1,
-          borderLeftColor: theme.mode === "dark" ? theme.colors.border : theme.colors.primary + "22",
+          borderLeftColor:
+            theme.mode === "dark"
+              ? theme.colors.border
+              : theme.colors.primary + "22",
         },
         swipeEdgeWidth: 40,
         sceneContainerStyle: {

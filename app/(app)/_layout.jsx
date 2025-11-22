@@ -21,7 +21,7 @@ export default function AppLayout() {
   return (
     <>
       <StatusBar style={barStyle} backgroundColor={theme.colors.background} />
-      
+
       <Stack
         screenOptions={{
           headerShown: false,

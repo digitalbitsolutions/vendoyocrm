@@ -1,5 +1,11 @@
 // app/(app)/historial/index.jsx
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -10,7 +16,10 @@ import {
   Platform,
   Animated,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import AppBar from "../../../src/components/AppBar";
 import ActivityItem from "../../../src/components/ActivityItem";
 import { useTheme } from "../../../src/style/theme";
@@ -24,15 +33,28 @@ const SHOW_PILL = false;
 
 /* ---------- Mock / util ---------- */
 const MOCK = [
-  { id: "a1", type: "create", title: "Nuevo trámite 1 creado por Miguel Yesan.", metaDate: "2025-09-02T13:21:00Z" },
-  { id: "a2", type: "create", title: "Nuevo trámite 2 creado por Miguel Yesan.", metaDate: "2025-09-02T13:21:00Z" },
+  {
+    id: "a1",
+    type: "create",
+    title: "Nuevo trámite 1 creado por Miguel Yesan.",
+    metaDate: "2025-09-02T13:21:00Z",
+  },
+  {
+    id: "a2",
+    type: "create",
+    title: "Nuevo trámite 2 creado por Miguel Yesan.",
+    metaDate: "2025-09-02T13:21:00Z",
+  },
   {
     id: "a3",
     type: "update",
     title:
       "José María Bardina actualizó los datos del trámite Trámite de Compra-Venta Inmobiliaria.",
     refLabel: "Referencia:",
-    beforeAfter: { "Antes:": "Recomendado por Miguel", "Después:": "CV-2025-0036" },
+    beforeAfter: {
+      "Antes:": "Recomendado por Miguel",
+      "Después:": "CV-2025-0036",
+    },
     metaDate: "2025-06-23T10:46:00Z",
   },
   {
@@ -120,7 +142,9 @@ export default function HistorialScreen() {
   const ListEmpty = () => (
     <View style={s.empty}>
       <Text style={s.emptyTitle}>No hay actividad todavía</Text>
-      <Text style={s.emptyHint}>Cuando haya acciones recientes las verás aquí.</Text>
+      <Text style={s.emptyHint}>
+        Cuando haya acciones recientes las verás aquí.
+      </Text>
     </View>
   );
 
@@ -167,7 +191,14 @@ export default function HistorialScreen() {
 
     if (!SHOW_PILL) {
       // pequeño spacer para separar el contenido del AppBar
-      return <View style={{ height: theme.spacing.lg / 1.4, backgroundColor: theme.colors.background }} />;
+      return (
+        <View
+          style={{
+            height: theme.spacing.lg / 1.4,
+            backgroundColor: theme.colors.background,
+          }}
+        />
+      );
     }
 
     return (
@@ -177,7 +208,11 @@ export default function HistorialScreen() {
             s.pillContainer,
             {
               paddingVertical: pillPadding,
-              transform: [{ translateY: pillTranslateY }, { scale: pillScale }, { scaleX: pillScaleX }],
+              transform: [
+                { translateY: pillTranslateY },
+                { scale: pillScale },
+                { scaleX: pillScaleX },
+              ],
             },
           ]}
         >
@@ -206,7 +241,11 @@ export default function HistorialScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      <AppBar variant="section" title="Historial de Actividad" showBorder={false} />
+      <AppBar
+        variant="section"
+        title="Historial de Actividad"
+        showBorder={false}
+      />
 
       {loadingInitial ? (
         <View style={s.loaderWrap}>
@@ -222,14 +261,23 @@ export default function HistorialScreen() {
             paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
             paddingTop: 6,
           }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+            />
+          }
           ListEmptyComponent={ListEmpty}
           ListHeaderComponent={ListHeader}
           stickyHeaderIndices={stickyIndices}
           ItemSeparatorComponent={() => <View style={s.itemSeparator} />}
           removeClippedSubviews={true}
           initialNumToRender={8}
-          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
           scrollEventThrottle={16}
         />
       )}
@@ -275,8 +323,18 @@ const mkStyles = (theme) =>
 
     /* Loader / empty */
     loaderWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
-    empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: theme.spacing.lg },
-    emptyTitle: { fontSize: theme.font.h3, fontWeight: "700", color: theme.colors.textMuted, marginBottom: 6 },
+    empty: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: theme.spacing.lg,
+    },
+    emptyTitle: {
+      fontSize: theme.font.h3,
+      fontWeight: "700",
+      color: theme.colors.textMuted,
+      marginBottom: 6,
+    },
     emptyHint: { color: theme.colors.textMuted, textAlign: "center" },
 
     /* Separador entre items */

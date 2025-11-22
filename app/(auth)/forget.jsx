@@ -1,12 +1,6 @@
 // app/(auth)/forget.jsx
 import { useState, useEffect, useMemo } from "react";
-import {
-  View,
-  Text,
-  Keyboard,
-  StyleSheet,
-  Image,
-} from "react-native";
+import { View, Text, Keyboard, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Formik } from "formik";
@@ -26,7 +20,9 @@ const COOLDOWN_SECONDS = 30;
 
 // Validación del formulario
 const schema = Yup.object({
-  email: Yup.string().email("Email no válido").required("El e-mail es obligatorio"),
+  email: Yup.string()
+    .email("Email no válido")
+    .required("El e-mail es obligatorio"),
 });
 
 export default function Forget() {
@@ -44,10 +40,7 @@ export default function Forget() {
 
   useEffect(() => {
     if (!cooldown) return;
-    const t = setInterval(
-      () => setCooldown((v) => Math.max(0, v - 1)),
-      1000
-    );
+    const t = setInterval(() => setCooldown((v) => Math.max(0, v - 1)), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
 
@@ -84,8 +77,8 @@ export default function Forget() {
               >
                 <Text>
                   Te enviamos un enlace a{" "}
-                  <Text style={{ fontWeight: "700" }}>{emailSentTo}</Text>. Revisa
-                  tu bandeja de entrada o spam.
+                  <Text style={{ fontWeight: "700" }}>{emailSentTo}</Text>.
+                  Revisa tu bandeja de entrada o spam.
                 </Text>
               </InlineMessage>
             )}

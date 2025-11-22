@@ -15,7 +15,7 @@ export function Button({
   onPress,
   disabled = false,
   loading = false,
-  variant = "primary",      // "primary" | "secondary" | "danger" | "outline" | "ghost"
+  variant = "primary", // "primary" | "secondary" | "danger" | "outline" | "ghost"
   fullWidth = false,
   leftIcon = null,
   rightIcon = null,
@@ -25,12 +25,17 @@ export function Button({
 
   // Color del texto por variante (siempre desde el theme)
   const textColor =
-    variant === "primary"   ? theme.colors.onAccent :
-    variant === "secondary" ? theme.colors.onSecondary :
-    variant === "danger"    ? theme.colors.onDanger :
-    variant === "outline"   ? theme.colors.primary :
-    variant === "ghost"     ? theme.colors.primary :
-                              theme.colors.text;
+    variant === "primary"
+      ? theme.colors.onAccent
+      : variant === "secondary"
+      ? theme.colors.onSecondary
+      : variant === "danger"
+      ? theme.colors.onDanger
+      : variant === "outline"
+      ? theme.colors.primary
+      : variant === "ghost"
+      ? theme.colors.primary
+      : theme.colors.text;
 
   return (
     <Pressable
@@ -39,7 +44,7 @@ export function Button({
       android_ripple={{ color: theme.colors.primary400, borderless: false }}
       style={({ pressed }) => [
         s.base,
-        s[variant],                  // aplica estilo de la variante
+        s[variant], // aplica estilo de la variante
         fullWidth && { alignSelf: "stretch" },
         (disabled || loading) && s.disabled,
         pressed && s.pressed,
@@ -50,10 +55,14 @@ export function Button({
     >
       <View style={s.content}>
         {loading ? (
-          <ActivityIndicator size="small" color={textColor} style={{ marginRight: 8 }} />
-        ) : (
-          leftIcon ? <View style={{ marginRight: 8 }}>{leftIcon}</View> : null
-        )}
+          <ActivityIndicator
+            size="small"
+            color={textColor}
+            style={{ marginRight: 8 }}
+          />
+        ) : leftIcon ? (
+          <View style={{ marginRight: 8 }}>{leftIcon}</View>
+        ) : null}
 
         <Text style={[s.text, { color: textColor }]} numberOfLines={1}>
           {loading ? "Cargando..." : title}
@@ -79,9 +88,9 @@ const mkStyles = (theme) =>
     },
 
     /* Variantes conectadas al theme */
-    primary:   { backgroundColor: theme.colors.primary },
+    primary: { backgroundColor: theme.colors.primary },
     secondary: { backgroundColor: theme.colors.secondary },
-    danger:    { backgroundColor: theme.colors.danger },
+    danger: { backgroundColor: theme.colors.danger },
 
     outline: {
       backgroundColor: "transparent",
@@ -96,7 +105,7 @@ const mkStyles = (theme) =>
     },
 
     disabled: { opacity: theme.opacity.disabled },
-    pressed:  { opacity: theme.opacity.pressed },
+    pressed: { opacity: theme.opacity.pressed },
 
     text: {
       fontSize: theme.font.h3,

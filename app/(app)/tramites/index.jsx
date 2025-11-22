@@ -1,5 +1,11 @@
 // app/(app)/tramites/index.jsx
-import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -53,7 +59,12 @@ const MOCK_TRAMITES = [
 /* -------------------------
    Pequeños componentes memo
    ------------------------- */
-const FilterChip = React.memo(function FilterChip({ label, active, onPress, s }) {
+const FilterChip = React.memo(function FilterChip({
+  label,
+  active,
+  onPress,
+  s,
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -69,9 +80,15 @@ const FilterChip = React.memo(function FilterChip({ label, active, onPress, s })
 
 const EmptyList = ({ s }) => (
   <View style={[s.card, { alignItems: "center", paddingVertical: 32 }]}>
-    <Ionicons name="document-outline" size={36} color={s.theme.colors.textMuted} />
+    <Ionicons
+      name="document-outline"
+      size={36}
+      color={s.theme.colors.textMuted}
+    />
     <Text style={s.emptyTitle}>No hay trámites</Text>
-    <Text style={s.emptyText}>Crea tu primer trámite con el botón “Nuevo Trámite”.</Text>
+    <Text style={s.emptyText}>
+      Crea tu primer trámite con el botón “Nuevo Trámite”.
+    </Text>
   </View>
 );
 
@@ -81,7 +98,11 @@ const EmptyList = ({ s }) => (
 function formatDate(iso) {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString("es-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
+    return d.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
   } catch {
     return String(iso || "");
   }
@@ -112,7 +133,10 @@ export default function TramitesScreen() {
 
   useEffect(() => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => setDebouncedQ(q.trim().toLowerCase()), 300);
+    searchTimeout.current = setTimeout(
+      () => setDebouncedQ(q.trim().toLowerCase()),
+      300
+    );
     return () => clearTimeout(searchTimeout.current);
   }, [q]);
 
@@ -122,7 +146,9 @@ export default function TramitesScreen() {
       const okEstado = estado === "Todos" ? true : t.estado === estado;
       const hayTexto =
         !text ||
-        (t.titulo + " " + (t.ref || "") + " " + (t.cliente || "")).toLowerCase().includes(text);
+        (t.titulo + " " + (t.ref || "") + " " + (t.cliente || ""))
+          .toLowerCase()
+          .includes(text);
       return okEstado && hayTexto;
     });
   }, [items, estado, debouncedQ]);
@@ -140,14 +166,18 @@ export default function TramitesScreen() {
   );
 
   const eliminar = useCallback((t) => {
-    Alert.alert("Eliminar trámite", `¿Seguro que deseas eliminar “${t.titulo}”?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => setItems((prev) => prev.filter((x) => x.id !== t.id)),
-      },
-    ]);
+    Alert.alert(
+      "Eliminar trámite",
+      `¿Seguro que deseas eliminar “${t.titulo}”?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () => setItems((prev) => prev.filter((x) => x.id !== t.id)),
+        },
+      ]
+    );
   }, []);
 
   useEffect(() => {
@@ -155,7 +185,9 @@ export default function TramitesScreen() {
       setItems((prev) => [nuevo, ...prev]);
     });
     const c2 = DeviceEventEmitter.addListener("tramite:updated", (upd) => {
-      setItems((prev) => prev.map((t) => (t.id === upd.id ? { ...t, ...upd } : t)));
+      setItems((prev) =>
+        prev.map((t) => (t.id === upd.id ? { ...t, ...upd } : t))
+      );
     });
     const c3 = DeviceEventEmitter.addListener("tramite:deleted", (id) => {
       setItems((prev) => prev.filter((t) => t.id !== id));
@@ -195,8 +227,12 @@ export default function TramitesScreen() {
         </Text>
 
         <View style={s.row}>
-          <Text style={[s.badge, s[badgeByState(item.estado)]]}>{item.estado}</Text>
-          <Text style={[s.muted, { marginLeft: "auto" }]}>{formatDate(item.creadoEl)}</Text>
+          <Text style={[s.badge, s[badgeByState(item.estado)]]}>
+            {item.estado}
+          </Text>
+          <Text style={[s.muted, { marginLeft: "auto" }]}>
+            {formatDate(item.creadoEl)}
+          </Text>
         </View>
 
         <View style={s.cardFooter}>
@@ -206,8 +242,14 @@ export default function TramitesScreen() {
             activeOpacity={theme.opacity.pressed}
             accessibilityLabel={`Editar ${item.titulo}`}
           >
-            <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
-            <Text style={[s.btnText, { color: theme.colors.onAccent }]}>Editar</Text>
+            <Ionicons
+              name="create-outline"
+              size={16}
+              color={theme.colors.onAccent}
+            />
+            <Text style={[s.btnText, { color: theme.colors.onAccent }]}>
+              Editar
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -216,8 +258,14 @@ export default function TramitesScreen() {
             activeOpacity={theme.opacity.pressed}
             accessibilityLabel={`Eliminar ${item.titulo}`}
           >
-            <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
-            <Text style={[s.btnText, { color: theme.colors.onDanger }]}>Eliminar</Text>
+            <Ionicons
+              name="trash-outline"
+              size={16}
+              color={theme.colors.onDanger}
+            />
+            <Text style={[s.btnText, { color: theme.colors.onDanger }]}>
+              Eliminar
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -235,7 +283,12 @@ export default function TramitesScreen() {
           horizontal
           keyExtractor={(x) => x}
           renderItem={({ item }) => (
-            <FilterChip label={item} active={estado === item} onPress={() => setEstado(item)} s={s} />
+            <FilterChip
+              label={item}
+              active={estado === item}
+              onPress={() => setEstado(item)}
+              s={s}
+            />
           )}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingRight: 8 }}
@@ -255,8 +308,16 @@ export default function TramitesScreen() {
           />
         </View>
 
-        <TouchableOpacity style={s.cta} onPress={nuevo} activeOpacity={theme.opacity.pressed}>
-          <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
+        <TouchableOpacity
+          style={s.cta}
+          onPress={nuevo}
+          activeOpacity={theme.opacity.pressed}
+        >
+          <Ionicons
+            name="add-circle"
+            size={18}
+            color={theme.colors.onSecondary}
+          />
           <Text style={s.ctaText}>Nuevo Trámite</Text>
         </TouchableOpacity>
       </View>
@@ -304,11 +365,16 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
       marginRight: 8,
     },
     chipActive: { backgroundColor: theme.colors.secondary },
-    chipText: { fontWeight: "700", color: theme.colors.text, fontSize: theme.font.small },
+    chipText: {
+      fontWeight: "700",
+      color: theme.colors.text,
+      fontSize: theme.font.small,
+    },
     chipTextActive: { color: theme.colors.onSecondary },
 
     searchWrap: {
@@ -323,7 +389,11 @@ const mkStyles = (theme) =>
       paddingHorizontal: 12,
       marginTop: theme.spacing.sm,
     },
-    searchInput: { flex: 1, color: theme.colors.text, fontSize: theme.font.body },
+    searchInput: {
+      flex: 1,
+      color: theme.colors.text,
+      fontSize: theme.font.body,
+    },
 
     listContent: {
       padding: theme.spacing.lg,
@@ -345,7 +415,11 @@ const mkStyles = (theme) =>
       fontWeight: "800",
       marginBottom: 6,
     },
-    subLine: { color: theme.colors.textMuted, marginBottom: 4, fontSize: theme.font.body },
+    subLine: {
+      color: theme.colors.textMuted,
+      marginBottom: 4,
+      fontSize: theme.font.body,
+    },
     muted: { color: theme.colors.textMuted },
 
     row: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 6 },
@@ -358,9 +432,18 @@ const mkStyles = (theme) =>
       fontWeight: "900",
       overflow: "hidden",
     },
-    badgePend: { backgroundColor: "rgba(255,176,32,0.15)", color: theme.colors.warning },
-    badgeWip: { backgroundColor: "rgba(76,163,255,0.18)", color: theme.colors.secondary },
-    badgeDone: { backgroundColor: "rgba(46,125,50,0.18)", color: theme.colors.success },
+    badgePend: {
+      backgroundColor: "rgba(255,176,32,0.15)",
+      color: theme.colors.warning,
+    },
+    badgeWip: {
+      backgroundColor: "rgba(76,163,255,0.18)",
+      color: theme.colors.secondary,
+    },
+    badgeDone: {
+      backgroundColor: "rgba(46,125,50,0.18)",
+      color: theme.colors.success,
+    },
 
     cardFooter: {
       marginTop: theme.spacing.md,

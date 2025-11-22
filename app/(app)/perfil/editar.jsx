@@ -55,7 +55,9 @@ function Field({ label, error, children }) {
         </Text>
       )}
       {children}
-      {!!error && <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>}
+      {!!error && (
+        <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>
+      )}
     </View>
   );
 }
@@ -119,10 +121,19 @@ export default function EditarPerfilScreen() {
   if (loading || !initial) {
     return (
       <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-        <AppBar variant="section" title="Editar perfil" showBorder={false} onBackPress={goProfile} />
-        <View style={[s.body, { alignItems: "center", justifyContent: "center" }]}>
+        <AppBar
+          variant="section"
+          title="Editar perfil"
+          showBorder={false}
+          onBackPress={goProfile}
+        />
+        <View
+          style={[s.body, { alignItems: "center", justifyContent: "center" }]}
+        >
           <ActivityIndicator size="small" color={theme.colors.secondary} />
-          <Text style={{ marginTop: 8, color: theme.colors.textMuted }}>Cargando…</Text>
+          <Text style={{ marginTop: 8, color: theme.colors.textMuted }}>
+            Cargando…
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -131,10 +142,21 @@ export default function EditarPerfilScreen() {
   /* ---------- Main form ---------- */
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      <AppBar variant="section" title="Editar perfil" showBorder={false} onBackPress={goProfile} />
+      <AppBar
+        variant="section"
+        title="Editar perfil"
+        showBorder={false}
+        onBackPress={goProfile}
+      />
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={s.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={s.body}>
             <Formik
               enableReinitialize
@@ -150,9 +172,11 @@ export default function EditarPerfilScreen() {
                     phone: values.phone.trim(),
                   });
                   if (isMounted.current) {
-                    Alert.alert("Listo", "Tu perfil se actualizó correctamente.", [
-                      { text: "OK", onPress: goProfile },
-                    ]);
+                    Alert.alert(
+                      "Listo",
+                      "Tu perfil se actualizó correctamente.",
+                      [{ text: "OK", onPress: goProfile }]
+                    );
                   }
                 } catch (e) {
                   if (isMounted.current) {
@@ -163,9 +187,21 @@ export default function EditarPerfilScreen() {
                 }
               }}
             >
-              {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, isValid }) => (
+              {({
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                values,
+                errors,
+                touched,
+                isSubmitting,
+                isValid,
+              }) => (
                 <View style={s.form}>
-                  <Field label="Nombre completo" error={touched.name && errors.name}>
+                  <Field
+                    label="Nombre completo"
+                    error={touched.name && errors.name}
+                  >
                     <TextInputNative
                       value={values.name}
                       onChangeText={handleChange("name")}
@@ -202,7 +238,11 @@ export default function EditarPerfilScreen() {
                       onBlur={handleBlur("phone")}
                       placeholder="+34 600 000 000"
                       placeholderTextColor={theme.colors.textMuted}
-                      keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"}
+                      keyboardType={
+                        Platform.OS === "ios"
+                          ? "numbers-and-punctuation"
+                          : "phone-pad"
+                      }
                       style={s.input}
                       returnKeyType="done"
                       accessible
@@ -217,7 +257,13 @@ export default function EditarPerfilScreen() {
                     loading={isSubmitting}
                     variant="primary"
                     fullWidth
-                    leftIcon={<Ionicons name="save-outline" size={18} color={theme.colors.onAccent} />}
+                    leftIcon={
+                      <Ionicons
+                        name="save-outline"
+                        size={18}
+                        color={theme.colors.onAccent}
+                      />
+                    }
                     accessibilityLabel="Guardar cambios de perfil"
                   />
                 </View>

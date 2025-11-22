@@ -24,9 +24,7 @@ import { changePassword } from "../../../src/services/security";
 /* --- Schema de validación (Yup) --- */
 const Schema = Yup.object().shape({
   currentPassword: Yup.string().required("Requerido"),
-  newPassword: Yup.string()
-    .min(6, "Mínimo 6 caracteres")
-    .required("Requerido"),
+  newPassword: Yup.string().min(6, "Mínimo 6 caracteres").required("Requerido"),
   confirm: Yup.string()
     .oneOf([Yup.ref("newPassword")], "Las contraseñas no coinciden")
     .required("Requerido"),
@@ -48,9 +46,21 @@ function passwordStrength(pw = "") {
 function Field({ label, error, children, theme }) {
   return (
     <View style={{ marginBottom: theme.spacing.md }}>
-      {!!label && <Text style={{ color: theme.colors.text, fontWeight: "700", marginBottom: 6 }}>{label}</Text>}
+      {!!label && (
+        <Text
+          style={{
+            color: theme.colors.text,
+            fontWeight: "700",
+            marginBottom: 6,
+          }}
+        >
+          {label}
+        </Text>
+      )}
       {children}
-      {!!error && <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>}
+      {!!error && (
+        <Text style={{ color: theme.colors.error, marginTop: 6 }}>{error}</Text>
+      )}
     </View>
   );
 }
@@ -93,7 +103,12 @@ export default function SeguridadScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
-      <AppBar variant="section" title="Seguridad" showBorder={false} onBackPress={goProfile} />
+      <AppBar
+        variant="section"
+        title="Seguridad"
+        showBorder={false}
+        onBackPress={goProfile}
+      />
 
       <View style={s.body}>
         <Formik
@@ -109,31 +124,56 @@ export default function SeguridadScreen() {
 
               if (res?.ok) {
                 resetForm();
-                Alert.alert("Hecho", "Tu contraseña fue cambiada correctamente.", [{ text: "OK", onPress: goProfile }]);
+                Alert.alert(
+                  "Hecho",
+                  "Tu contraseña fue cambiada correctamente.",
+                  [{ text: "OK", onPress: goProfile }]
+                );
               } else {
                 // Manejo de error proveniente del backend
-                Alert.alert("Atención", res?.message || "No se pudo cambiar la contraseña.");
+                Alert.alert(
+                  "Atención",
+                  res?.message || "No se pudo cambiar la contraseña."
+                );
               }
             } catch (e) {
-              Alert.alert("Error", e?.message || "No se pudo cambiar la contraseña.");
+              Alert.alert(
+                "Error",
+                e?.message || "No se pudo cambiar la contraseña."
+              );
             } finally {
               setSubmitting(false);
             }
           }}
         >
-          {({ handleChange, handleBlur, handleSubmit, values, errors, touched, isSubmitting, setFieldValue }) => {
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            errors,
+            touched,
+            isSubmitting,
+            setFieldValue,
+          }) => {
             // actualizamos el medidor de fuerza cada vez que cambia newPassword
             React.useEffect(() => {
               const { score } = passwordStrength(values.newPassword || "");
               animateStrength(score);
             }, [values.newPassword]);
 
-            const { label: strengthLabel } = passwordStrength(values.newPassword || "");
+            const { label: strengthLabel } = passwordStrength(
+              values.newPassword || ""
+            );
 
             return (
               <View style={s.form}>
                 {/* Contraseña actual */}
-                <Field label="Contraseña actual" error={touched.currentPassword && errors.currentPassword} theme={theme}>
+                <Field
+                  label="Contraseña actual"
+                  error={touched.currentPassword && errors.currentPassword}
+                  theme={theme}
+                >
                   <View style={s.inputRow}>
                     <TextInputNative
                       value={values.currentPassword}
@@ -152,16 +192,28 @@ export default function SeguridadScreen() {
                       onPress={() => setShowCurrent((v) => !v)}
                       hitSlop={theme.hitSlop}
                       accessibilityRole="button"
-                      accessibilityLabel={showCurrent ? "Ocultar contraseña actual" : "Mostrar contraseña actual"}
+                      accessibilityLabel={
+                        showCurrent
+                          ? "Ocultar contraseña actual"
+                          : "Mostrar contraseña actual"
+                      }
                       style={s.eyeBtn}
                     >
-                      <Ionicons name={showCurrent ? "eye-off" : "eye"} size={18} color={theme.colors.textMuted} />
+                      <Ionicons
+                        name={showCurrent ? "eye-off" : "eye"}
+                        size={18}
+                        color={theme.colors.textMuted}
+                      />
                     </Pressable>
                   </View>
                 </Field>
 
                 {/* Nueva contraseña */}
-                <Field label="Nueva contraseña" error={touched.newPassword && errors.newPassword} theme={theme}>
+                <Field
+                  label="Nueva contraseña"
+                  error={touched.newPassword && errors.newPassword}
+                  theme={theme}
+                >
                   <View style={s.inputRow}>
                     <TextInputNative
                       value={values.newPassword}
@@ -182,10 +234,18 @@ export default function SeguridadScreen() {
                       onPress={() => setShowNew((v) => !v)}
                       hitSlop={theme.hitSlop}
                       accessibilityRole="button"
-                      accessibilityLabel={showNew ? "Ocultar nueva contraseña" : "Mostrar nueva contraseña"}
+                      accessibilityLabel={
+                        showNew
+                          ? "Ocultar nueva contraseña"
+                          : "Mostrar nueva contraseña"
+                      }
                       style={s.eyeBtn}
                     >
-                      <Ionicons name={showNew ? "eye-off" : "eye"} size={18} color={theme.colors.textMuted} />
+                      <Ionicons
+                        name={showNew ? "eye-off" : "eye"}
+                        size={18}
+                        color={theme.colors.textMuted}
+                      />
                     </Pressable>
                   </View>
 
@@ -194,7 +254,12 @@ export default function SeguridadScreen() {
                     <View style={s.strengthLabelWrap}>
                       <Text style={s.strengthLabelText}>{strengthLabel}</Text>
                     </View>
-                    <View style={s.strengthBarBg} accessible accessibilityRole="progressbar" accessibilityLabel={`Fuerza: ${strengthLabel}`}>
+                    <View
+                      style={s.strengthBarBg}
+                      accessible
+                      accessibilityRole="progressbar"
+                      accessibilityLabel={`Fuerza: ${strengthLabel}`}
+                    >
                       <Animated.View
                         style={[
                           s.strengthBarFill,
@@ -204,10 +269,15 @@ export default function SeguridadScreen() {
                               outputRange: ["0%", "100%"],
                             }),
                             backgroundColor:
-                              values.newPassword.length === 0 ? theme.colors.border :
-                              passwordStrength(values.newPassword).score >= 3 ? theme.colors.success :
-                              passwordStrength(values.newPassword).score === 2 ? theme.colors.warning :
-                              theme.colors.danger,
+                              values.newPassword.length === 0
+                                ? theme.colors.border
+                                : passwordStrength(values.newPassword).score >=
+                                  3
+                                ? theme.colors.success
+                                : passwordStrength(values.newPassword).score ===
+                                  2
+                                ? theme.colors.warning
+                                : theme.colors.danger,
                           },
                         ]}
                       />
@@ -216,7 +286,11 @@ export default function SeguridadScreen() {
                 </Field>
 
                 {/* Confirmar */}
-                <Field label="Confirmar nueva contraseña" error={touched.confirm && errors.confirm} theme={theme}>
+                <Field
+                  label="Confirmar nueva contraseña"
+                  error={touched.confirm && errors.confirm}
+                  theme={theme}
+                >
                   <View style={s.inputRow}>
                     <TextInputNative
                       value={values.confirm}
@@ -235,10 +309,18 @@ export default function SeguridadScreen() {
                       onPress={() => setShowConfirm((v) => !v)}
                       hitSlop={theme.hitSlop}
                       accessibilityRole="button"
-                      accessibilityLabel={showConfirm ? "Ocultar confirmación" : "Mostrar confirmación"}
+                      accessibilityLabel={
+                        showConfirm
+                          ? "Ocultar confirmación"
+                          : "Mostrar confirmación"
+                      }
                       style={s.eyeBtn}
                     >
-                      <Ionicons name={showConfirm ? "eye-off" : "eye"} size={18} color={theme.colors.textMuted} />
+                      <Ionicons
+                        name={showConfirm ? "eye-off" : "eye"}
+                        size={18}
+                        color={theme.colors.textMuted}
+                      />
                     </Pressable>
                   </View>
                 </Field>
@@ -251,7 +333,13 @@ export default function SeguridadScreen() {
                   loading={isSubmitting}
                   variant="primary"
                   fullWidth
-                  leftIcon={<Ionicons name="save-outline" size={18} color={theme.colors.onAccent} />}
+                  leftIcon={
+                    <Ionicons
+                      name="save-outline"
+                      size={18}
+                      color={theme.colors.onAccent}
+                    />
+                  }
                 />
               </View>
             );
