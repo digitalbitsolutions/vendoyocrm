@@ -91,11 +91,30 @@ export default function NuevoTramiteScreen() {
   const SAVE_BTN_HEIGHT = theme.button?.height ?? 56;
   const SAVE_BAR_PADDING_ESTIMATE = SAVE_BTN_HEIGHT + (theme.spacing?.lg ?? 24);
 
+  // computed styles (avoid inline object literals in JSX)
+  const contentContainerStyle = useMemo(
+    () => [
+      s.content,
+      {
+        paddingBottom:
+          (theme.spacing?.xxl ?? 20) +
+          SAVE_BAR_PADDING_ESTIMATE +
+          insets.bottom,
+      },
+    ],
+    [s, insets.bottom, theme, SAVE_BAR_PADDING_ESTIMATE]
+  );
+
+  const saveBarStyle = useMemo(
+    () => [s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) }],
+    [s, insets.bottom, theme]
+  );
+
   return (
     <SafeAreaView style={s.backdrop} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ flex: 1 }}
+        style={s.keyboardAvoid}
       >
         <View style={s.card}>
           <View style={s.header}>
@@ -167,15 +186,7 @@ export default function NuevoTramiteScreen() {
               return (
                 <>
                   <ScrollView
-                    contentContainerStyle={[
-                      s.content,
-                      {
-                        paddingBottom:
-                          (theme.spacing?.xxl ?? 20) +
-                          SAVE_BAR_PADDING_ESTIMATE +
-                          insets.bottom,
-                      },
-                    ]}
+                    contentContainerStyle={contentContainerStyle}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                   >
@@ -244,10 +255,7 @@ export default function NuevoTramiteScreen() {
                           style={({ pressed }) => [
                             s.chip,
                             values.estado === st && s.chipActive,
-                            pressed &&
-                              !(values.estado === st) && {
-                                opacity: theme.opacity.pressed,
-                              },
+                            pressed && !(values.estado === st) && s.pressed,
                           ]}
                           accessibilityRole="button"
                           accessibilityState={{
@@ -277,7 +285,7 @@ export default function NuevoTramiteScreen() {
                       }
                       style={({ pressed }) => [
                         s.attachBtn,
-                        pressed && { opacity: theme.opacity.pressed },
+                        pressed && s.pressed,
                       ]}
                       hitSlop={theme.hitSlop}
                     >
@@ -302,22 +310,11 @@ export default function NuevoTramiteScreen() {
                       onBlur={handleBlur("descripcion")}
                       multiline
                       numberOfLines={4}
-                      style={[
-                        s.input,
-                        { height: 120, textAlignVertical: "top" },
-                      ]}
+                      style={[s.input, s.textarea]}
                     />
                   </ScrollView>
 
-                  <View
-                    style={[
-                      s.saveBar,
-                      s.saveBarShadow,
-                      {
-                        paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8),
-                      },
-                    ]}
-                  >
+                  <View style={saveBarStyle}>
                     <Button
                       title={isSubmitting ? "Creando..." : "Crear Trámite"}
                       onPress={handleSubmit}
@@ -364,6 +361,9 @@ const mkStyles = (theme) =>
       flex: 1,
       justifyContent: "flex-end",
       backgroundColor: theme.colors.overlay,
+    },
+    keyboardAvoid: {
+      flex: 1,
     },
     card: {
       width: "95%",
@@ -423,6 +423,10 @@ const mkStyles = (theme) =>
       color: theme.colors.text,
       fontSize: theme.font.body,
     },
+    textarea: {
+      height: 120,
+      textAlignVertical: "top",
+    },
     placeholderColor: theme.colors.textMuted,
     chipsRow: {
       flexDirection: "row",
@@ -443,6 +447,7 @@ const mkStyles = (theme) =>
       fontSize: theme.font.small,
     },
     chipTextActive: { color: theme.colors.onSecondary },
+
     attachBtn: {
       height: 44,
       borderRadius: theme.radius.lg,
@@ -459,6 +464,12 @@ const mkStyles = (theme) =>
       color: theme.colors.secondary,
       fontWeight: "700",
     },
+
+    // small helper to reuse pressed opacity without inline style
+    pressed: {
+      opacity: theme.opacity.pressed,
+    },
+
     saveBarShadow: {
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
