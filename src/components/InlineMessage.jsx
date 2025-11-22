@@ -1,3 +1,4 @@
+// /Users/vendoyo.es/vendoyo.ios/src/components/InlineMessage.jsx
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -102,72 +103,85 @@ export function InlineMessage({
   const padY = compact ? 8 : 12;
   const padX = compact ? 10 : 14;
 
+  // --- Precomputed dynamic style objects (no inline literals in JSX) ---
+  const containerDynamic = useMemo(
+    () => ({
+      paddingVertical: padY,
+      paddingHorizontal: padX,
+      backgroundColor: bg,
+      borderColor,
+    }),
+    [padY, padX, bg, borderColor]
+  );
+
+  const titleDynamic = useMemo(
+    () => ({
+      color: textColor,
+      fontSize: compact ? 13 : 14,
+    }),
+    [textColor, compact]
+  );
+
+  const textDynamic = useMemo(
+    () => ({
+      color: textColor,
+      marginTop: title ? 2 : 0,
+      fontSize: compact ? 13 : 14,
+    }),
+    [textColor, title, compact]
+  );
+
+  const actionsRowDynamic = useMemo(() => ({ marginTop: 8 }), []);
+
+  const actionTextColor = useMemo(() => ({ color: tone.color }), [tone.color]);
+
+  const pressedStyle = useMemo(() => ({ opacity: theme.opacity.pressed }), [
+    theme.opacity,
+  ]);
+
+  const androidRipple = useMemo(
+    () =>
+      Platform.OS === "android"
+        ? { color: withAlpha(tone.color, 0.25), borderless: true }
+        : undefined,
+    [tone.color]
+  );
+
+  const iconSize = compact ? 16 : 18;
+
   return (
     <View
       testID={testID}
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={[
-        s.wrap,
-        {
-          paddingVertical: padY,
-          paddingHorizontal: padX,
-          backgroundColor: bg,
-          borderColor,
-        },
-        style,
-      ]}
+      style={[s.wrap, containerDynamic, style]}
     >
       {/* icono */}
-      <Ionicons
-        name={tone.icon}
-        size={compact ? 16 : 18}
-        color={iconColor}
-        style={s.icon}
-      />
+      <Ionicons name={tone.icon} size={iconSize} color={iconColor} style={s.icon} />
 
       {/* contenido */}
-      <View style={{ flex: 1 }}>
+      <View style={s.content}>
         {!!title && (
-          <Text
-            style={[s.title, { color: textColor, fontSize: compact ? 13 : 14 }]}
-            numberOfLines={2}
-          >
+          <Text style={[s.title, titleDynamic]} numberOfLines={2}>
             {title}
           </Text>
         )}
         {children ? (
-          <Text
-            style={[
-              s.text,
-              {
-                color: textColor,
-                marginTop: title ? 2 : 0,
-                fontSize: compact ? 13 : 14,
-              },
-            ]}
-          >
-            {children}
-          </Text>
+          <Text style={[s.text, textDynamic]}>{children}</Text>
         ) : null}
 
         {/* acciones inline */}
         {Array.isArray(actions) && actions.length > 0 && (
-          <View style={[s.actionsRow, { marginTop: 8 }]}>
+          <View style={[s.actionsRow, actionsRowDynamic]}>
             {actions.map((a, idx) => (
               <Pressable
                 key={`${a.label}-${idx}`}
                 onPress={a.onPress}
                 hitSlop={theme.hitSlop}
                 accessibilityRole="button"
-                style={({ pressed }) => [
-                  s.actionBtn,
-                  pressed && { opacity: theme.opacity.pressed },
-                ]}
+                style={({ pressed }) => [s.actionBtn, pressed && pressedStyle]}
               >
-                <Text style={[s.actionText, { color: tone.color }]}>
-                  {a.label}
-                </Text>
+                <Text style={[s.actionText, actionTextColor]}>{a.label}</Text>
               </Pressable>
             ))}
           </View>
@@ -181,13 +195,10 @@ export function InlineMessage({
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
           accessibilityLabel="Cerrar mensaje"
-          android_ripple={{
-            color: withAlpha(tone.color, 0.25),
-            borderless: true,
-          }}
+          android_ripple={androidRipple}
           style={s.closeBtn}
         >
-          <Ionicons name="close" size={compact ? 16 : 18} color={iconColor} />
+          <Ionicons name="close" size={iconSize} color={iconColor} />
         </Pressable>
       )}
     </View>
@@ -203,11 +214,14 @@ const mkStyles = (theme) =>
       flexDirection: "row",
       alignItems: "flex-start",
       ...theme.shadow,
-      ...(Platform.OS === "android" ? { elevation: 0 } : null), // inline message: sombra suave/casi nula
+      ...(Platform.OS === "android" ? { elevation: 0 } : null),
     },
     icon: {
       marginRight: 10,
       marginTop: 1,
+    },
+    content: {
+      flex: 1,
     },
     title: {
       fontWeight: "700",
