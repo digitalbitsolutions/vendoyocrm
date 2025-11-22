@@ -1,4 +1,3 @@
-// app/(app)/dashboard/_layout.jsx
 import React, { useMemo, useCallback } from "react";
 import {
   useSafeAreaInsets,
@@ -41,8 +40,8 @@ const DrawerItem = React.memo(function DrawerItem({
       style={({ pressed }) => [
         s.item,
         active && s.itemActive,
-        pressed && !active && { backgroundColor: "rgba(0,0,0,0.03)" },
-        pressed && { opacity: theme.opacity.pressed },
+        pressed && !active && s.pressedNotActive,
+        pressed && s.pressedOpacity,
       ]}
       hitSlop={theme.hitSlop}
       accessibilityRole="button"
@@ -50,12 +49,12 @@ const DrawerItem = React.memo(function DrawerItem({
       accessibilityState={{ selected: !!active }}
     >
       <View style={s.itemLeft}>
-        {active ? <View style={s.activeDot} /> : <View style={{ width: 6 }} />}
+        {active ? <View style={s.activeDot} /> : <View style={s.placeholderDot} />}
         <Ionicons
           name={icon}
           size={22}
           color={active ? theme.colors.secondary : theme.colors.textMuted}
-          style={{ width: 26, marginLeft: 6 }}
+          style={s.icon}
         />
       </View>
 
@@ -72,6 +71,17 @@ function CustomDrawerContent(props) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const s = useMemo(() => mkStyles(theme), [theme]);
+
+  // styles dinámicos dependientes de insets (evita inline objects en JSX)
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        menuWithInset: {
+          paddingBottom: insets.bottom + theme.spacing.lg,
+        },
+      }),
+    [insets.bottom, theme.spacing.lg]
+  );
 
   const MENU = useMemo(
     () => [
@@ -118,10 +128,7 @@ function CustomDrawerContent(props) {
 
       {/* Lista */}
       <ScrollView
-        contentContainerStyle={[
-          s.menu,
-          { paddingBottom: insets.bottom + theme.spacing.lg },
-        ]}
+        contentContainerStyle={[s.menu, dynamicStyles.menuWithInset]}
         showsVerticalScrollIndicator={false}
       >
         {MENU.map((it) => (
@@ -134,16 +141,13 @@ function CustomDrawerContent(props) {
           />
         ))}
 
-        <View style={{ height: theme.spacing.md }} />
+        <View style={s.spacerMd} />
 
         {/* Cerrar sesión: ancho completo interior con borde red */}
         <View style={s.logoutWrap}>
           <Pressable
             onPress={onSignOut}
-            style={({ pressed }) => [
-              s.logoutBtn,
-              pressed && { opacity: theme.opacity.pressed },
-            ]}
+            style={({ pressed }) => [s.logoutBtn, pressed && s.pressedOpacity]}
             hitSlop={theme.hitSlop}
             accessibilityRole="button"
             accessibilityLabel="Cerrar sesión"
@@ -165,14 +169,11 @@ export default function DashboardLayout() {
   // Drawer width responsivo: no más de 360, y porcentaje si pantalla pequeña
   const drawerWidth = Math.min(360, Math.round(width * 0.78));
 
-  return (
-    <Drawer
-      screenOptions={{
-        headerShown: false,
-        drawerPosition: "right",
-        drawerType: "front",
-        overlayColor: theme.colors.overlay,
-        drawerStyle: {
+  // drawerStyle dinámico (creado con StyleSheet.create desde useMemo)
+  const dynamicDrawerStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        drawer: {
           width: drawerWidth,
           backgroundColor: theme.colors.surface,
           borderLeftWidth: 1,
@@ -181,10 +182,36 @@ export default function DashboardLayout() {
               ? theme.colors.border
               : theme.colors.primary + "22",
         },
-        swipeEdgeWidth: 40,
-        sceneContainerStyle: {
+      }),
+    [
+      drawerWidth,
+      theme.colors.surface,
+      theme.mode,
+      theme.colors.border,
+      theme.colors.primary,
+    ]
+  );
+
+  const sceneStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        scene: {
           backgroundColor: theme.colors.background,
         },
+      }),
+    [theme.colors.background]
+  );
+
+  return (
+    <Drawer
+      screenOptions={{
+        headerShown: false,
+        drawerPosition: "right",
+        drawerType: "front",
+        overlayColor: theme.colors.overlay,
+        drawerStyle: dynamicDrawerStyles.drawer,
+        swipeEdgeWidth: 40,
+        sceneContainerStyle: sceneStyles.scene,
       }}
       drawerContent={(p) => <CustomDrawerContent {...p} />}
     >
@@ -227,7 +254,6 @@ const mkStyles = (theme) =>
 
     menu: {
       paddingTop: theme.spacing.lg,
-      paddingBottom: theme.spacing.lg,
       paddingHorizontal: theme.spacing.md,
       backgroundColor: theme.colors.surface,
     },
@@ -257,6 +283,13 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.secondary,
       marginRight: 4,
     },
+    placeholderDot: {
+      width: 6,
+    },
+    icon: {
+      width: 26,
+      marginLeft: 6,
+    },
     itemText: {
       color: theme.colors.text,
       fontSize: theme.font.h3,
@@ -264,6 +297,18 @@ const mkStyles = (theme) =>
     },
     itemTextActive: {
       color: theme.colors.secondary,
+    },
+
+    /* pressed util styles */
+    pressedOpacity: {
+      opacity: theme.opacity.pressed,
+    },
+    pressedNotActive: {
+      backgroundColor: "rgba(0,0,0,0.03)",
+    },
+
+    spacerMd: {
+      height: theme.spacing.md,
     },
 
     /* Logout */
