@@ -21,7 +21,6 @@ export function Button({
   rightIcon = null,
 }) {
   const { theme } = useTheme();
-  const s = mkStyles(theme);
 
   // Color del texto por variante (siempre desde el theme)
   const textColor =
@@ -37,6 +36,8 @@ export function Button({
       ? theme.colors.primary
       : theme.colors.text;
 
+  const s = mkStyles(theme, textColor, fullWidth);
+
   return (
     <Pressable
       onPress={onPress}
@@ -45,7 +46,7 @@ export function Button({
       style={({ pressed }) => [
         s.base,
         s[variant], // aplica estilo de la variante
-        fullWidth && { alignSelf: "stretch" },
+        fullWidth && s.fullWidth,
         (disabled || loading) && s.disabled,
         pressed && s.pressed,
       ]}
@@ -58,23 +59,23 @@ export function Button({
           <ActivityIndicator
             size="small"
             color={textColor}
-            style={{ marginRight: 8 }}
+            style={s.indicator}
           />
         ) : leftIcon ? (
-          <View style={{ marginRight: 8 }}>{leftIcon}</View>
+          <View style={s.iconLeft}>{leftIcon}</View>
         ) : null}
 
-        <Text style={[s.text, { color: textColor }]} numberOfLines={1}>
+        <Text style={s.text} numberOfLines={1}>
           {loading ? "Cargando..." : title}
         </Text>
 
-        {rightIcon ? <View style={{ marginLeft: 8 }}>{rightIcon}</View> : null}
+        {rightIcon ? <View style={s.iconRight}>{rightIcon}</View> : null}
       </View>
     </Pressable>
   );
 }
 
-const mkStyles = (theme) =>
+const mkStyles = (theme, textColor, fullWidth) =>
   StyleSheet.create({
     base: {
       height: 52,
@@ -110,6 +111,7 @@ const mkStyles = (theme) =>
     text: {
       fontSize: theme.font.h3,
       fontWeight: "900",
+      color: textColor,
     },
 
     content: {
@@ -118,5 +120,24 @@ const mkStyles = (theme) =>
       justifyContent: "center",
       paddingHorizontal: 2,
       minWidth: 40,
+    },
+
+    fullWidth: {
+      alignSelf: "stretch",
+    },
+
+    // icon wrappers / margins (evitan inline styles)
+    iconLeft: {
+      marginRight: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconRight: {
+      marginLeft: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    indicator: {
+      marginRight: 8,
     },
   });
