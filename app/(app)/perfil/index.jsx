@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  ActionSheetIOS,
 } from "react-native";
 import {
   launchImageLibraryAsync,
@@ -163,6 +162,8 @@ export default function PerfilScreen() {
     };
 
     if (Platform.OS === "ios") {
+      // import dinámico para evitar la warning de `split-platform-components`
+      const { ActionSheetIOS } = require("react-native");
       const options = [
         "Cancelar",
         "Tomar foto",
@@ -225,10 +226,7 @@ export default function PerfilScreen() {
           <View style={s.headerRow}>
             <Pressable
               onPress={chooseAvatar}
-              style={({ pressed }) => [
-                s.avatarWrap,
-                pressed && { opacity: theme.opacity.pressed },
-              ]}
+              style={({ pressed }) => [s.avatarWrap, pressed && s.pressed]}
               accessibilityRole="button"
               accessibilityLabel="Cambiar foto de perfil"
               accessibilityHint="Abre opciones para tomar foto, elegir de galería o quitar"
@@ -266,7 +264,7 @@ export default function PerfilScreen() {
               </View>
             </Pressable>
 
-            <View style={{ flex: 1 }}>
+            <View style={s.infoCol}>
               <Text style={s.name} numberOfLines={1}>
                 {profile?.name || (loading ? "Cargando..." : "-")}
               </Text>
@@ -399,7 +397,10 @@ const mkStyles = (theme) =>
       alignItems: "center",
     },
 
-    avatarWrap: { width: 84, height: 84 },
+    avatarWrap: {
+      width: 84,
+      height: 84,
+    },
     avatar: {
       width: 84,
       height: 84,
@@ -426,6 +427,8 @@ const mkStyles = (theme) =>
       borderWidth: 2,
       borderColor: theme.colors.surface,
     },
+
+    infoCol: { flex: 1 },
 
     name: {
       fontSize: theme.font.h2,
@@ -480,4 +483,7 @@ const mkStyles = (theme) =>
       backgroundColor: theme.colors.surface,
     },
     loadingText: { color: theme.colors.textMuted },
+
+    /* Reutilizables para evitar inline-styles */
+    pressed: { opacity: theme.opacity.pressed },
   });
