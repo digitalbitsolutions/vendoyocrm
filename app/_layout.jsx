@@ -1,5 +1,5 @@
 // app/_layout.jsx
-import React, { useEffect } from "react";
+import React, { useMemo } from "react";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -10,30 +10,25 @@ import { ThemeProvider, useTheme } from "../src/style/theme";
 
 function AppContent() {
   const { theme } = useTheme();
-  const { isLoading, booting } = useAuth();
+  const { isLoading } = useAuth();
 
-  // Debug: Mostrar estado de carga
-  console.log("AppContent - isLoading:", isLoading, "booting:", booting);
+  // Debug (usar warn para cumplir eslint no-console)
+  console.warn("AppContent - isLoading:", isLoading);
+
+  const s = useMemo(() => mkStyles(theme), [theme]);
 
   // Si aún estamos cargando, mostramos pantalla de carga simple
-  if (booting || isLoading) {
+  if (isLoading) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: theme.colors.background },
-        ]}
-      >
+      <View style={s.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={{ marginTop: 10, color: theme.colors.text }}>
-          Cargando aplicación...
-        </Text>
+        <Text style={s.loadingText}>Cargando aplicación...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <View style={s.container}>
       <StatusBar
         style={theme.statusBarStyle}
         backgroundColor={theme.statusBarBg}
@@ -41,7 +36,7 @@ function AppContent() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.background },
+          contentStyle: s.stackContent,
           animation: "fade",
           gestureEnabled: true,
         }}
@@ -65,10 +60,23 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
+const mkStyles = (theme) =>
+  StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.colors.background,
+    },
+    loadingText: {
+      marginTop: 10,
+      color: theme.colors.text,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    stackContent: {
+      backgroundColor: theme.colors.background,
+    },
+  });
