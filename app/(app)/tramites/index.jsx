@@ -16,7 +16,6 @@ import {
   Pressable,
   Alert,
   DeviceEventEmitter,
-  Platform,
   Keyboard,
   RefreshControl,
 } from "react-native";
@@ -78,7 +77,7 @@ const FilterChip = React.memo(function FilterChip({
   );
 });
 
-const EmptyList = ({ s, theme }) => (
+const EmptyList = React.memo(({ s, theme }) => (
   <View style={[s.card, s.emptyCard]}>
     <Ionicons name="document-outline" size={36} color={theme.colors.textMuted} />
     <Text style={s.emptyTitle}>No hay trámites</Text>
@@ -86,7 +85,7 @@ const EmptyList = ({ s, theme }) => (
       Crea tu primer trámite con el botón “Nuevo Trámite”.
     </Text>
   </View>
-);
+));
 
 /* -------------------------
    Helper formatting
@@ -99,7 +98,7 @@ function formatDate(iso) {
       month: "2-digit",
       day: "2-digit",
     });
-  } catch {
+  } catch (err) {
     return String(iso || "");
   }
 }
@@ -132,7 +131,12 @@ export default function TramitesScreen() {
       () => setDebouncedQ(q.trim().toLowerCase()),
       300
     );
-    return () => clearTimeout(searchTimeout.current);
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+        searchTimeout.current = null;
+      }
+    };
   }, [q]);
 
   const filtered = useMemo(() => {
