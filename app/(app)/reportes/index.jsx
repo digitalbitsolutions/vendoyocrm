@@ -45,9 +45,7 @@ const toCSV = (rows) => {
   if (!rows.length) return "";
   const headers = ["cliente", "tramite", "estado", "fecha_inicio", "fecha_fin"];
   const esc = (v) =>
-    `"${String(v ?? "")
-      .replaceAll(`"`, `""`)
-      .replaceAll("\n", " ")}"`;
+    `"${String(v ?? "").replaceAll(`"`, `""`).replaceAll("\n", " ")}"`;
   const body = rows
     .map((r) =>
       [r.cliente, r.tramite, r.estado, r.fechaInicio, r.fechaFin]
@@ -136,6 +134,7 @@ async function fetchReportsMock({
   return { data: slice, total };
 }
 
+/* Hook / adaptador (cambiar a tu API real fácilmente) */
 async function fetchReportsFromAPI(filters) {
   return fetchReportsMock(filters);
 }
@@ -151,16 +150,7 @@ function stateToStyle(s) {
 export default function ReportesScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const s = mkStyles(theme);
-
-  // estilos que dependen de insets/theme calculados en componente
-  const listContainerStyle = useMemo(
-    () => ({
-      paddingHorizontal: theme.spacing.lg,
-      paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
-    }),
-    [theme, insets.bottom]
-  );
+  const s = useMemo(() => mkStyles(theme), [theme]);
 
   // filtros controlados (cliente está debounced)
   const [clienteInput, setClienteInput] = useState("");
@@ -220,10 +210,7 @@ export default function ReportesScreen() {
         setRows((prev) => (append ? [...prev, ...data] : data));
       } catch (e) {
         setError(e?.message || "Error al obtener datos");
-        Alert.alert(
-          "Error",
-          e?.message || "No se pudieron obtener los reportes."
-        );
+        Alert.alert("Error", e?.message || "No se pudieron obtener los reportes.");
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -233,11 +220,13 @@ export default function ReportesScreen() {
     [cliente, estado, fIniHuman, fFinHuman]
   );
 
+  // inicial / reload cuando cambian filtros o page
   useEffect(() => {
     loadPage({ page: 1, append: false });
     setPage(1);
   }, [cliente, estado, fIniHuman, fFinHuman, loadPage]);
 
+  // cargar más cuando page incrementa por onEndReached
   useEffect(() => {
     if (page === 1) return;
     loadPage({ page, append: true });
@@ -255,7 +244,7 @@ export default function ReportesScreen() {
     if (page < totalPages) setPage((p) => p + 1);
   }, [page, total, pageSize, loadingMore, loading]);
 
-  /* Export CSV -> Documents (mejor para usuario final) */
+  /* Export CSV -> Documents */
   const onExport = useCallback(async () => {
     try {
       const FileSystem = (await import("expo-file-system")).default;
@@ -284,8 +273,7 @@ export default function ReportesScreen() {
         Alert.alert("Exportado", `CSV creado en: ${uri}`);
       }
     } catch (e) {
-      // evitar console.error que lanza lint; usamos warn
-      console.warn(e);
+      console.error(e);
       Alert.alert(
         "Exportar error",
         "Instala 'expo-file-system' y 'expo-sharing' o revisa permisos."
@@ -324,11 +312,11 @@ export default function ReportesScreen() {
         </View>
 
         <View style={s.rowGrid}>
-          <View style={s.rowGridCol}>
+          <View style={s.rowCol}>
             <Text style={s.rowLabel}>Inicio</Text>
             <Text style={s.rowValue}>{toHuman(item.fechaInicio)}</Text>
           </View>
-          <View style={s.rowGridCol}>
+          <View style={s.rowCol}>
             <Text style={s.rowLabel}>Final</Text>
             <Text style={s.rowValue}>{toHuman(item.fechaFin)}</Text>
           </View>
@@ -444,7 +432,9 @@ export default function ReportesScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Ordenar por ${h.label}`}
             >
-              <Text style={[s.thText, active && s.thTextActive]}>
+              <Text
+                style={[s.thText, active && { color: theme.colors.secondary }]}
+              >
                 {h.label}
               </Text>
               <Ionicons
@@ -457,6 +447,7 @@ export default function ReportesScreen() {
                 }
                 size={16}
                 color={active ? theme.colors.secondary : theme.colors.textMuted}
+                style={s.sortIcon}
               />
             </Pressable>
           );
@@ -467,12 +458,16 @@ export default function ReportesScreen() {
   );
 
   /* empty / footer UI */
-  const ListFooter = () => {
-    if (loadingMore)
-      return <ActivityIndicator style={s.footerLoading} color={theme.colors.secondary} />;
-    return null;
-  };
+  const ListFooter = () =>
+    loadingMore ? (
+      <View style={s.loadingWrap}>
+        <ActivityIndicator color={theme.colors.secondary} />
+      </View>
+    ) : null;
 
+  const ItemSeparator = () => <View style={s.sep} />;
+
+  /* sorted client-side fallback */
   const sortedRows = useMemo(() => {
     const list = [...rows];
     list.sort((a, b) => {
@@ -506,7 +501,7 @@ export default function ReportesScreen() {
       </View>
 
       <FlatList
-        contentContainerStyle={listContainerStyle}
+        contentContainerStyle={s.flatContent}
         data={sortedRows}
         keyExtractor={(r) => r.id}
         ListHeaderComponent={
@@ -514,14 +509,14 @@ export default function ReportesScreen() {
             <Filters />
             <HeaderButtons />
             {loading && (
-              <View style={s.loadingBlock}>
+              <View style={s.loadingWrap}>
                 <ActivityIndicator color={theme.colors.secondary} />
               </View>
             )}
           </>
         }
         renderItem={ReportRow}
-        ItemSeparatorComponent={() => <View style={s.separator} />}
+        ItemSeparatorComponent={ItemSeparator}
         ListEmptyComponent={() =>
           !loading ? (
             <View style={s.emptyBox}>
@@ -552,7 +547,6 @@ const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
 
-    // CTA export
     actions: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
@@ -574,6 +568,7 @@ const mkStyles = (theme) =>
       color: theme.colors.onSecondary,
       fontWeight: "800",
       fontSize: theme.font.body,
+      marginLeft: 8,
     },
 
     filtersCard: {
@@ -643,6 +638,7 @@ const mkStyles = (theme) =>
       color: theme.colors.onSecondary,
       fontWeight: "900",
       fontSize: theme.font.body,
+      marginLeft: 8,
     },
 
     tableHeader: {
@@ -650,7 +646,6 @@ const mkStyles = (theme) =>
       alignItems: "center",
       justifyContent: "space-between",
       flexWrap: "wrap",
-      paddingHorizontal: 0,
       marginTop: theme.spacing.sm,
       marginBottom: theme.spacing.sm,
     },
@@ -670,9 +665,7 @@ const mkStyles = (theme) =>
       fontWeight: "800",
       color: theme.colors.text,
     },
-    thTextActive: {
-      color: theme.colors.secondary,
-    },
+    sortIcon: { marginLeft: 8 },
 
     rowCard: {
       backgroundColor: theme.colors.surface,
@@ -702,7 +695,7 @@ const mkStyles = (theme) =>
       flexShrink: 1,
     },
     rowGrid: { flexDirection: "row", marginTop: 4 },
-    rowGridCol: { flex: 1 },
+    rowCol: { flex: 1 },
 
     statePend: { color: theme.colors.warning, fontWeight: "800" },
     stateWip: { color: theme.colors.secondary, fontWeight: "800" },
@@ -719,20 +712,14 @@ const mkStyles = (theme) =>
       marginTop: theme.spacing.md,
       marginBottom: theme.spacing.md,
     },
-    emptyText: {
-      color: theme.colors.textMuted,
-      marginTop: 6,
+    emptyText: { color: theme.colors.textMuted, marginTop: 6 },
+
+    flatContent: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingBottom: Math.max(16, theme.spacing.xl),
     },
 
-    separator: {
-      height: 10,
-    },
+    sep: { height: 10 },
 
-    loadingBlock: {
-      paddingVertical: 8,
-    },
-
-    footerLoading: {
-      marginVertical: 12,
-    },
+    loadingWrap: { paddingVertical: 12, alignItems: "center" },
   });

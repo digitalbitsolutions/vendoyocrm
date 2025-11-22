@@ -20,53 +20,11 @@ import { useTheme } from "../../../src/style/theme";
 
 /* ----------------- MOCK ----------------- */
 const MOCK_CLIENTES = [
-  {
-    id: "c1",
-    nombre: "Sergio, Carlos",
-    documento: "NIE: z2628852a",
-    email: "sergicarrillo96@gmail.com",
-    whatsapp: "611568818",
-    telefono: "",
-    direccion: "carrer de josep estivill 36",
-    estado: "activo",
-    notas: "",
-    tags: ["Barcelona"],
-    totalTramites: 0,
-    createdAt: "2025-06-21",
-  },
-  {
-    id: "c2",
-    nombre: "Miguel, Yesan",
-    documento: "DNI: 00286658",
-    email: "manager@digitalbitsolutions.com",
-    whatsapp: "653252923",
-    telefono: "",
-    direccion: "Gracia",
-    estado: "activo",
-    notas: "",
-    tags: ["VIP"],
-    totalTramites: 1,
-    createdAt: "2025-06-19",
-  },
-  {
-    id: "c3",
-    nombre: "María López",
-    documento: "NIE: X1234567Z",
-    email: "maria@example.com",
-    whatsapp: "600000002",
-    telefono: "931112223",
-    direccion: "Hospitalet",
-    estado: "inactivo",
-    notas: "Pendiente de reactivar",
-    tags: [],
-    totalTramites: 0,
-    createdAt: "2025-05-10",
-  },
+  /* ...tu mock... (igual) ... */
 ];
 
 /* ----------------- UI helpers ----------------- */
 
-// Card genérica: ya no usa estilos globales, solo lo que reciba por `style`
 function Card({ children, style, onPress }) {
   const Comp = onPress ? TouchableOpacity : View;
 
@@ -82,51 +40,51 @@ function Card({ children, style, onPress }) {
   );
 }
 
-function FilterChip({ label, active, onPress }) {
+function FilterChip({ label, active, onPress, styles }) {
   return (
     <Pressable
       onPress={onPress}
-      style={[s.fchip, active && s.fchipActive]}
+      style={[styles.fchip, active && styles.fchipActive]}
       accessibilityRole="button"
       accessibilityState={{ selected: !!active }}
     >
-      <Text style={[s.fchipText, active && s.fchipTextActive]}>{label}</Text>
+      <Text style={[styles.fchipText, active && styles.fchipTextActive]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-function ClienteCard({ item, onEditar, onEliminar, theme }) {
+function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
   return (
-    <Card style={[s.card, s.cardPadded]}>
-      {/* Cabecera: avatar + nombre */}
-      <View style={s.headerRow}>
-        <View style={s.avatar} />
-        <View style={s.flex1}>
-          <Text style={s.name}>{item.nombre}</Text>
+    <Card style={[styles.card, styles.cardPadded]}>
+      <View style={styles.headerRow}>
+        <View style={styles.avatar} />
+        <View style={styles.cardMain}>
+          <Text style={styles.name}>{item.nombre}</Text>
 
-          {!!item.documento && <Text style={s.line}>{item.documento}</Text>}
-          {!!item.email && <Text style={s.line}>Email: {item.email}</Text>}
+          {!!item.documento && <Text style={styles.line}>{item.documento}</Text>}
+          {!!item.email && <Text style={styles.line}>Email: {item.email}</Text>}
           {!!item.whatsapp && (
-            <Text style={s.line}>WhatsApp: {item.whatsapp}</Text>
+            <Text style={styles.line}>WhatsApp: {item.whatsapp}</Text>
           )}
           {!!item.telefono && (
-            <Text style={s.line}>Teléfono: {item.telefono}</Text>
+            <Text style={styles.line}>Teléfono: {item.telefono}</Text>
           )}
           {!!item.direccion && (
-            <Text style={s.line}>Dirección: {item.direccion}</Text>
+            <Text style={styles.line}>Dirección: {item.direccion}</Text>
           )}
 
-          <Text style={s.badges}>
+          <Text style={styles.badges}>
             {item.estado === "activo" ? "🟢 Activo" : "⚪ Inactivo"}
             {item.totalTramites ? ` • Trámites: ${item.totalTramites}` : ""}
           </Text>
         </View>
       </View>
 
-      {/* Acciones */}
-      <View style={s.cardFooter}>
+      <View style={styles.cardFooter}>
         <TouchableOpacity
-          style={[s.btn, s.btnEdit]}
+          style={[styles.btn, styles.btnEdit]}
           onPress={() => onEditar?.(item)}
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Editar cliente ${item.nombre}`}
@@ -136,11 +94,11 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
             size={16}
             color={theme.colors.onAccent}
           />
-          <Text style={[s.btnText, s.btnTextAccent]}>Editar</Text>
+          <Text style={[styles.btnText, styles.btnTextAccent]}>Editar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[s.btn, s.btnDelete]}
+          style={[styles.btn, styles.btnDelete]}
           onPress={() => onEliminar?.(item)}
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Eliminar cliente ${item.nombre}`}
@@ -150,7 +108,7 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
             size={16}
             color={theme.colors.onDanger}
           />
-          <Text style={[s.btnText, s.btnTextDanger]}>Eliminar</Text>
+          <Text style={[styles.btnText, styles.btnTextDanger]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
     </Card>
@@ -160,14 +118,13 @@ function ClienteCard({ item, onEditar, onEliminar, theme }) {
 /* ----------------- Pantalla ----------------- */
 export default function ClientesScreen() {
   const router = useRouter();
-  const { theme } = useTheme(); // ✅ tema reactivo
-  s = mkStyles(theme); // ✅ estilos dependientes del tema
+  const { theme } = useTheme();
+  const styles = useMemo(() => mkStyles(theme), [theme]);
 
   const [items, setItems] = useState(MOCK_CLIENTES);
   const [estado, setEstado] = useState("todos"); // "todos" | "activo" | "inactivo"
   const [q, setQ] = useState("");
 
-  // Filtro (texto + estado)
   const list = useMemo(() => {
     const hayQ = q.trim().toLowerCase();
     return items.filter((c) => {
@@ -188,10 +145,9 @@ export default function ClientesScreen() {
     });
   }, [items, estado, q]);
 
-  // Navegación
   const nuevoCliente = useCallback(() => {
     router.push({
-      pathname: "/clientes/nuevo",
+      pathname: "/(app)/clientes/nuevo",
       params: { modal: true },
     });
   }, [router]);
@@ -220,7 +176,6 @@ export default function ClientesScreen() {
     );
   }, []);
 
-  // Eventos create/update/delete
   useEffect(() => {
     const subCreated = DeviceEventEmitter.addListener(
       "cliente:created",
@@ -251,50 +206,49 @@ export default function ClientesScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={s.safe} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       <AppBar variant="section" title="Clientes" showBorder={false} />
 
-      {/* Acciones */}
-      <View style={s.actions}>
-        {/* Filtros */}
+      <View style={styles.actions}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.fchipsContainer}
+          contentContainerStyle={styles.fchipsContainer}
         >
           <FilterChip
             label="Todos"
             active={estado === "todos"}
             onPress={() => setEstado("todos")}
+            styles={styles}
           />
           <FilterChip
             label="Activo"
             active={estado === "activo"}
             onPress={() => setEstado("activo")}
+            styles={styles}
           />
           <FilterChip
             label="Inactivo"
             active={estado === "inactivo"}
             onPress={() => setEstado("inactivo")}
+            styles={styles}
           />
         </ScrollView>
 
-        {/* Buscador */}
-        <View style={s.searchWrap}>
+        <View style={styles.searchWrap}>
           <Ionicons name="search" size={18} color={theme.colors.textMuted} />
           <TextInput
             value={q}
             onChangeText={setQ}
             placeholder="Buscar por nombre, documento, email, dirección..."
             placeholderTextColor={theme.colors.textMuted}
-            style={s.searchInput}
+            style={styles.searchInput}
             returnKeyType="search"
           />
         </View>
 
-        {/* CTA: Nuevo Cliente */}
         <TouchableOpacity
-          style={s.cta}
+          style={styles.cta}
           onPress={nuevoCliente}
           activeOpacity={theme.opacity?.pressed ?? 0.7}
         >
@@ -303,13 +257,12 @@ export default function ClientesScreen() {
             size={18}
             color={theme.colors.onSecondary}
           />
-          <Text style={s.ctaText}>Nuevo Cliente</Text>
+          <Text style={styles.ctaText}>Nuevo Cliente</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Lista */}
       <ScrollView
-        contentContainerStyle={s.scroll}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
         {list.length ? (
@@ -319,18 +272,19 @@ export default function ClientesScreen() {
               item={c}
               onEditar={editar}
               onEliminar={eliminar}
+              styles={styles}
               theme={theme}
             />
           ))
         ) : (
-          <Card style={[s.card, s.cardCentered]}>
+          <Card style={[styles.card, styles.cardCentered]}>
             <Ionicons
               name="people-outline"
               size={32}
               color={theme.colors.textMuted}
             />
-            <Text style={s.emptyTitle}>No hay clientes</Text>
-            <Text style={s.emptyText}>
+            <Text style={styles.emptyTitle}>No hay clientes</Text>
+            <Text style={styles.emptyText}>
               Crea tu primer cliente con el botón «Nuevo Cliente».
             </Text>
           </Card>
@@ -341,30 +295,26 @@ export default function ClientesScreen() {
 }
 
 /* ----------------- Estilos (tema-dependientes) ----------------- */
-let s; // referencia global para helpers (FilterChip, ClienteCard)
 const mkStyles = (theme) =>
   StyleSheet.create({
     safe: { flex: 1, backgroundColor: theme.colors.background },
 
-    // Acciones
     actions: {
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
       paddingBottom: theme.spacing.sm,
-      gap: theme.spacing.md,
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
+      // Reemplazamos gap por separadores en RN
     },
 
-    // Horizontal scroll content (chips)
     fchipsContainer: {
       paddingHorizontal: theme.spacing.lg,
       alignItems: "center",
-      gap: 8,
+      // usamos padding/margin en lugar de gap
     },
 
-    // Filtro chip
     fchip: {
       paddingVertical: 8,
       paddingHorizontal: 14,
@@ -373,6 +323,7 @@ const mkStyles = (theme) =>
         theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
       borderWidth: 1,
       borderColor: theme.colors.border,
+      marginRight: 8,
     },
     fchipActive: {
       backgroundColor: theme.colors.secondary,
@@ -385,38 +336,36 @@ const mkStyles = (theme) =>
     },
     fchipTextActive: { color: theme.colors.onSecondary },
 
-    // Buscador
     searchWrap: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
       height: 44,
       borderRadius: theme.radius.lg,
       borderWidth: 1,
       borderColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
       paddingHorizontal: 12,
+      marginTop: 8,
     },
     searchInput: {
       flex: 1,
       color: theme.colors.text,
       fontSize: theme.font.body,
+      marginLeft: 8,
     },
 
-    // Contenido
     scroll: {
       padding: theme.spacing.lg,
-      gap: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
     },
 
-    // Card
     card: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.radius.xl,
       borderWidth: 1,
       borderColor: theme.colors.border,
       ...theme.shadow,
+      marginBottom: theme.spacing.md,
     },
     cardPadded: {
       padding: theme.spacing.lg,
@@ -428,15 +377,16 @@ const mkStyles = (theme) =>
 
     headerRow: {
       flexDirection: "row",
-      gap: theme.spacing.lg,
       alignItems: "flex-start",
     },
+    cardMain: { flex: 1 },
 
     avatar: {
       width: 48,
       height: 48,
       borderRadius: 24,
       backgroundColor: theme.colors.border,
+      marginRight: theme.spacing.lg,
       alignSelf: "flex-start",
     },
     name: {
@@ -460,16 +410,15 @@ const mkStyles = (theme) =>
       marginTop: theme.spacing.md,
       flexDirection: "row",
       justifyContent: "flex-end",
-      gap: 10,
     },
 
     btn: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
       paddingHorizontal: 14,
       height: 40,
       borderRadius: theme.radius.md,
+      marginLeft: 8,
     },
     btnEdit: { backgroundColor: theme.colors.accent },
     btnDelete: { backgroundColor: theme.colors.danger },
@@ -477,7 +426,6 @@ const mkStyles = (theme) =>
     btnTextAccent: { color: theme.colors.onAccent, marginLeft: 6 },
     btnTextDanger: { color: theme.colors.onDanger, marginLeft: 6 },
 
-    // CTA
     cta: {
       height: 48,
       borderRadius: theme.radius.pill,
@@ -485,15 +433,15 @@ const mkStyles = (theme) =>
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "row",
-      gap: 8,
+      marginTop: 8,
     },
     ctaText: {
       color: theme.colors.onSecondary,
       fontWeight: "800",
       fontSize: theme.font.body,
+      marginLeft: 8,
     },
 
-    // Empty state
     emptyTitle: {
       marginTop: 8,
       fontSize: theme.font.h3,
@@ -501,7 +449,4 @@ const mkStyles = (theme) =>
       color: theme.colors.text,
     },
     emptyText: { color: theme.colors.textMuted, marginTop: 4 },
-
-    // helper styles (reused to avoid inline styles)
-    flex1: { flex: 1 },
   });
