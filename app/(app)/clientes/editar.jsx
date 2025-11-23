@@ -119,12 +119,29 @@ export default function EditarClienteScreen() {
       updatedAt: new Date().toISOString(),
     };
 
-    payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
-    payload.nombreCompleto = `${payload.nombre}${payload.apellido ? ", " + payload.apellido : ""}`;
+    payload.documento = `${payload.tipoDoc || ""}: ${
+      payload.numDoc || ""
+    }`.trim();
+    payload.nombreCompleto = `${payload.nombre}${
+      payload.apellido ? ", " + payload.apellido : ""
+    }`;
 
     DeviceEventEmitter.emit("cliente:updated", payload);
     router.back();
-  }, [canSave, id, tipoDoc, numDoc, nombre, apellido, email, telefono, whatsapp, direccion, password, router]);
+  }, [
+    canSave,
+    id,
+    tipoDoc,
+    numDoc,
+    nombre,
+    apellido,
+    email,
+    telefono,
+    whatsapp,
+    direccion,
+    password,
+    router,
+  ]);
 
   const onCopyId = useCallback(async () => {
     if (!id) return;
@@ -278,7 +295,9 @@ export default function EditarClienteScreen() {
           </ScrollView>
 
           {/* Save bar con más padding inferior */}
-          <View style={[s.saveBar, s.saveBarShadow, dynamicStyles.saveBarInset]}>
+          <View
+            style={[s.saveBar, s.saveBarShadow, dynamicStyles.saveBarInset]}
+          >
             <Button
               title="Guardar cambios"
               onPress={onSave}

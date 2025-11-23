@@ -71,14 +71,21 @@ function Card({ children, style, onPress }) {
   return (
     <Comp
       style={style}
-      {...(onPress ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" } : {})}
+      {...(onPress
+        ? { onPress, activeOpacity: 0.7, accessibilityRole: "button" }
+        : {})}
     >
       {children}
     </Comp>
   );
 }
 
-const FilterChip = React.memo(function FilterChip({ label, active, onPress, styles }) {
+const FilterChip = React.memo(function FilterChip({
+  label,
+  active,
+  onPress,
+  styles,
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -90,12 +97,20 @@ const FilterChip = React.memo(function FilterChip({ label, active, onPress, styl
       accessibilityRole="button"
       accessibilityState={{ selected: !!active }}
     >
-      <Text style={[styles.fchipText, active && styles.fchipTextActive]}>{label}</Text>
+      <Text style={[styles.fchipText, active && styles.fchipTextActive]}>
+        {label}
+      </Text>
     </Pressable>
   );
 });
 
-const ClienteCard = React.memo(function ClienteCard({ item, onEditar, onEliminar, styles, theme }) {
+const ClienteCard = React.memo(function ClienteCard({
+  item,
+  onEditar,
+  onEliminar,
+  styles,
+  theme,
+}) {
   return (
     <Card style={[styles.card, styles.cardPadded]}>
       <View style={styles.headerRow}>
@@ -103,11 +118,19 @@ const ClienteCard = React.memo(function ClienteCard({ item, onEditar, onEliminar
         <View style={styles.cardMain}>
           <Text style={styles.name}>{item.nombre}</Text>
 
-          {!!item.documento && <Text style={styles.line}>{item.documento}</Text>}
+          {!!item.documento && (
+            <Text style={styles.line}>{item.documento}</Text>
+          )}
           {!!item.email && <Text style={styles.line}>Email: {item.email}</Text>}
-          {!!item.whatsapp && <Text style={styles.line}>WhatsApp: {item.whatsapp}</Text>}
-          {!!item.telefono && <Text style={styles.line}>Teléfono: {item.telefono}</Text>}
-          {!!item.direccion && <Text style={styles.line}>Dirección: {item.direccion}</Text>}
+          {!!item.whatsapp && (
+            <Text style={styles.line}>WhatsApp: {item.whatsapp}</Text>
+          )}
+          {!!item.telefono && (
+            <Text style={styles.line}>Teléfono: {item.telefono}</Text>
+          )}
+          {!!item.direccion && (
+            <Text style={styles.line}>Dirección: {item.direccion}</Text>
+          )}
 
           <Text style={styles.badges}>
             {item.estado === "activo" ? "🟢 Activo" : "⚪ Inactivo"}
@@ -123,7 +146,11 @@ const ClienteCard = React.memo(function ClienteCard({ item, onEditar, onEliminar
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Editar cliente ${item.nombre}`}
         >
-          <Ionicons name="create-outline" size={16} color={theme.colors.onAccent} />
+          <Ionicons
+            name="create-outline"
+            size={16}
+            color={theme.colors.onAccent}
+          />
           <Text style={[styles.btnText, styles.btnTextAccent]}>Editar</Text>
         </TouchableOpacity>
 
@@ -133,7 +160,11 @@ const ClienteCard = React.memo(function ClienteCard({ item, onEditar, onEliminar
           activeOpacity={theme.opacity?.pressed ?? 0.7}
           accessibilityLabel={`Eliminar cliente ${item.nombre}`}
         >
-          <Ionicons name="trash-outline" size={16} color={theme.colors.onDanger} />
+          <Ionicons
+            name="trash-outline"
+            size={16}
+            color={theme.colors.onDanger}
+          />
           <Text style={[styles.btnText, styles.btnTextDanger]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
@@ -184,26 +215,42 @@ export default function ClientesScreen() {
   );
 
   const eliminar = useCallback((item) => {
-    Alert.alert("Eliminar cliente", `¿Seguro que deseas eliminar a ${item.nombre}?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Eliminar",
-        style: "destructive",
-        onPress: () => setItems((prev) => prev.filter((c) => c.id !== item.id)),
-      },
-    ]);
+    Alert.alert(
+      "Eliminar cliente",
+      `¿Seguro que deseas eliminar a ${item.nombre}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: () =>
+            setItems((prev) => prev.filter((c) => c.id !== item.id)),
+        },
+      ]
+    );
   }, []);
 
   useEffect(() => {
-    const subCreated = DeviceEventEmitter.addListener("cliente:created", (nuevo) => {
-      setItems((prev) => [nuevo, ...prev]);
-    });
-    const subUpdated = DeviceEventEmitter.addListener("cliente:updated", (upd) => {
-      setItems((prev) => prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c)));
-    });
-    const subDeleted = DeviceEventEmitter.addListener("cliente:deleted", (id) => {
-      setItems((prev) => prev.filter((c) => c.id !== id));
-    });
+    const subCreated = DeviceEventEmitter.addListener(
+      "cliente:created",
+      (nuevo) => {
+        setItems((prev) => [nuevo, ...prev]);
+      }
+    );
+    const subUpdated = DeviceEventEmitter.addListener(
+      "cliente:updated",
+      (upd) => {
+        setItems((prev) =>
+          prev.map((c) => (c.id === upd.id ? { ...c, ...upd } : c))
+        );
+      }
+    );
+    const subDeleted = DeviceEventEmitter.addListener(
+      "cliente:deleted",
+      (id) => {
+        setItems((prev) => prev.filter((c) => c.id !== id));
+      }
+    );
 
     return () => {
       try {
@@ -219,7 +266,10 @@ export default function ClientesScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView
+      style={styles.safe}
+      edges={["top", "left", "right", "bottom"]}
+    >
       <AppBar variant="section" title="Clientes" showBorder={false} />
 
       <View style={styles.actions}>
@@ -228,9 +278,24 @@ export default function ClientesScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.fchipsContainer}
         >
-          <FilterChip label="Todos" active={estado === "todos"} onPress={() => setEstado("todos")} styles={styles} />
-          <FilterChip label="Activo" active={estado === "activo"} onPress={() => setEstado("activo")} styles={styles} />
-          <FilterChip label="Inactivo" active={estado === "inactivo"} onPress={() => setEstado("inactivo")} styles={styles} />
+          <FilterChip
+            label="Todos"
+            active={estado === "todos"}
+            onPress={() => setEstado("todos")}
+            styles={styles}
+          />
+          <FilterChip
+            label="Activo"
+            active={estado === "activo"}
+            onPress={() => setEstado("activo")}
+            styles={styles}
+          />
+          <FilterChip
+            label="Inactivo"
+            active={estado === "inactivo"}
+            onPress={() => setEstado("inactivo")}
+            styles={styles}
+          />
         </ScrollView>
 
         <View style={styles.searchWrap}>
@@ -246,22 +311,46 @@ export default function ClientesScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.cta} onPress={nuevoCliente} activeOpacity={theme.opacity?.pressed ?? 0.7}>
-          <Ionicons name="add-circle" size={18} color={theme.colors.onSecondary} />
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={nuevoCliente}
+          activeOpacity={theme.opacity?.pressed ?? 0.7}
+        >
+          <Ionicons
+            name="add-circle"
+            size={18}
+            color={theme.colors.onSecondary}
+          />
           <Text style={styles.ctaText}>Nuevo Cliente</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {list.length ? (
           list.map((c) => (
-            <ClienteCard key={c.id} item={c} onEditar={editar} onEliminar={eliminar} styles={styles} theme={theme} />
+            <ClienteCard
+              key={c.id}
+              item={c}
+              onEditar={editar}
+              onEliminar={eliminar}
+              styles={styles}
+              theme={theme}
+            />
           ))
         ) : (
           <Card style={[styles.card, styles.cardCentered]}>
-            <Ionicons name="people-outline" size={32} color={theme.colors.textMuted} />
+            <Ionicons
+              name="people-outline"
+              size={32}
+              color={theme.colors.textMuted}
+            />
             <Text style={styles.emptyTitle}>No hay clientes</Text>
-            <Text style={styles.emptyText}>Crea tu primer cliente con el botón «Nuevo Cliente».</Text>
+            <Text style={styles.emptyText}>
+              Crea tu primer cliente con el botón «Nuevo Cliente».
+            </Text>
           </Card>
         )}
       </ScrollView>
@@ -292,7 +381,8 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
       borderWidth: 1,
       borderColor: theme.colors.border,
       marginRight: 8,

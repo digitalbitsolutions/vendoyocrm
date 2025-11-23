@@ -1,5 +1,11 @@
 // app/(app)/perfil/index.jsx
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -109,109 +115,97 @@ export default function PerfilScreen() {
     [uploadImage, updateProfile]
   );
 
-  const openLibrary = useCallback(
-    async () => {
-      const perm = await requestMediaLibraryPermissionsAsync();
-      if (perm.status !== "granted") {
-        Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería.");
-        return;
-      }
-      const result = await launchImageLibraryAsync({
-        mediaTypes: MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.9,
-      });
-      if (result.canceled) return;
-      await handlePicked(result.assets?.[0]);
-    },
-    [handlePicked]
-  );
+  const openLibrary = useCallback(async () => {
+    const perm = await requestMediaLibraryPermissionsAsync();
+    if (perm.status !== "granted") {
+      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería.");
+      return;
+    }
+    const result = await launchImageLibraryAsync({
+      mediaTypes: MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+    if (result.canceled) return;
+    await handlePicked(result.assets?.[0]);
+  }, [handlePicked]);
 
-  const openCamera = useCallback(
-    async () => {
-      const perm = await requestCameraPermissionsAsync();
-      if (perm.status !== "granted") {
-        Alert.alert(
-          "Permiso requerido",
-          "Activa el permiso de cámara para continuar."
-        );
-        return;
-      }
-      const result = await launchCameraAsync({
-        mediaTypes: MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.9,
-      });
-      if (result.canceled) return;
-      await handlePicked(result.assets?.[0]);
-    },
-    [handlePicked]
-  );
+  const openCamera = useCallback(async () => {
+    const perm = await requestCameraPermissionsAsync();
+    if (perm.status !== "granted") {
+      Alert.alert(
+        "Permiso requerido",
+        "Activa el permiso de cámara para continuar."
+      );
+      return;
+    }
+    const result = await launchCameraAsync({
+      mediaTypes: MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.9,
+    });
+    if (result.canceled) return;
+    await handlePicked(result.assets?.[0]);
+  }, [handlePicked]);
 
-  const removeAvatar = useCallback(
-    async () => {
-      try {
-        setUploading(true);
-        const updated = await updateProfile({ avatarUrl: null });
-        if (isMountedRef.current) setProfile(updated);
-      } catch (e) {
-        Alert.alert("Error", e?.message || "No se pudo quitar la foto.");
-      } finally {
-        if (isMountedRef.current) setUploading(false);
-      }
-    },
-    [updateProfile]
-  );
+  const removeAvatar = useCallback(async () => {
+    try {
+      setUploading(true);
+      const updated = await updateProfile({ avatarUrl: null });
+      if (isMountedRef.current) setProfile(updated);
+    } catch (e) {
+      Alert.alert("Error", e?.message || "No se pudo quitar la foto.");
+    } finally {
+      if (isMountedRef.current) setUploading(false);
+    }
+  }, [updateProfile]);
 
   // Muestra opciones para cambiar avatar (ActionSheet iOS / Alert Android)
-  const chooseAvatar = useCallback(
-    () => {
-      const hasPhoto = !!profile?.avatarUrl;
-      const run = async (key) => {
-        if (key === "camera") return openCamera();
-        if (key === "library") return openLibrary();
-        if (key === "remove" && hasPhoto) return removeAvatar();
-      };
+  const chooseAvatar = useCallback(() => {
+    const hasPhoto = !!profile?.avatarUrl;
+    const run = async (key) => {
+      if (key === "camera") return openCamera();
+      if (key === "library") return openLibrary();
+      if (key === "remove" && hasPhoto) return removeAvatar();
+    };
 
-      if (Platform.OS === "ios") {
-        // import dinámico para evitar la warning de `split-platform-components`
-        const { ActionSheetIOS } = require("react-native");
-        const options = [
-          "Cancelar",
-          "Tomar foto",
-          "Elegir de galería",
-          ...(hasPhoto ? ["Quitar foto"] : []),
-        ];
-        const cancelButtonIndex = 0;
-        ActionSheetIOS.showActionSheetWithOptions(
-          { options, cancelButtonIndex, userInterfaceStyle: "automatic" },
-          (i) => {
-            if (i === 1) run("camera");
-            if (i === 2) run("library");
-            if (hasPhoto && i === 3) run("remove");
-          }
-        );
-      } else {
-        Alert.alert("Foto de perfil", "Selecciona una opción", [
-          { text: "Tomar foto", onPress: () => run("camera") },
-          { text: "Elegir de galería", onPress: () => run("library") },
-          ...(hasPhoto
-            ? [
-                {
-                  text: "Quitar foto",
-                  style: "destructive",
-                  onPress: () => run("remove"),
-                },
-              ]
-            : []),
-          { text: "Cancelar", style: "cancel" },
-        ]);
-      }
-    },
-    [profile?.avatarUrl, openCamera, openLibrary, removeAvatar]
-  );
+    if (Platform.OS === "ios") {
+      // import dinámico para evitar la warning de `split-platform-components`
+      const { ActionSheetIOS } = require("react-native");
+      const options = [
+        "Cancelar",
+        "Tomar foto",
+        "Elegir de galería",
+        ...(hasPhoto ? ["Quitar foto"] : []),
+      ];
+      const cancelButtonIndex = 0;
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options, cancelButtonIndex, userInterfaceStyle: "automatic" },
+        (i) => {
+          if (i === 1) run("camera");
+          if (i === 2) run("library");
+          if (hasPhoto && i === 3) run("remove");
+        }
+      );
+    } else {
+      Alert.alert("Foto de perfil", "Selecciona una opción", [
+        { text: "Tomar foto", onPress: () => run("camera") },
+        { text: "Elegir de galería", onPress: () => run("library") },
+        ...(hasPhoto
+          ? [
+              {
+                text: "Quitar foto",
+                style: "destructive",
+                onPress: () => run("remove"),
+              },
+            ]
+          : []),
+        { text: "Cancelar", style: "cancel" },
+      ]);
+    }
+  }, [profile?.avatarUrl, openCamera, openLibrary, removeAvatar]);
 
   /* ---------------- UI derivada ---------------- */
   const initials = useMemo(() => {

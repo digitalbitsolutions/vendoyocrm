@@ -45,7 +45,9 @@ const toCSV = (rows) => {
   if (!rows.length) return "";
   const headers = ["cliente", "tramite", "estado", "fecha_inicio", "fecha_fin"];
   const esc = (v) =>
-    `"${String(v ?? "").replaceAll(`"`, `""`).replaceAll("\n", " ")}"`;
+    `"${String(v ?? "")
+      .replaceAll(`"`, `""`)
+      .replaceAll("\n", " ")}"`;
   const body = rows
     .map((r) =>
       [r.cliente, r.tramite, r.estado, r.fechaInicio, r.fechaFin]
@@ -210,7 +212,10 @@ export default function ReportesScreen() {
         setRows((prev) => (append ? [...prev, ...data] : data));
       } catch (e) {
         setError(e?.message || "Error al obtener datos");
-        Alert.alert("Error", e?.message || "No se pudieron obtener los reportes.");
+        Alert.alert(
+          "Error",
+          e?.message || "No se pudieron obtener los reportes."
+        );
       } finally {
         setLoading(false);
         setLoadingMore(false);

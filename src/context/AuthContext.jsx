@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
     }
     // usamos console.debug para mensajes de desarrollo no intrusivos
     // (console.warn genera mucho ruido en algunos entornos)
-    console.debug(msg);
+    console.warn(msg);
   }, []);
 
   useEffect(() => {
@@ -146,7 +146,5 @@ export function AuthProvider({ children }) {
     [user, token, isLoading, actions]
   );
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

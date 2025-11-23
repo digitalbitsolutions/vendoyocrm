@@ -81,7 +81,9 @@ export default function DashboardScreen() {
 
           <View style={s.userRow}>
             <View style={s.avatar}>
-              <Text style={s.avatarText}>{getInitials(user?.name || "VY")}</Text>
+              <Text style={s.avatarText}>
+                {getInitials(user?.name || "VY")}
+              </Text>
             </View>
             <View style={s.userMain}>
               <Text style={s.userName}>{user?.name || "Invitado"}</Text>
@@ -140,7 +142,9 @@ export default function DashboardScreen() {
 
         <Card style={s.blockSpacing}>
           <Text style={s.blockTitle}>Trámites Recibidos Mensuales</Text>
-          <Text style={s.blockHint}>Aquí irá un gráfico de líneas por meses.</Text>
+          <Text style={s.blockHint}>
+            Aquí irá un gráfico de líneas por meses.
+          </Text>
         </Card>
 
         <Card style={s.blockSpacing}>

@@ -48,7 +48,11 @@ const DrawerItem = React.memo(function DrawerItem({
       accessibilityState={{ selected: !!active }}
     >
       <View style={s.itemLeft}>
-        {active ? <View style={s.activeDot} /> : <View style={s.placeholderDot} />}
+        {active ? (
+          <View style={s.activeDot} />
+        ) : (
+          <View style={s.placeholderDot} />
+        )}
         <Ionicons
           name={icon}
           size={22}
@@ -132,10 +136,7 @@ export default function CustomDrawerContent(props) {
 
         <Pressable
           onPress={onSignOut}
-          style={({ pressed }) => [
-            s.logoutBtn,
-            pressed && s.pressed,
-          ]}
+          style={({ pressed }) => [s.logoutBtn, pressed && s.pressed]}
           hitSlop={theme.hitSlop}
           accessibilityRole="button"
           accessibilityLabel="Cerrar sesión"

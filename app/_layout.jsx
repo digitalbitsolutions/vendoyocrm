@@ -17,7 +17,7 @@ function AppContent() {
   useEffect(() => {
     if (typeof __DEV__ !== "undefined" && __DEV__) {
       if (prevRef.current !== isLoading) {
-        console.debug("AppContent - isLoading:", isLoading);
+        console.warn("AppContent - isLoading:", isLoading);
         prevRef.current = isLoading;
       }
     }

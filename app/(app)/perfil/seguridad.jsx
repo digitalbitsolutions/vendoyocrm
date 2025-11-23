@@ -1,10 +1,5 @@
 // app/(app)/perfil/seguridad.jsx
-import React, {
-  useCallback,
-  useState,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useCallback, useState, useMemo, useRef } from "react";
 import {
   View,
   Text,

@@ -11,7 +11,10 @@ import {
   Platform,
   DeviceEventEmitter,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -71,11 +74,24 @@ export default function NuevoClienteScreen() {
       password: password.trim(),
       createdAt: new Date().toISOString(),
     };
-    payload.documento = `${payload.tipoDoc || ""}: ${payload.numDoc || ""}`.trim();
+    payload.documento = `${payload.tipoDoc || ""}: ${
+      payload.numDoc || ""
+    }`.trim();
 
     DeviceEventEmitter.emit("cliente:created", payload);
     router.back();
-  }, [canSave, tipoDoc, numDoc, nombre, apellido, email, telefono, direccion, password, router]);
+  }, [
+    canSave,
+    tipoDoc,
+    numDoc,
+    nombre,
+    apellido,
+    email,
+    telefono,
+    direccion,
+    password,
+    router,
+  ]);
 
   const SAVE_BTN_HEIGHT = useMemo(
     () => (theme.button && theme.button.height ? theme.button.height : 56),
@@ -177,25 +193,50 @@ export default function NuevoClienteScreen() {
               placeholder="Ej: +34 600 000 000"
               value={telefono}
               onChangeText={setTelefono}
-              keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"}
+              keyboardType={
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "phone-pad"
+              }
               returnKeyType="next"
             />
 
             <Label s={s}>Dirección:</Label>
-            <Input s={s} placeholder="Ej: Calle Mayor, 123, Barcelona" value={direccion} onChangeText={setDireccion} />
+            <Input
+              s={s}
+              placeholder="Ej: Calle Mayor, 123, Barcelona"
+              value={direccion}
+              onChangeText={setDireccion}
+            />
 
             <Label s={s}>Contraseña: *</Label>
-            <Input s={s} placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword} secureTextEntry />
+            <Input
+              s={s}
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
           </ScrollView>
 
-          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) }]}>
+          <View
+            style={[
+              s.saveBar,
+              s.saveBarShadow,
+              { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) },
+            ]}
+          >
             <Button
               title="Guardar Cliente"
               onPress={onSubmit}
               disabled={!canSave}
               fullWidth
               variant="secondary"
-              leftIcon={<Ionicons name="checkmark-circle" size={18} color={theme.colors.onSecondary} />}
+              leftIcon={
+                <Ionicons
+                  name="checkmark-circle"
+                  size={18}
+                  color={theme.colors.onSecondary}
+                />
+              }
             />
           </View>
         </View>
@@ -209,7 +250,13 @@ function Label({ children, s }) {
   return <Text style={s.label}>{children}</Text>;
 }
 function Input({ s, ...props }) {
-  return <TextInput placeholderTextColor={s.placeholderColor} {...props} style={[s.input, props.style]} />;
+  return (
+    <TextInput
+      placeholderTextColor={s.placeholderColor}
+      {...props}
+      style={[s.input, props.style]}
+    />
+  );
 }
 
 /* mkStyles - CORREGIDO */

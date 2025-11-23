@@ -80,7 +80,9 @@ export default function ModalCard({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={s.kavContainer}
       >
-        <Animated.View style={[s.card, sizeStyle, { transform: [{ translateY }] }]}>
+        <Animated.View
+          style={[s.card, sizeStyle, { transform: [{ translateY }] }]}
+        >
           <SafeAreaView edges={["bottom"]}>{children}</SafeAreaView>
         </Animated.View>
       </KeyboardAvoidingView>

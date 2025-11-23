@@ -49,7 +49,11 @@ const DrawerItem = React.memo(function DrawerItem({
       accessibilityState={{ selected: !!active }}
     >
       <View style={s.itemLeft}>
-        {active ? <View style={s.activeDot} /> : <View style={s.placeholderDot} />}
+        {active ? (
+          <View style={s.activeDot} />
+        ) : (
+          <View style={s.placeholderDot} />
+        )}
         <Ionicons
           name={icon}
           size={22}

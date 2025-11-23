@@ -1,5 +1,11 @@
 // app/(app)/ajustes/index.jsx
-import React, { useEffect, useCallback, useState, useRef, useMemo } from "react";
+import React, {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -38,7 +44,11 @@ function Row({ icon, title, subtitle, onPress }) {
         <Text style={styles.title}>{title}</Text>
         {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={theme.colors.textMuted}
+      />
     </Pressable>
   );
 }
@@ -87,20 +97,17 @@ export default function Ajustes() {
   const [overlayColor, setOverlayColor] = useState(theme.colors.background);
   const DURATION = 180; // ms
 
-  const persist = useCallback(
-    async (next) => {
-      setCfg(next);
-      try {
-        setSaving(true);
-        await saveSettings(next);
-      } catch (e) {
-        Alert.alert("Error", e?.message || "No se pudo guardar.");
-      } finally {
-        setSaving(false);
-      }
-    },
-    []
-  );
+  const persist = useCallback(async (next) => {
+    setCfg(next);
+    try {
+      setSaving(true);
+      await saveSettings(next);
+    } catch (e) {
+      Alert.alert("Error", e?.message || "No se pudo guardar.");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
 
   // Crossfade al cambiar tema
   const setUiMode = useCallback(
@@ -214,7 +221,10 @@ export default function Ajustes() {
       />
 
       {/* Overlay para el crossfade (toma el color anterior y se desvanece) */}
-      <Animated.View pointerEvents="none" style={[s.overlayBase, ...overlayAnimatedStyle]} />
+      <Animated.View
+        pointerEvents="none"
+        style={[s.overlayBase, ...overlayAnimatedStyle]}
+      />
 
       <ScrollView
         style={s.flex}

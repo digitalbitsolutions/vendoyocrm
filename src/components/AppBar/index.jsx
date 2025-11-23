@@ -86,7 +86,11 @@ export default function AppBar({
             </Text>
           </Pressable>
 
-          {right ? <View style={s.rightBtn}>{right}</View> : <View style={s.placeholder} />}
+          {right ? (
+            <View style={s.rightBtn}>{right}</View>
+          ) : (
+            <View style={s.placeholder} />
+          )}
         </View>
       </>
     );
@@ -131,7 +135,10 @@ export default function AppBar({
   );
 }
 
-const mkStyles = (theme, { transparent, showBorder, logoWidth = 140, logoAspect = 5 }) =>
+const mkStyles = (
+  theme,
+  { transparent, showBorder, logoWidth = 140, logoAspect = 5 }
+) =>
   StyleSheet.create({
     wrap: {
       height: 56,

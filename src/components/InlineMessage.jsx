@@ -135,9 +135,10 @@ export function InlineMessage({
 
   const actionTextColor = useMemo(() => ({ color: tone.color }), [tone.color]);
 
-  const pressedStyle = useMemo(() => ({ opacity: theme.opacity.pressed }), [
-    theme.opacity,
-  ]);
+  const pressedStyle = useMemo(
+    () => ({ opacity: theme.opacity.pressed }),
+    [theme.opacity]
+  );
 
   const androidRipple = useMemo(
     () =>
@@ -157,7 +158,12 @@ export function InlineMessage({
       style={[s.wrap, containerDynamic, style]}
     >
       {/* icono */}
-      <Ionicons name={tone.icon} size={iconSize} color={iconColor} style={s.icon} />
+      <Ionicons
+        name={tone.icon}
+        size={iconSize}
+        color={iconColor}
+        style={s.icon}
+      />
 
       {/* contenido */}
       <View style={s.content}>

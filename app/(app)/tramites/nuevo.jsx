@@ -12,7 +12,10 @@ import {
   DeviceEventEmitter,
   Alert,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
@@ -106,7 +109,11 @@ export default function NuevoTramiteScreen() {
   );
 
   const saveBarStyle = useMemo(
-    () => [s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) }],
+    () => [
+      s.saveBar,
+      s.saveBarShadow,
+      { paddingBottom: insets.bottom + (theme.spacing?.sm ?? 8) },
+    ],
     [s, insets.bottom, theme]
   );
 
@@ -142,7 +149,9 @@ export default function NuevoTramiteScreen() {
                 const payload = {
                   id: `t-${Date.now()}`,
                   titulo: String(values.titulo || "").trim(),
-                  ref: String(values.ref || "").trim().toUpperCase(),
+                  ref: String(values.ref || "")
+                    .trim()
+                    .toUpperCase(),
                   cliente: String(values.cliente || "").trim(),
                   fechaInicio: null,
                   fechaFinEstimada: toISO(values.fechaFin) || null,
@@ -156,7 +165,10 @@ export default function NuevoTramiteScreen() {
                 Alert.alert("Listo", "Trámite creado correctamente.");
                 router.back();
               } catch (e) {
-                Alert.alert("Error", e?.message || "No se pudo crear el trámite.");
+                Alert.alert(
+                  "Error",
+                  e?.message || "No se pudo crear el trámite."
+                );
               } finally {
                 setSubmitting(false);
               }
@@ -272,7 +284,10 @@ export default function NuevoTramiteScreen() {
                     <Label s={s}>Documentos</Label>
                     <Pressable
                       onPress={() =>
-                        Alert.alert("Pendiente", "Integrar selector de archivos")
+                        Alert.alert(
+                          "Pendiente",
+                          "Integrar selector de archivos"
+                        )
                       }
                       style={({ pressed }) => [
                         s.attachBtn,
@@ -286,7 +301,9 @@ export default function NuevoTramiteScreen() {
                         color={theme.colors.secondary}
                       />
                       <Text style={s.attachText}>
-                        {filesCount ? `${filesCount} archivo(s)` : "Adjuntar archivos"}
+                        {filesCount
+                          ? `${filesCount} archivo(s)`
+                          : "Adjuntar archivos"}
                       </Text>
                     </Pressable>
 

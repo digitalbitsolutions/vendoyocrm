@@ -83,7 +83,11 @@ FilterChip.displayName = "FilterChip";
 function EmptyList({ s, theme }) {
   return (
     <View style={[s.card, s.emptyCard]}>
-      <Ionicons name="document-outline" size={36} color={theme.colors.textMuted} />
+      <Ionicons
+        name="document-outline"
+        size={36}
+        color={theme.colors.textMuted}
+      />
       <Text style={s.emptyTitle}>No hay trámites</Text>
       <Text style={s.emptyText}>
         Crea tu primer trámite con el botón “Nuevo Trámite”.

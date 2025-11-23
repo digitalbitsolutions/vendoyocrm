@@ -6,7 +6,7 @@ module.exports = {
     version: "1.0.0",
     orientation: "portrait",
     userInterfaceStyle: "automatic",
-    
+
     updates: {
       fallbackToCacheTimeout: 0,
     },

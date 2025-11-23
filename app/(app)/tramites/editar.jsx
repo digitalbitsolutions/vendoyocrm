@@ -12,7 +12,10 @@ import {
   DeviceEventEmitter,
   Alert,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Clipboard from "expo-clipboard";
@@ -87,7 +90,8 @@ export default function EditarTramiteScreen() {
     if (params?.titulo) setTitulo(String(params.titulo));
     if (params?.ref) setRef(String(params.ref).toUpperCase());
     if (params?.cliente) setCliente(String(params.cliente));
-    if (params?.fechaFinEstimada) setFechaFin(toHuman(String(params.fechaFinEstimada)));
+    if (params?.fechaFinEstimada)
+      setFechaFin(toHuman(String(params.fechaFinEstimada)));
     if (params?.estado) {
       const e = String(params.estado);
       const map = {
@@ -124,7 +128,10 @@ export default function EditarTramiteScreen() {
 
   const onSubmit = useCallback(() => {
     if (!canSave) {
-      Alert.alert("Faltan datos", "Completa título, referencia y cliente para guardar.");
+      Alert.alert(
+        "Faltan datos",
+        "Completa título, referencia y cliente para guardar."
+      );
       return;
     }
 
@@ -141,7 +148,18 @@ export default function EditarTramiteScreen() {
 
     DeviceEventEmitter.emit("tramite:updated", payload);
     router.back();
-  }, [canSave, id, titulo, ref, cliente, fechaFin, estado, descripcion, router, toISO]);
+  }, [
+    canSave,
+    id,
+    titulo,
+    ref,
+    cliente,
+    fechaFin,
+    estado,
+    descripcion,
+    router,
+    toISO,
+  ]);
 
   // memoiza contentContainerStyle dinámico
   const contentContainerStyle = useMemo(
@@ -159,14 +177,28 @@ export default function EditarTramiteScreen() {
           <View style={s.header}>
             <View style={s.headerTop}>
               <Text style={s.title}>Editar Trámite</Text>
-              <Pressable onPress={onClose} style={s.closeBtn} accessibilityRole="button" accessibilityLabel="Cerrar">
+              <Pressable
+                onPress={onClose}
+                style={s.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Cerrar"
+              >
                 <Ionicons name="close" size={22} color={theme.colors.text} />
               </Pressable>
             </View>
 
             {!!id && (
-              <Pressable onPress={copyId} style={s.idRow} accessibilityRole="button" accessibilityLabel="Copiar ID">
-                <Ionicons name="copy-outline" size={14} color={theme.colors.textMuted} />
+              <Pressable
+                onPress={copyId}
+                style={s.idRow}
+                accessibilityRole="button"
+                accessibilityLabel="Copiar ID"
+              >
+                <Ionicons
+                  name="copy-outline"
+                  size={14}
+                  color={theme.colors.textMuted}
+                />
                 <Text style={s.idText} numberOfLines={1}>
                   {id}
                 </Text>
@@ -174,15 +206,42 @@ export default function EditarTramiteScreen() {
             )}
           </View>
 
-          <ScrollView contentContainerStyle={contentContainerStyle} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={contentContainerStyle}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={s.label}>Título: *</Text>
-            <TextInput value={titulo} onChangeText={setTitulo} placeholder="Ej: Compraventa Inmuebles" placeholderTextColor={theme.colors.textMuted} style={s.input} returnKeyType="next" />
+            <TextInput
+              value={titulo}
+              onChangeText={setTitulo}
+              placeholder="Ej: Compraventa Inmuebles"
+              placeholderTextColor={theme.colors.textMuted}
+              style={s.input}
+              returnKeyType="next"
+            />
 
             <Text style={s.label}>Referencia: *</Text>
-            <TextInput value={ref} onChangeText={setRef} onBlur={onRefBlur} placeholder="Ej: CV-2025-0037" placeholderTextColor={theme.colors.textMuted} autoCapitalize="characters" style={s.input} returnKeyType="next" />
+            <TextInput
+              value={ref}
+              onChangeText={setRef}
+              onBlur={onRefBlur}
+              placeholder="Ej: CV-2025-0037"
+              placeholderTextColor={theme.colors.textMuted}
+              autoCapitalize="characters"
+              style={s.input}
+              returnKeyType="next"
+            />
 
             <Text style={s.label}>Cliente: *</Text>
-            <TextInput value={cliente} onChangeText={setCliente} placeholder="Ej: Miguel Yesan" placeholderTextColor={theme.colors.textMuted} style={s.input} returnKeyType="next" />
+            <TextInput
+              value={cliente}
+              onChangeText={setCliente}
+              placeholder="Ej: Miguel Yesan"
+              placeholderTextColor={theme.colors.textMuted}
+              style={s.input}
+              returnKeyType="next"
+            />
 
             <Text style={s.label}>Fecha Fin Estimada</Text>
             <TextInput
@@ -191,30 +250,82 @@ export default function EditarTramiteScreen() {
               placeholder="dd/mm/aaaa"
               placeholderTextColor={theme.colors.textMuted}
               style={s.input}
-              keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"}
+              keyboardType={
+                Platform.OS === "ios" ? "numbers-and-punctuation" : "numeric"
+              }
               returnKeyType="next"
             />
 
             <Text style={s.label}>Estado</Text>
             <View style={s.chipsRow}>
-              <Pressable onPress={() => setEstado("Pendiente")} style={[s.chip, estado === "Pendiente" && s.chipActive]} accessibilityRole="button" accessibilityState={{ selected: estado === "Pendiente" }}>
-                <Text style={[s.chipText, estado === "Pendiente" && s.chipTextActive]}>Pendiente</Text>
+              <Pressable
+                onPress={() => setEstado("Pendiente")}
+                style={[s.chip, estado === "Pendiente" && s.chipActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: estado === "Pendiente" }}
+              >
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "Pendiente" && s.chipTextActive,
+                  ]}
+                >
+                  Pendiente
+                </Text>
               </Pressable>
 
-              <Pressable onPress={() => setEstado("En Proceso")} style={[s.chip, estado === "En Proceso" && s.chipActive]} accessibilityRole="button" accessibilityState={{ selected: estado === "En Proceso" }}>
-                <Text style={[s.chipText, estado === "En Proceso" && s.chipTextActive]}>En Proceso</Text>
+              <Pressable
+                onPress={() => setEstado("En Proceso")}
+                style={[s.chip, estado === "En Proceso" && s.chipActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: estado === "En Proceso" }}
+              >
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "En Proceso" && s.chipTextActive,
+                  ]}
+                >
+                  En Proceso
+                </Text>
               </Pressable>
 
-              <Pressable onPress={() => setEstado("Completado")} style={[s.chip, estado === "Completado" && s.chipActive]} accessibilityRole="button" accessibilityState={{ selected: estado === "Completado" }}>
-                <Text style={[s.chipText, estado === "Completado" && s.chipTextActive]}>Completado</Text>
+              <Pressable
+                onPress={() => setEstado("Completado")}
+                style={[s.chip, estado === "Completado" && s.chipActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: estado === "Completado" }}
+              >
+                <Text
+                  style={[
+                    s.chipText,
+                    estado === "Completado" && s.chipTextActive,
+                  ]}
+                >
+                  Completado
+                </Text>
               </Pressable>
             </View>
 
             <Text style={[s.label, s.mt12]}>Descripción</Text>
-            <TextInput value={descripcion} onChangeText={setDescripcion} placeholder="Describe el trámite..." placeholderTextColor={theme.colors.textMuted} multiline numberOfLines={4} style={[s.input, s.textarea]} />
+            <TextInput
+              value={descripcion}
+              onChangeText={setDescripcion}
+              placeholder="Describe el trámite..."
+              placeholderTextColor={theme.colors.textMuted}
+              multiline
+              numberOfLines={4}
+              style={[s.input, s.textarea]}
+            />
           </ScrollView>
 
-          <View style={[s.saveBar, s.saveBarShadow, { paddingBottom: insets.bottom + 16 }]}>
+          <View
+            style={[
+              s.saveBar,
+              s.saveBarShadow,
+              { paddingBottom: insets.bottom + 16 },
+            ]}
+          >
             <Pressable
               onPress={onSubmit}
               disabled={!canSave}
@@ -227,7 +338,11 @@ export default function EditarTramiteScreen() {
               accessibilityLabel="Guardar cambios"
               accessibilityState={{ disabled: !canSave }}
             >
-              <Ionicons name="save-outline" size={18} color={theme.colors.onSecondary} />
+              <Ionicons
+                name="save-outline"
+                size={18}
+                color={theme.colors.onSecondary}
+              />
               <Text style={s.saveCtaText}>Guardar cambios</Text>
             </Pressable>
           </View>
@@ -296,7 +411,8 @@ const mkStyles = (theme) =>
       borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.03)" : "#F1F5F9",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.03)" : "#F1F5F9",
       marginTop: 2,
     },
     idText: {
@@ -335,7 +451,8 @@ const mkStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: theme.radius.pill,
-      backgroundColor: theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+      backgroundColor:
+        theme.mode === "dark" ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
     },
     chipActive: { backgroundColor: theme.colors.secondary },
     chipText: {
