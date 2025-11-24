@@ -2,9 +2,18 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ["babel-preset-expo"],
+    presets: [
+      // preset recomendado para proyectos Expo
+      "babel-preset-expo",
+    ],
     plugins: [
-      // react-native-reanimated debe ir al final de la lista de plugins
+      // transforma las llamadas de expo-router (require.context) correctamente
+      "expo-router/babel",
+
+      // permite parsear "export type { ... }" / Flow en node_modules (ej: gesture-handler)
+      "@babel/plugin-syntax-flow",
+
+      // plugin recomendado para react-native-reanimated (si lo usas)
       "react-native-reanimated/plugin",
     ],
   };
