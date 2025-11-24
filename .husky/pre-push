@@ -1,0 +1,12 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# 1) Aplicar formato / fixes a los staged files (rápido)
+npx --no-install lint-staged || {
+    echo "x lint-staged failed - fix issues and try again"
+    exit 1
+}
+
+# 2) Ejecutar un test rápido y non-blocking (no falla el push si no hay tests)
+#    --> test:quick lo configuramos en package.json en el siguiente paso
+npm run test:quick --silent || echo "⚠ test:quick failed (non-blocking) — CI will run full tests"
