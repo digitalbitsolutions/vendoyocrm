@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start --dev-client",
-    "start:go": "expo start",
-    "start:clear": "expo start --clear",
+    "start": "EXPO_ROUTER_APP_ROOT=app expo start --dev-client",
+    "start:go": "EXPO_ROUTER_APP_ROOT=app expo start",
+    "start:clear": "EXPO_ROUTER_APP_ROOT=app expo start --clear",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
@@ -13,6 +13,7 @@
     "lint:fix": "eslint . --ext .js,.jsx --fix",
     "format": "prettier --write .",
     "test": "jest",
+    "test:quick": "jest --passWithNoTests --silent",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "check": "npm run lint && npm run test",
@@ -22,12 +23,10 @@
   "lint-staged": {
     "*.{js,jsx}": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*.{json,md}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "dependencies": {
@@ -62,7 +61,12 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/eslint-parser": "^7.28.5",
+    "@babel/plugin-syntax-flow": "^7.27.1",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
     "@eslint/eslintrc": "^3.3.1",
+    "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.1.10",
     "@types/react-native": "^0.72.8",
@@ -84,5 +88,9 @@
     "pretty-quick": "^4.2.2",
     "react-test-renderer": "^19.2.0",
     "typescript": "~5.9.2"
+  },
+  "engines": {
+    "node": ">=18 <21",
+    "npm": ">=9"
   }
 }
