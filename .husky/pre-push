@@ -1,5 +1,4 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
+
 
 # 1) Aplicar formato / fixes a los staged files (rápido)
 npx --no-install lint-staged || {
