@@ -46,7 +46,7 @@
     "expo-status-bar": "~3.0.8",
     "expo-system-ui": "~6.0.8",
     "formik": "^2.4.6",
-    "react": "19.2.0",
+    "react": "19.1.0",
     "react-dom": "19.2.0",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
@@ -86,7 +86,7 @@
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.6.2",
     "pretty-quick": "^4.2.2",
-    "react-test-renderer": "^19.2.0",
+    "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
   "engines": {
