@@ -1,11 +1,25 @@
-# vendoyocrm
+# Vendoyo – Mobile App (Frontend)
 
-CRM de VendoYo.es Multi Franquicia
+Aplicación móvil desarrollada con React Native para iOS y Android.
 
-## Quick start (arranque rápido)
+Este repositorio contiene el desarrollo del frontend de la aplicación.
 
-Copia `.env.example`a `.env`y ajusta valores si hace falta:
+## Mi rol en el proyecto
+- Desarrollo completo del frontend móvil
+- Arquitectura de componentes reutilizables
+- Implementación de navegación entre pantallas
+- Manejo de estado con hooks y context
+- Integración del frontend con APIs backend
+- Enfoque en UI y experiencia de usuario
 
-```bash
-cp .env.example .env
-```
+## Stack tecnológico
+- React Native
+- JavaScript (ES6+)
+- Expo
+- APIs REST
+
+## Estado del proyecto
+Proyecto en fase final de desarrollo. Publicación en App Store y Google Play pendiente de finalización del backend.
+
+## Notas
+Este proyecto forma parte de una aplicación real orientada a producto.
